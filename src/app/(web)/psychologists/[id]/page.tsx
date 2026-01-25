@@ -7,6 +7,8 @@ import Link from 'next/link';
 import { FiArrowLeft, FiStar, FiClock, FiBookOpen, FiAward } from 'react-icons/fi';
 import CalendlyEmbed from '@/components/booking/CalendlyEmbed';
 import { TherapistPublicView } from '@/types/models/therapist';
+import { getLanguageName } from '@/lib/constants/languages';
+import { getServiceById } from '@/types/models/service';
 
 export default function PsychologistDetail() {
   const params = useParams();
@@ -123,7 +125,7 @@ export default function PsychologistDetail() {
                         key={idx}
                         className="text-sm px-3 py-1 bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300 rounded-full"
                       >
-                        {lang}
+                        {getLanguageName(lang)}
                       </span>
                     ))}
                   </div>
@@ -146,14 +148,17 @@ export default function PsychologistDetail() {
               
               <h3 className="text-lg font-bold mb-3 text-gray-900 dark:text-white">Specializations</h3>
               <div className="flex flex-wrap gap-2">
-                {psychologist.specializations.map((spec, idx) => (
-                  <span 
-                    key={idx}
-                    className="text-sm px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full"
-                  >
-                    {spec}
-                  </span>
-                ))}
+                {psychologist.specializations.map((spec, idx) => {
+                  const service = getServiceById(spec);
+                  return (
+                    <span 
+                      key={idx}
+                      className="text-sm px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full"
+                    >
+                      {service?.name || spec}
+                    </span>
+                  );
+                })}
               </div>
             </div>
           </div>

@@ -32,6 +32,9 @@ export async function GET(
       );
     }
 
+    // Get services from array field
+    const services = therapistProfileData?.services || [];
+
     // Get user data for name and photo
     const userDoc = await db.collection("users").doc(id).get();
     const userData = userDoc.data();
@@ -57,7 +60,7 @@ export async function GET(
       title: therapistProfileData.credentials?.specializations?.[0] || "Therapist",
       image: userData.profile?.avatarUrl || therapistProfileData.photoURL || "/images/default-avatar.png",
       languages: therapistProfileData.practice?.languages || [],
-      specializations: therapistProfileData.credentials?.specializations || [],
+      specializations: services,
       experience: therapistProfileData.practice?.yearsExperience || 0,
       bio: therapistProfileData.practice?.bio || "",
       hourlyRate: hourlyRate,

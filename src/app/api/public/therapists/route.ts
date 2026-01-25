@@ -40,6 +40,9 @@ export async function GET(request: NextRequest) {
         }
 
         const profileData = therapistProfileDoc.data();
+        
+        // Get services from array field
+        const services = profileData?.services || [];
 
         // Only include verified therapists
         if (!profileData?.verification?.isVerified) {
@@ -51,7 +54,7 @@ export async function GET(request: NextRequest) {
           return null;
         }
 
-        if (specialization && !profileData.credentials?.specializations?.includes(specialization)) {
+        if (specialization && !services.includes(specialization)) {
           return null;
         }
 
@@ -75,7 +78,7 @@ export async function GET(request: NextRequest) {
             : 'Therapist',
           image: userData.profile?.avatarUrl || '/images/default-avatar.png',
           languages: profileData.practice?.languages || [],
-          specializations: profileData.credentials?.specializations || [],
+          specializations: services,
           experience: profileData.practice?.yearsExperience || 0,
           bio: profileData.practice?.bio || '',
           hourlyRate: normalizedRate,

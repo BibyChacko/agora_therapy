@@ -9,7 +9,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/hooks/useAuth";
-import { signInWithEmail, signInWithGoogle } from "@/lib/firebase/auth";
+import { signInWithEmail, signInWithGoogle, getCurrentUserData } from "@/lib/firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,12 +41,24 @@ function LoginForm() {
 
   const redirectTo = searchParams.get("redirect") || "/";
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated based on role
   useEffect(() => {
-    if (user && !authLoading) {
-      router.push(redirectTo === "/" ? "/dashboard" : redirectTo);
-    }
-  }, [user, authLoading, router, redirectTo]);
+    const redirectBasedOnRole = async () => {
+      if (user && !authLoading) {
+        const userData = await getCurrentUserData();
+        if (userData?.role === "client") {
+          router.push("/client");
+        } else if (userData?.role === "therapist") {
+          router.push("/therapist");
+        } else if (userData?.role === "admin") {
+          router.push("/admin");
+        } else {
+          router.push("/dashboard");
+        }
+      }
+    };
+    redirectBasedOnRole();
+  }, [user, authLoading, router]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -77,9 +89,18 @@ function LoginForm() {
 
     try {
       await signInWithEmail(formData.email, formData.password);
-      // Wait a moment for userData to be fetched
-      setTimeout(() => {
-        window.location.href = redirectTo === "/" ? "/dashboard" : redirectTo;
+      // Wait a moment for userData to be fetched, then redirect based on role
+      setTimeout(async () => {
+        const userData = await getCurrentUserData();
+        if (userData?.role === "client") {
+          window.location.href = "/client";
+        } else if (userData?.role === "therapist") {
+          window.location.href = "/therapist";
+        } else if (userData?.role === "admin") {
+          window.location.href = "/admin";
+        } else {
+          window.location.href = "/dashboard";
+        }
       }, 500);
     } catch (error: unknown) {
       console.error("Login error:", error);
@@ -106,9 +127,18 @@ function LoginForm() {
 
     try {
       await signInWithGoogle();
-      // Wait a moment for userData to be fetched
-      setTimeout(() => {
-        window.location.href = redirectTo === "/" ? "/dashboard" : redirectTo;
+      // Wait a moment for userData to be fetched, then redirect based on role
+      setTimeout(async () => {
+        const userData = await getCurrentUserData();
+        if (userData?.role === "client") {
+          window.location.href = "/client";
+        } else if (userData?.role === "therapist") {
+          window.location.href = "/therapist";
+        } else if (userData?.role === "admin") {
+          window.location.href = "/admin";
+        } else {
+          window.location.href = "/dashboard";
+        }
       }, 500);
     } catch (error: unknown) {
       console.error("Google sign in error:", error);
