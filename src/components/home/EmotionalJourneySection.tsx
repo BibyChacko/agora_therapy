@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const fears = [
   { from: "Scared of nights", to: "Scared of being a failure" },
   { from: "Scared of ghosts", to: "Scared of being a burden" },
@@ -65,18 +67,18 @@ export function EmotionalJourneySection() {
               You don&apos;t have to carry it all alone anymore.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
-              <a 
+              <Link 
                 href="/psychologists"
                 className="px-8 py-3 bg-white text-teal-600 rounded-full font-semibold hover:bg-gray-100 transition-colors shadow-lg"
               >
                 Talk to Someone Today
-              </a>
-              <a 
+              </Link>
+              <Link 
                 href="/services"
                 className="px-8 py-3 border-2 border-white text-white rounded-full font-semibold hover:bg-white/10 transition-colors"
               >
                 Explore Support Options
-              </a>
+              </Link>
             </div>
           </div>
         </div>

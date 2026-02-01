@@ -13,6 +13,7 @@ import { DaytimeSupportSection } from '@/components/home/DaytimeSupportSection';
 import { FeaturedTherapistsSection } from '@/components/home/FeaturedTherapistsSection';
 import { HowItWorksSection } from '@/components/home/HowItWorksSection';
 import { CTASection } from '@/components/home/CTASection';
+import { StructuredData } from '@/components/StructuredData';
 import { getPopularLanguages, getServices, getFeaturedTherapists } from '@/lib/data/home-data';
 
 export const metadata: Metadata = {
@@ -60,21 +61,39 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://mindgood.com'),
+  metadataBase: new URL('https://mindgood.life'),
   alternates: {
     canonical: '/',
+    languages: {
+      'en': '/',
+      'hi': '/hi',
+      'ta': '/ta',
+      'te': '/te',
+      'ml': '/ml',
+      'kn': '/kn',
+      'mr': '/mr',
+      'gu': '/gu',
+      'bn': '/bn',
+      'pa': '/pa',
+      'ur': '/ur',
+      'si': '/si',
+      'de': '/de',
+      'es': '/es',
+      'fr': '/fr',
+      'it': '/it',
+    },
   },
   openGraph: {
     title: 'Online Therapy & Counseling in Your Language | 24/7 Mental Health Support',
     description: 'Connect with licensed psychologists and therapists online from anywhere in the world. Professional counseling in 50+ languages including Malayalam, Tamil, Hindi, Telugu, and Kannada.',
-    url: '/',
+    url: 'https://mindgood.life',
     siteName: 'MindGood',
     images: [
       {
         url: '/images/hero-image.webp',
         width: 1200,
         height: 630,
-        alt: 'Online Therapy and Mental Health Support',
+        alt: 'Online Therapy and Mental Health Support - MindGood',
       },
     ],
     locale: 'en_US',
@@ -97,10 +116,6 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
-  verification: {
-    google: 'your-google-verification-code',
-    yandex: 'your-yandex-verification-code',
-  },
 };
 
 export default async function Home() {
@@ -112,6 +127,7 @@ export default async function Home() {
 
   return (
     <>
+      <StructuredData />
       <HeroSection />
       <LanguageSection languages={languages} />
       <ServicesSection services={services} />
