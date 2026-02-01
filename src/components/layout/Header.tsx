@@ -50,6 +50,7 @@ const Header = () => {
     { name: 'About', path: '/about' },
     { name: 'Services', path: '/services' },
     { name: 'Psychologists', path: '/psychologists' },
+    { name: 'Yoga', path: '/yoga-for-mental-health' },
     { name: 'Blog', path: '/blog' },
     { name: 'FAQ', path: '/faq' },
     { name: 'Contact', path: '/contact' },
