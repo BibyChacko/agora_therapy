@@ -1,17 +1,19 @@
 import { Metadata } from 'next';
-import { HeroSection } from '@/components/home/HeroSection';
-import { LanguageSection } from '@/components/home/LanguageSection';
-import { ServicesSection } from '@/components/home/ServicesSection';
-import { EmotionalJourneySection } from '@/components/home/EmotionalJourneySection';
-import { SupportHandSection } from '@/components/home/SupportHandSection';
-import { RelationshipSupportSection } from '@/components/home/RelationshipSupportSection';
-import { SexualHealthSection } from '@/components/home/SexualHealthSection';
-import { RehabSection } from '@/components/home/RehabSection';
+import { GlassHeroSection } from '@/components/home/GlassHeroSection';
+import { GlassLanguageSection } from '@/components/home/GlassLanguageSection';
+import { GlassServicesSection } from '@/components/home/GlassServicesSection';
+import { GlassEmotionalJourneySection } from '@/components/home/GlassEmotionalJourneySection';
+import { GlassSupportHandSection } from '@/components/home/GlassSupportHandSection';
+import { GlassRelationshipSupportSection } from '@/components/home/GlassRelationshipSupportSection';
+import { GlassSexualHealthSection } from '@/components/home/GlassSexualHealthSection';
+import { GlassMeditationSection } from '@/components/home/GlassMeditationSection';
+import { GlassTherapistSection } from '@/components/home/GlassTherapistSection';
+import { GlassLateNightSupportSection } from '@/components/home/GlassLateNightSupportSection';
+import { GlassDaytimeSupportSection } from '@/components/home/GlassDaytimeSupportSection';
+import { GlassHowItWorksSection } from '@/components/home/GlassHowItWorksSection';
+import { GlassFAQSection } from '@/components/home/GlassFAQSection';
 import { YogaSection } from '@/components/home/YogaSection';
-import { LateNightSupportSection } from '@/components/home/LateNightSupportSection';
-import { DaytimeSupportSection } from '@/components/home/DaytimeSupportSection';
-import { FeaturedTherapistsSection } from '@/components/home/FeaturedTherapistsSection';
-import { HowItWorksSection } from '@/components/home/HowItWorksSection';
+import { RehabSection } from '@/components/home/RehabSection';
 import { CTASection } from '@/components/home/CTASection';
 import { StructuredData } from '@/components/StructuredData';
 import { getPopularLanguages, getServices, getFeaturedTherapists } from '@/lib/data/home-data';
@@ -128,19 +130,21 @@ export default async function Home() {
   return (
     <>
       <StructuredData />
-      <HeroSection />
-      <LanguageSection languages={languages} />
-      <ServicesSection services={services} />
-      <EmotionalJourneySection />
-      <SupportHandSection />
-      <RelationshipSupportSection />
-      <SexualHealthSection />
-      <RehabSection />
+      <GlassHeroSection />
+      <GlassLanguageSection languages={languages} />
+      <GlassServicesSection services={services} />
+      <GlassEmotionalJourneySection />
+      <GlassSupportHandSection />
+      <GlassRelationshipSupportSection />
+      <GlassSexualHealthSection />
+      <GlassMeditationSection />
+      <GlassTherapistSection therapists={therapists} />
       <YogaSection />
-      <FeaturedTherapistsSection therapists={therapists} />
-      <LateNightSupportSection />
-      <DaytimeSupportSection />
-      <HowItWorksSection />
+      <RehabSection />
+      <GlassLateNightSupportSection />
+      <GlassDaytimeSupportSection />
+      <GlassHowItWorksSection />
+      <GlassFAQSection />
       <CTASection />
     </>
   );
