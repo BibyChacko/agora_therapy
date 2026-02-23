@@ -12,9 +12,9 @@ import { GlassLateNightSupportSection } from '@/components/home/GlassLateNightSu
 import { GlassDaytimeSupportSection } from '@/components/home/GlassDaytimeSupportSection';
 import { GlassHowItWorksSection } from '@/components/home/GlassHowItWorksSection';
 import { GlassFAQSection } from '@/components/home/GlassFAQSection';
-import { YogaSection } from '@/components/home/YogaSection';
-import { RehabSection } from '@/components/home/RehabSection';
-import { CTASection } from '@/components/home/CTASection';
+import { GlassYogaSection } from '@/components/home/GlassYogaSection';
+import { GlassRehabSection } from '@/components/home/GlassRehabSection';
+import { GlassCTASection } from '@/components/home/GlassCTASection';
 import { StructuredData } from '@/components/StructuredData';
 import { getPopularLanguages, getServices, getFeaturedTherapists } from '@/lib/data/home-data';
 
@@ -139,13 +139,13 @@ export default async function Home() {
       <GlassSexualHealthSection />
       <GlassMeditationSection />
       <GlassTherapistSection therapists={therapists} />
-      <YogaSection />
-      <RehabSection />
+      <GlassYogaSection />
+      <GlassRehabSection />
       <GlassLateNightSupportSection />
-      <GlassDaytimeSupportSection />
+      {/* <GlassDaytimeSupportSection /> */}
       <GlassHowItWorksSection />
       <GlassFAQSection />
-      <CTASection />
+      <GlassCTASection />
     </>
   );
 }
