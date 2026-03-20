@@ -18,7 +18,7 @@ export function GlassTherapistSection({ therapists }: GlassTherapistSectionProps
   const displayTherapists = therapists.slice(0, 3);
 
   return (
-    <section className="py-20 bg-gradient-to-br from-gray-50 via-purple-50 to-blue-50 dark:from-gray-900 dark:via-purple-950 dark:to-gray-900 relative overflow-hidden">
+    <section className="py-20 bg-gradient-to-br from-purple-50 via-blue-50 to-teal-50 dark:from-gray-900 dark:via-purple-950 dark:to-gray-900 relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-20 right-20 w-72 h-72 bg-purple-300/20 rounded-full blur-3xl"></div>
@@ -28,9 +28,12 @@ export function GlassTherapistSection({ therapists }: GlassTherapistSectionProps
       <div className="container mx-auto px-4 relative z-10">
         <div className="text-center mb-12">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-            Meet Expert Instructors
+            Meet Our Expert 
+            <span className="bg-gradient-to-r from-purple-600 to-teal-600 bg-clip-text text-transparent ml-3">
+              Psychologists
+            </span>
           </h2>
-          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-700 dark:text-gray-300 max-w-2xl mx-auto">
             Connect with licensed professionals who understand your journey and speak your language
           </p>
         </div>

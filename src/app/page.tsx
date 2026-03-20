@@ -3,10 +3,7 @@ import { GlassHeroSection } from '@/components/home/GlassHeroSection';
 import { GlassLanguageSection } from '@/components/home/GlassLanguageSection';
 import { GlassServicesSection } from '@/components/home/GlassServicesSection';
 import { GlassEmotionalJourneySection } from '@/components/home/GlassEmotionalJourneySection';
-import { GlassSupportHandSection } from '@/components/home/GlassSupportHandSection';
-import { GlassRelationshipSupportSection } from '@/components/home/GlassRelationshipSupportSection';
-import { GlassSexualHealthSection } from '@/components/home/GlassSexualHealthSection';
-import { GlassMeditationSection } from '@/components/home/GlassMeditationSection';
+import { GlassSpecializedSupportSection } from '@/components/home/GlassSpecializedSupportSection';
 import { GlassTherapistSection } from '@/components/home/GlassTherapistSection';
 import { GlassLateNightSupportSection } from '@/components/home/GlassLateNightSupportSection';
 import { GlassDaytimeSupportSection } from '@/components/home/GlassDaytimeSupportSection';
@@ -134,10 +131,7 @@ export default async function Home() {
       <GlassLanguageSection languages={languages} />
       <GlassServicesSection services={services} />
       <GlassEmotionalJourneySection />
-      <GlassSupportHandSection />
-      <GlassRelationshipSupportSection />
-      <GlassSexualHealthSection />
-      <GlassMeditationSection />
+      <GlassSpecializedSupportSection />
       <GlassTherapistSection therapists={therapists} />
       <GlassYogaSection />
       <GlassRehabSection />

@@ -35,6 +35,22 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
+## Admin Seeder
+
+To create an admin user in Firebase Auth and Firestore with the `admin` role, you can run the following script:
+
+```bash
+npm run create-admin <email> <password> <firstName> <lastName>
+```
+
+**Example:**
+
+```bash
+npm run create-admin admin@example.com SecurePass123! John Doe
+```
+
+This script will set up the user with the proper `admin` custom claims in Firebase Authentication and create the user profile document in Firestore.
+
 subtask completed
 
 Analyze current codebase structure and existing implementations

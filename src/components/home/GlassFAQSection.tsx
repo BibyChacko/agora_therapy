@@ -29,11 +29,11 @@ export function GlassFAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section className="py-20 bg-gradient-to-br from-white via-blue-50 to-purple-50 dark:from-gray-900 dark:via-blue-950 dark:to-purple-950 relative overflow-hidden">
+    <section className="py-20 bg-gradient-to-br from-purple-50 via-blue-50 to-teal-50 dark:from-gray-900 dark:via-purple-950 dark:to-gray-900 relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-40 left-10 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-300/20 rounded-full blur-3xl"></div>
+        <div className="absolute top-40 left-10 w-96 h-96 bg-purple-300/20 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-teal-300/20 rounded-full blur-3xl"></div>
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
@@ -64,7 +64,7 @@ export function GlassFAQSection() {
 
               {/* Floating contact card */}
               <div className="absolute -bottom-6 -right-6 backdrop-blur-xl bg-white/80 dark:bg-gray-800/80 border border-white/90 dark:border-gray-700/90 rounded-2xl p-6 shadow-2xl max-w-xs">
-                <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 font-medium">
                   Get instant support via WhatsApp
                 </p>
                 <a
@@ -84,23 +84,26 @@ export function GlassFAQSection() {
             {/* Right - FAQ */}
             <div>
               <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-8">
-                Common Questions
+                Common 
+                <span className="bg-gradient-to-r from-purple-600 to-teal-600 bg-clip-text text-transparent ml-3">
+                  Questions
+                </span>
               </h2>
 
               <div className="space-y-4">
                 {faqs.map((faq, index) => (
                   <div
                     key={index}
-                    className="backdrop-blur-md bg-white/50 dark:bg-gray-800/50 border border-white/60 dark:border-gray-700/60 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl"
+                    className="backdrop-blur-md bg-white/40 dark:bg-gray-800/40 border border-white/60 dark:border-gray-700/60 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:bg-white/50 dark:hover:bg-gray-800/50"
                   >
                     <button
                       onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                      className="w-full px-6 py-5 flex items-center justify-between text-left"
+                      className="w-full px-6 py-5 flex items-center justify-between text-left group"
                     >
-                      <span className="font-semibold text-lg text-gray-900 dark:text-white pr-4">
+                      <span className="font-semibold text-lg text-gray-900 dark:text-white pr-4 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                         {faq.question}
                       </span>
-                      <div className={`flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center transition-transform duration-300 ${
+                      <div className={`flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-purple-600 to-teal-600 flex items-center justify-center transition-transform duration-300 ${
                         openIndex === index ? 'rotate-180' : ''
                       }`}>
                         <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -115,7 +118,7 @@ export function GlassFAQSection() {
                       }`}
                     >
                       <div className="px-6 pb-5">
-                        <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                        <p className="text-gray-700 dark:text-gray-300 leading-relaxed font-medium">
                           {faq.answer}
                         </p>
                       </div>
