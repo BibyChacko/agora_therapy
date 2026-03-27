@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Link from 'next/link';
 import { GlassSpecializedSupportSection } from '@/components/home/GlassSpecializedSupportSection';
 
 export const metadata: Metadata = {
@@ -141,12 +142,12 @@ export default function SpecializedSupportPage() {
             Committed to providing a safe and nurturing space for you.
           </p>
           <div>
-            <a
+            <Link
               href="/psychologists"
               className="inline-block px-8 py-3 bg-white text-gray-900 rounded-full font-semibold hover:bg-gray-100 transition-all duration-300"
             >
               Learn More
-            </a>
+            </Link>
           </div>
         </div>
       </section>
@@ -169,12 +170,12 @@ export default function SpecializedSupportPage() {
                   We believe in the transformative power of therapy. Our compassionate team of experienced therapists 
                   is here to guide you on your journey toward healing, growth, and self-discovery.
                 </p>
-                <a
+                <Link
                   href="/psychologists"
                   className="inline-block px-8 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full font-semibold hover:bg-gray-800 dark:hover:bg-gray-100 transition-all duration-300"
                 >
                   Book Appointment
-                </a>
+                </Link>
               </div>
             </div>
 
