@@ -7,27 +7,47 @@ import { getAdminAuth, getAdminFirestore } from "@/lib/firebase/admin";
  */
 export async function GET(request: NextRequest) {
   try {
+    console.log("🔍 [Admin Users API] Starting fetch users request");
+    
     // Verify admin authentication
     const token = request.cookies.get("auth-token")?.value;
     if (!token) {
+      console.warn("⚠️ [Admin Users API] No auth-token cookie found");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    console.log("🔍 [Admin Users API] Token found, initializing Admin SDK");
     const auth = getAdminAuth();
     const db = getAdminFirestore();
+    
+    console.log("🔍 [Admin Users API] Verifying ID token...");
     const decodedToken = await auth.verifyIdToken(token);
+    console.log(`🔍 [Admin Users API] Token verified for UID: ${decodedToken.uid}`);
+
+    console.log("🔍 [Admin Users API] Checking user role in Firestore...");
     const userDoc = await db.collection("users").doc(decodedToken.uid).get();
+    
+    if (!userDoc.exists) {
+      console.error(`❌ [Admin Users API] User document not found for UID: ${decodedToken.uid}`);
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const userData = userDoc.data();
+    console.log(`🔍 [Admin Users API] User role: ${userData?.role}`);
 
     if (!userData || userData.role !== "admin") {
+      console.warn(`⚠️ [Admin Users API] User ${decodedToken.uid} is not an admin`);
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // Fetch all users from Firestore
+    console.log("🔍 [Admin Users API] Fetching all users from 'users' collection...");
     const usersSnapshot = await db
       .collection("users")
       .orderBy("metadata.createdAt", "desc")
       .get();
+    
+    console.log(`✅ [Admin Users API] Successfully fetched ${usersSnapshot.size} users`);
 
     const users = usersSnapshot.docs.map((doc) => {
       const data = doc.data();
@@ -51,10 +71,13 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({ users });
-  } catch (error) {
-    console.error("Error fetching users:", error);
+  } catch (error: any) {
+    console.error("❌ [Admin Users API] Error in GET /api/admin/users:", error);
+    if (error.code) console.error("❌ [Admin Users API] Error code:", error.code);
+    if (error.stack) console.error("❌ [Admin Users API] Stack trace:", error.stack);
+    
     return NextResponse.json(
-      { error: "Failed to fetch users" },
+      { error: "Failed to fetch users", details: error.message },
       { status: 500 }
     );
   }
