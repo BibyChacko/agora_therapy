@@ -5,33 +5,44 @@
  * Usage: npx ts-node -P scripts/tsconfig.json scripts/create-admin.ts <email> <password> <firstName> <lastName>
  * Example: npx ts-node -P scripts/tsconfig.json scripts/create-admin.ts admin@mindgood.com SecurePass123! John Doe
  */
+const fs = require('fs');
+const path = require('path');
+
+// Load environment variables from .env
+const envPath = path.resolve(process.cwd(), '.env');
+require('dotenv').config({ path: envPath });
 
 const admin = require('firebase-admin');
 const { Timestamp } = require('firebase-admin/firestore');
-const path = require('path');
-const fs = require('fs');
 
 // Initialize Firebase Admin
 if (admin.apps.length === 0) {
-  // Try to load from google_services.json first
-  const serviceAccountPath = path.join(__dirname, '..', 'google_services.json');
-  
-  if (fs.existsSync(serviceAccountPath)) {
-    const serviceAccount = require(serviceAccountPath);
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-    });
-    console.log('✅ Initialized Firebase Admin with google_services.json');
-  } else {
-    // Fall back to environment variables
+  const projectId = process.env.FIREBASE_PROJECT_ID;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+
+  if (projectId && clientEmail && privateKey) {
     admin.initializeApp({
       credential: admin.credential.cert({
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+        projectId,
+        clientEmail,
+        privateKey,
       }),
     });
     console.log('✅ Initialized Firebase Admin with environment variables');
+  } else {
+    // Fall back to google_services.json if env vars are missing
+    const serviceAccountPath = path.join(__dirname, '..', 'google_services.json');
+    if (fs.existsSync(serviceAccountPath)) {
+      const serviceAccount = require(serviceAccountPath);
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+      });
+      console.log('✅ Initialized Firebase Admin with google_services.json');
+    } else {
+      console.error('❌ Missing Firebase Admin credentials. Please set environment variables or provide google_services.json');
+      process.exit(1);
+    }
   }
 }
 
