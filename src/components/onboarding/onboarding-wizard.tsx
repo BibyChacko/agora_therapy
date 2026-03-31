@@ -190,7 +190,7 @@ export function OnboardingWizard({ user, onComplete }: OnboardingWizardProps) {
           yearsExperience: 0,
           sessionTypes: [],
           languages: [], // Will be copied from basicInfo.languages when saving
-          hourlyRate: 10000, // Default $100.00 (stored in cents)
+          hourlyRate: 0,
           currency: "USD",
         },
         availability: {
@@ -859,30 +859,40 @@ export function OnboardingWizard({ user, onComplete }: OnboardingWizardProps) {
         return (
           <div className="space-y-4">
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="hourlyRate">Hourly Rate (USD) *</Label>
-                <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <Input
-                    id="hourlyRate"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={data.therapistProfile.practice.hourlyRate / 100}
-                    onChange={(e) =>
-                      updateTherapistPractice(
-                        "hourlyRate",
-                        Math.round(parseFloat(e.target.value) * 100)
-                      )
-                    }
-                    placeholder="100.00"
-                    className="pl-10"
-                  />
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="hourlyRate">Hourly Rate (USD) *</Label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <Input
+                      id="hourlyRate"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={data.therapistProfile.practice.hourlyRate === 0 ? "" : data.therapistProfile.practice.hourlyRate / 100}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === "") {
+                          updateTherapistPractice("hourlyRate", 0);
+                        } else {
+                          const parsed = parseFloat(val);
+                          if (!isNaN(parsed)) {
+                            updateTherapistPractice(
+                              "hourlyRate",
+                              Math.round(parsed * 100)
+                            );
+                          }
+                        }
+                      }}
+                      placeholder="100.00"
+                      className="pl-10"
+                    />
+                  </div>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Platform fee (15%) will be deducted from this amount
-                </p>
               </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Platform fee (15%) will be deducted from this amount
+              </p>
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h4 className="font-semibold text-blue-900 mb-2">

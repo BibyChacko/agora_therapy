@@ -229,8 +229,6 @@ export async function getCurrentUserData(): Promise<AppUser | null> {
 
     // Use direct doc reference instead of helper
     const userDocRef = doc(db, "users", user.uid);
-    console.log("🔍 getCurrentUserData - Document path:", userDocRef.path);
-    console.log("🔍 getCurrentUserData - Fetching doc for user:", user.uid);
     
     const userDoc = await getDoc(userDocRef);
     console.log("🔍 getCurrentUserData - Doc exists:", userDoc.exists());
