@@ -540,7 +540,7 @@ export default function TherapistDetailPage({
                         <p className="text-sm text-gray-500">Hourly Rate</p>
                         <p className="font-medium">
                           {therapist.therapistProfile.practice.hourlyRate > 0
-                            ? `$${displayHourlyRate(therapist.therapistProfile.practice.hourlyRate)}/hr`
+                            ? `$${displayHourlyRate(therapist.therapistProfile.practice.hourlyRate/100)}/hr`
                             : "Not provided"}
                         </p>
                       </div>

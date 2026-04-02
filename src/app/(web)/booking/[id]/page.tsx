@@ -158,7 +158,7 @@ export default function BookingPage() {
   }
 
   const timeSlots = generateTimeSlots();
-  const sessionFee = (therapist.hourlyRate * duration) / 60;
+  const sessionFee = ((therapist.hourlyRate /100) * duration) / 60;
 
   return (
     <div className="container mx-auto px-4 py-12">

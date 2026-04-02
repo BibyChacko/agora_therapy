@@ -328,8 +328,8 @@ export default function TherapistsManagement() {
                           </div>
                           <div>
                             <span className="font-medium">Rate:</span> $
-                            {therapist.therapistProfile?.practice.hourlyRate ||
-                              0}
+                            {(therapist.therapistProfile?.practice.hourlyRate ||
+                              0)/100}
                             /hr
                           </div>
                         </div>
