@@ -221,7 +221,7 @@ export class TherapistService {
   }
 
   /**
-   * Upload verification document
+   * Upload verification document via Cloudinary API
    */
   static async uploadDocument(
     therapistId: string,
@@ -229,20 +229,25 @@ export class TherapistService {
     documentType: string
   ): Promise<DocumentUploadResult> {
     try {
-      const timestamp = Date.now();
-      const fileExtension = file.name.split(".").pop();
-      const filename = `${documentType}_${timestamp}.${fileExtension}`;
-      const storagePath = `therapist-documents/${therapistId}/${filename}`;
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("folder", `agora_therapy/documents/${therapistId}`);
 
-      const storageRef: StorageReference = ref(storage, storagePath);
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
 
-      // Upload file
-      const uploadResult = await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(uploadResult.ref);
+      if (!response.ok) {
+        throw new Error("Failed to upload document");
+      }
+
+      const data = await response.json();
 
       return {
-        url,
-        filename,
+        url: data.url,
+        // Since cloudinary doesn't preserve filename elegantly by default, we store the publicId as the filename for deletion
+        filename: data.publicId,
         uploadedAt: new Date(),
       };
     } catch (error) {
@@ -252,16 +257,22 @@ export class TherapistService {
   }
 
   /**
-   * Delete verification document
+   * Delete verification document via Cloudinary API
    */
   static async deleteDocument(
     therapistId: string,
-    filename: string
+    publicId: string
   ): Promise<void> {
     try {
-      const storagePath = `therapist-documents/${therapistId}/${filename}`;
-      const storageRef: StorageReference = ref(storage, storagePath);
-      await deleteObject(storageRef);
+      const response = await fetch("/api/upload", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ publicId }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete document");
+      }
     } catch (error) {
       console.error("Error deleting document:", error);
       throw new Error("Failed to delete document");
@@ -269,7 +280,7 @@ export class TherapistService {
   }
 
   /**
-   * Upload therapist profile photo (stores locally in public folder)
+   * Upload therapist profile photo via Cloudinary API
    */
   static async uploadProfilePhoto(
     therapistId: string,
@@ -288,24 +299,21 @@ export class TherapistService {
         throw new Error("File size too large. Maximum size is 5MB.");
       }
 
-      // Create FormData to send file to API
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("therapistId", therapistId);
+      formData.append("folder", `agora_therapy/profiles/${therapistId}`);
 
-      // Upload to API endpoint
-      const response = await fetch("/api/upload/therapist-photo", {
+      const response = await fetch("/api/upload", {
         method: "POST",
         body: formData,
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to upload photo");
+        throw new Error("Failed to upload photo to server");
       }
 
       const data = await response.json();
-      const photoURL = data.photoURL;
+      const photoURL = data.url;
 
       // Update therapist profile with photo URL
       const docRef = documents.therapistProfile(therapistId);
@@ -369,20 +377,46 @@ export class TherapistService {
         return;
       }
 
-      // Delete via API endpoint
-      const response = await fetch("/api/upload/therapist-photo", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ 
-          therapistId,
-          photoURL: profile.photoURL 
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete photo");
+      // Delete from Cloudinary
+      if (profile.photoURL.includes("res.cloudinary.com")) {
+        try {
+          // Extract public_id from Cloudinary URL:
+          // https://res.cloudinary.com/cloud_name/image/upload/v1234/folder/public_id.jpg
+          const parts = profile.photoURL.split("/");
+          const uploadIndex = parts.findIndex(p => p === "upload");
+          if (uploadIndex !== -1) {
+            // Remove everything up to and including 'upload/v1234/' 
+            // the remaining is folder/publicId.extension
+            const relevantParts = parts.slice(uploadIndex + 2);
+            let publicIdWithExt = relevantParts.join("/");
+            // Remove extension
+            const publicId = publicIdWithExt.substring(0, publicIdWithExt.lastIndexOf('.'));
+            
+            await fetch("/api/upload", {
+              method: "DELETE",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ publicId }),
+            });
+          }
+        } catch (err) {
+          console.warn("Could not delete from Cloudinary.", err);
+        }
+      } else if (profile.photoURL.startsWith("/uploads/")) {
+        // Fallback for legacy local uploads via API
+        try {
+          await fetch("/api/upload/therapist-photo", {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ 
+              therapistId,
+              photoURL: profile.photoURL 
+            }),
+          });
+        } catch (err) {
+          console.warn("Could not delete via legacy API.", err);
+        }
       }
 
       // Remove photo URL from profile

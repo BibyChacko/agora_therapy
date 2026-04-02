@@ -40,8 +40,6 @@ import { TherapistService } from "@/lib/services/therapist-service";
 import type { User } from "@/types/database";
 import { Textarea } from "@/components/ui/textarea";
 import { Timestamp } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "@/lib/firebase/client";
 import { useOnboardingState, type OnboardingState } from "@/lib/hooks/useOnboardingState";
 import { TIMEZONES, TIMEZONE_GROUPS, getUserTimezone } from "@/lib/constants/timezones";
 import { LANGUAGES, LANGUAGE_GROUPS } from "@/lib/constants/languages";
@@ -394,15 +392,22 @@ export function OnboardingWizard({ user, onComplete }: OnboardingWizardProps) {
           throw new Error(`${file.name} exceeds 5MB size limit`);
         }
 
-        // Upload to Firebase Storage
-        const timestamp = Date.now();
-        const fileName = `${timestamp}_${file.name}`;
-        const storageRef = ref(storage, `certificates/${user.id}/${fileName}`);
+        // Upload to Cloudinary API
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("folder", `agora_therapy/certificates/${user.id}`);
         
-        await uploadBytes(storageRef, file);
-        const downloadURL = await getDownloadURL(storageRef);
+        const response = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to upload ${file.name}`);
+        }
         
-        return downloadURL;
+        const data = await response.json();
+        return data.url;
       });
 
       const newURLs = await Promise.all(uploadPromises);

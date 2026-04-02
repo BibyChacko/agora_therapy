@@ -4,13 +4,6 @@
  */
 
 import {  updateDoc, serverTimestamp, getDoc } from "firebase/firestore";
-import {
-  ref,
-  uploadBytes,
-  getDownloadURL,
-  deleteObject,
-} from "firebase/storage";
-import { storage } from "@/lib/firebase/client";
 import { documents } from "@/lib/firebase/collections";
 import type { User } from "@/types/database";
 
@@ -79,28 +72,43 @@ export class ProfileService {
 
       // Delete old avatar if exists
       if (userData?.profile?.avatarUrl) {
-        try {
-          const oldImageRef = ref(storage, `avatars/${userId}/avatar`);
-          await deleteObject(oldImageRef);
-        } catch (error) {
-          // Ignore error if file doesn't exist
-          console.log("Old avatar file not found, continuing...", error);
+        if (userData.profile.avatarUrl.includes("res.cloudinary.com")) {
+          try {
+            const parts = userData.profile.avatarUrl.split("/");
+            const uploadIndex = parts.findIndex((p: string) => p === "upload");
+            if (uploadIndex !== -1) {
+              const relevantParts = parts.slice(uploadIndex + 2);
+              let publicIdWithExt = relevantParts.join("/");
+              const publicId = publicIdWithExt.substring(0, publicIdWithExt.lastIndexOf('.'));
+              
+              await fetch("/api/upload", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ publicId }),
+              });
+            }
+          } catch (error) {
+            console.log("Old avatar file not found, continuing...", error);
+          }
         }
       }
 
-      // Create a unique filename with timestamp
-      const timestamp = Date.now();
-      const fileExtension = file.name.split(".").pop();
-      const fileName = `avatar_${timestamp}.${fileExtension}`;
+      // Upload file to Cloudinary via server-side API
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("folder", `agora_therapy/avatars/${userId}`);
 
-      // Create storage reference
-      const storageRef = ref(storage, `avatars/${userId}/${fileName}`);
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
 
-      // Upload file
-      const snapshot = await uploadBytes(storageRef, file);
+      if (!response.ok) {
+        throw new Error("Failed to upload avatar to server");
+      }
 
-      // Get download URL
-      const downloadURL = await getDownloadURL(snapshot.ref);
+      const data = await response.json();
+      const downloadURL = data.url;
 
       // Update user profile with new avatar URL
       await updateDoc(userRef, {

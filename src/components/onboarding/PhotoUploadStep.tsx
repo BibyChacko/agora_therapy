@@ -71,10 +71,10 @@ export function PhotoUploadStep({
       // Create FormData
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("userId", userId);
+      formData.append("folder", `agora_therapy/avatars/${userId}`);
 
       // Upload to API
-      const response = await fetch("/api/upload/profile-photo", {
+      const response = await fetch("/api/upload", {
         method: "POST",
         body: formData,
       });
@@ -85,7 +85,7 @@ export function PhotoUploadStep({
       }
 
       const data = await response.json();
-      onPhotoUploaded(data.photoURL);
+      onPhotoUploaded(data.url);
     } catch (error: any) {
       console.error("Error uploading photo:", error);
       setError(error.message || "Failed to upload photo. Please try again.");
