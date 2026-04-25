@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { FiFilter, FiX } from 'react-icons/fi';
 
 interface PsychologistFiltersProps {
-  onFilterChange: (filters: { specialization: string; language: string; minExperience: string }) => void;
   initialFilters?: { specialization: string; language: string; minExperience: string };
 }
 
@@ -33,14 +33,38 @@ const LANGUAGES = [
   'Arabic',
   'Hindi',
   'Portuguese',
+  'Malayalam',
+  'Tamil',
+  'Telugu',
+  'Kannada'
 ];
 
-const PsychologistFilters: React.FC<PsychologistFiltersProps> = ({ onFilterChange, initialFilters }) => {
-  // State for filters - initialize with URL parameters if provided
+const PsychologistFilters: React.FC<PsychologistFiltersProps> = ({ initialFilters }) => {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // State for filters
   const [language, setLanguage] = useState(initialFilters?.language || '');
   const [specialization, setSpecialization] = useState(initialFilters?.specialization || '');
   const [minExperience, setMinExperience] = useState(initialFilters?.minExperience || '');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  // Update URL params
+  const updateParams = (newFilters: { specialization: string; language: string; minExperience: string }) => {
+    const params = new URLSearchParams(searchParams.toString());
+    
+    if (newFilters.specialization) params.set('specialization', newFilters.specialization);
+    else params.delete('specialization');
+    
+    if (newFilters.language) params.set('language', newFilters.language);
+    else params.delete('language');
+    
+    if (newFilters.minExperience) params.set('minExperience', newFilters.minExperience);
+    else params.delete('minExperience');
+
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   // Update local state when initialFilters change (from URL)
   React.useEffect(() => {
@@ -54,17 +78,17 @@ const PsychologistFilters: React.FC<PsychologistFiltersProps> = ({ onFilterChang
   // Handle filter changes
   const handleLanguageChange = (value: string) => {
     setLanguage(value);
-    onFilterChange({ specialization, language: value, minExperience });
+    updateParams({ specialization, language: value, minExperience });
   };
 
   const handleSpecializationChange = (value: string) => {
     setSpecialization(value);
-    onFilterChange({ specialization: value, language, minExperience });
+    updateParams({ specialization: value, language, minExperience });
   };
 
   const handleExperienceChange = (value: string) => {
     setMinExperience(value);
-    onFilterChange({ specialization, language, minExperience: value });
+    updateParams({ specialization, language, minExperience: value });
   };
   
   // Reset filters
@@ -72,7 +96,7 @@ const PsychologistFilters: React.FC<PsychologistFiltersProps> = ({ onFilterChang
     setLanguage('');
     setSpecialization('');
     setMinExperience('');
-    onFilterChange({ specialization: '', language: '', minExperience: '' });
+    router.push(pathname, { scroll: false });
   };
   
   return (
@@ -108,7 +132,7 @@ const PsychologistFilters: React.FC<PsychologistFiltersProps> = ({ onFilterChang
           <select
             value={language}
             onChange={(e) => handleLanguageChange(e.target.value)}
-            className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors"
           >
             <option value="">All Languages</option>
             {LANGUAGES.map((lang) => (
@@ -127,7 +151,7 @@ const PsychologistFilters: React.FC<PsychologistFiltersProps> = ({ onFilterChang
           <select
             value={specialization}
             onChange={(e) => handleSpecializationChange(e.target.value)}
-            className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors"
           >
             <option value="">All Specializations</option>
             {SPECIALIZATIONS.map((spec) => (
@@ -146,7 +170,7 @@ const PsychologistFilters: React.FC<PsychologistFiltersProps> = ({ onFilterChang
           <select
             value={minExperience}
             onChange={(e) => handleExperienceChange(e.target.value)}
-            className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors"
           >
             <option value="">Any Experience</option>
             <option value="1">1+ years</option>
