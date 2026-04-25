@@ -1,77 +1,91 @@
-"use client";
-
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import { FiArrowLeft, FiStar, FiClock, FiBookOpen, FiAward } from 'react-icons/fi';
-import CalendlyEmbed from '@/components/booking/CalendlyEmbed';
-import { TherapistPublicView } from '@/types/models/therapist';
+import { notFound } from 'next/navigation';
+import { FiArrowLeft, FiStar, FiClock, FiBookOpen } from 'react-icons/fi';
 import { getLanguageName } from '@/lib/constants/languages';
 import { getServiceById } from '@/types/models/service';
+import { getPublicTherapistById } from '@/lib/services/public-therapist-service';
 
-export default function PsychologistDetail() {
-  const params = useParams();
-  const id = params.id as string;
-  const [psychologist, setPsychologist] = useState<TherapistPublicView | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+interface Props {
+  params: Promise<{ id: string }>;
+}
 
-  useEffect(() => {
-    if (id) {
-      fetchTherapist();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const therapist = await getPublicTherapistById(id);
 
-  const fetchTherapist = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(`/api/public/therapists/${id}`);
-      if (response.ok) {
-        const data = await response.json();
-        setPsychologist(data);
-      } else {
-        setError(true);
-      }
-    } catch (error) {
-      console.error('Error fetching therapist:', error);
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
+  if (!therapist) {
+    return {
+      title: 'Therapist Not Found | MindGood',
+    };
+  }
+
+  const specializations = therapist.specializations
+    .map(spec => getServiceById(spec)?.name || spec)
+    .join(', ');
+
+  const title = `${therapist.name} - ${therapist.title} | MindGood`;
+  const description = `${therapist.name} is a verified psychologist specializing in ${specializations}. With ${therapist.experience} years of experience, they provide affordable therapy in ${therapist.languages.map(getLanguageName).join(', ')}.`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: [therapist.image],
+      type: 'profile',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [therapist.image],
+    },
   };
+}
 
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-16">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">Loading therapist profile...</p>
-          </div>
-        </div>
-      </div>
-    );
+export default async function PsychologistDetail({ params }: Props) {
+  const { id } = await params;
+  const psychologist = await getPublicTherapistById(id);
+
+  if (!psychologist) {
+    notFound();
   }
-  
-  if (error || !psychologist) {
-    return (
-      <div className="container mx-auto px-4 py-16 text-center">
-        <h1 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">Therapist Not Found</h1>
-        <p className="mb-8 text-gray-700 dark:text-gray-300">The therapist you are looking for does not exist or has been removed.</p>
-        <Link 
-          href="/psychologists"
-          className="inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r from-teal-500 to-blue-600 text-white font-medium hover:opacity-90 transition-opacity"
-        >
-          <FiArrowLeft className="mr-2" /> Back to All Therapists
-        </Link>
-      </div>
-    );
-  }
+
+  // JSON-LD structured data for AEO
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Physician",
+    "name": psychologist.name,
+    "image": psychologist.image,
+    "description": psychologist.bio,
+    "medicalSpecialty": psychologist.specializations.map(spec => getServiceById(spec)?.name || spec),
+    "occupationalExperience": {
+      "@type": "OccupationalExperience",
+      "experienceInYears": psychologist.experience
+    },
+    "knowsLanguage": psychologist.languages.map(getLanguageName),
+    "priceRange": `$$`,
+    "address": {
+      "@type": "PostalAddress",
+      "addressCountry": "UAE"
+    },
+    "aggregateRating": psychologist.rating ? {
+      "@type": "AggregateRating",
+      "ratingValue": psychologist.rating,
+      "reviewCount": psychologist.reviewCount || 1
+    } : undefined
+  };
 
   return (
     <div className="container mx-auto px-4 py-12">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      
       {/* Back Button */}
       <Link 
         href="/psychologists"
@@ -83,7 +97,7 @@ export default function PsychologistDetail() {
       <div className="grid md:grid-cols-3 gap-8">
         {/* Left Column - Profile Info */}
         <div className="md:col-span-2">
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md overflow-hidden">
+          <article className="bg-white dark:bg-gray-900 rounded-lg shadow-md overflow-hidden">
             {/* Profile Header */}
             <div className="flex flex-col md:flex-row">
               <div className="relative w-full md:w-64 h-64">
@@ -111,7 +125,7 @@ export default function PsychologistDetail() {
                       ))}
                     </div>
                     <span className="ml-2 text-gray-700 dark:text-gray-300">
-                      {psychologist.rating.toFixed(1)} {psychologist.reviewCount && `(${psychologist.reviewCount} reviews)`}
+                      {psychologist.rating.toFixed(1)} {psychologist.reviewCount ? `(${psychologist.reviewCount} reviews)` : ''}
                     </span>
                   </div>
                 )}
@@ -144,7 +158,9 @@ export default function PsychologistDetail() {
               <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white flex items-center">
                 <FiBookOpen className="mr-2" /> About
               </h2>
-              <p className="text-gray-700 dark:text-gray-300 mb-6">{psychologist.bio}</p>
+              <div className="prose dark:prose-invert max-w-none">
+                <p className="text-gray-700 dark:text-gray-300 mb-6">{psychologist.bio}</p>
+              </div>
               
               <h3 className="text-lg font-bold mb-3 text-gray-900 dark:text-white">Specializations</h3>
               <div className="flex flex-wrap gap-2">
@@ -161,11 +177,11 @@ export default function PsychologistDetail() {
                 })}
               </div>
             </div>
-          </div>
+          </article>
         </div>
         
         {/* Right Column - Booking */}
-        <div>
+        <aside>
           <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-6 sticky top-24">
             <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Book a Consultation</h2>
             <p className="text-gray-700 dark:text-gray-300 mb-6">
@@ -180,7 +196,7 @@ export default function PsychologistDetail() {
               </p>
               <Link
                 href={`/booking/${psychologist.id}`}
-                className="block w-full py-3 text-center bg-gradient-to-r from-teal-500 to-blue-600 text-white rounded-md hover:opacity-90 transition-opacity"
+                className="block w-full py-3 text-center bg-gradient-to-r from-teal-500 to-blue-600 text-white rounded-md hover:opacity-90 transition-opacity font-bold"
               >
                 Book Consultation
               </Link>
@@ -189,7 +205,7 @@ export default function PsychologistDetail() {
               </p>
             </div>
           </div>
-        </div>
+        </aside>
       </div>
     </div>
   );

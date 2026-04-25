@@ -58,7 +58,7 @@ export async function GET(
       id: therapistProfileDoc.id,
       name: userData.profile?.displayName || `${userData.profile?.firstName} ${userData.profile?.lastName}`,
       title: `${therapistProfileData.practice?.yearsExperience || 0}+ Years Exp • ${therapistProfileData.credentials?.licenseState || ''}`,
-      image: therapistProfileData.image || userData.profile?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.profile?.displayName || 'T')}&background=random`,
+      image: therapistProfileData.photoURL || userData.profile?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.profile?.displayName || 'T')}&background=random`,
       languages: therapistProfileData.practice?.languages || [],
       specializations: services,
       experience: therapistProfileData.practice?.yearsExperience || 0,

@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
       amount,
       currency: therapistProfile.practice?.currency || "aed",
       description: `Therapy session - ${duration} minutes`,
-      statement_descriptor: "MINDGOOD THERAPY",
+      statement_descriptor_suffix: "MINDGOOD",
       receipt_email: clientData.email,
       shipping: {
         name: customerName,

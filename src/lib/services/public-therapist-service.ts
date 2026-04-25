@@ -83,3 +83,64 @@ export async function getPublicTherapists(filters: TherapistFilters = {}): Promi
   // Filter out null values
   return therapists.filter((t): t is TherapistPublicView => t !== null);
 }
+
+export async function getPublicTherapistById(id: string): Promise<TherapistPublicView | null> {
+  const db = getAdminFirestore();
+  
+  // Get therapist profile
+  const therapistProfileDoc = await db
+    .collection("therapistProfiles")
+    .doc(id)
+    .get();
+
+  if (!therapistProfileDoc.exists) {
+    return null;
+  }
+
+  const profileData = therapistProfileDoc.data();
+
+  // Check if therapist is verified
+  if (!profileData?.verification?.isVerified) {
+    return null;
+  }
+
+  // Get user data for name and photo
+  const userDoc = await db.collection("users").doc(id).get();
+  if (!userDoc.exists) {
+    return null;
+  }
+  
+  const userData = userDoc.data();
+  
+  // Skip if user is not active
+  if (userData?.status !== "active") {
+    return null;
+  }
+
+  // Get services from array field
+  const services = profileData?.services || [];
+
+  // Normalize hourly rate (handle both old dollar format and new cents format)
+  let hourlyRate = profileData.practice?.hourlyRate || 0;
+  if (hourlyRate < 1000) {
+    // Likely in dollars, convert to cents
+    hourlyRate = hourlyRate * 100;
+  }
+
+  return {
+    id: therapistProfileDoc.id,
+    name: userData.profile?.displayName || `${userData.profile?.firstName} ${userData.profile?.lastName}`.trim(),
+    title: `${profileData.practice?.yearsExperience || 0}+ Years Exp • ${profileData.credentials?.licenseState || ''}`,
+    image: profileData.photoURL || userData.profile?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.profile?.displayName || 'T')}&background=random`,
+    languages: profileData.practice?.languages || [],
+    specializations: services,
+    experience: profileData.practice?.yearsExperience || 0,
+    bio: profileData.practice?.bio || "",
+    hourlyRate: hourlyRate,
+    rating: 5.0, // TODO: Calculate from reviews
+    reviewCount: 0, // TODO: Count from reviews
+    isVerified: profileData.verification?.isVerified || false,
+    isFeatured: profileData.isFeatured || false,
+    timezone: profileData.availability?.timezone || userData.profile?.timezone || 'UTC',
+  };
+}
