@@ -15,17 +15,17 @@ const Footer = () => {
           {/* Logo and About */}
           <div className="space-y-4">
             <Link href="/" className="flex items-center gap-2">
-              <div className="relative w-10 h-10">
+              <div className="relative w-28 h-12">
                 <Image 
-                  src="/logo.svg" 
+                  src="/Mindgood.png" 
                   alt="MindGood Logo" 
                   fill
                   className="object-contain"
                 />
               </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-teal-500 to-blue-600 bg-clip-text text-transparent">
+              {/* <span className="text-xl font-bold bg-gradient-to-r from-teal-500 to-blue-600 bg-clip-text text-transparent">
                 MindGood
-              </span>
+              </span> */}
             </Link>
             <p className="text-gray-600 dark:text-gray-400 text-sm">
               Connecting you with psychologists who speak your language. Get professional mental health support in Malayalam, Tamil, Hindi, Telugu, and Kannada.

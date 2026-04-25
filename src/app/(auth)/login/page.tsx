@@ -300,7 +300,7 @@ function LoginForm() {
             </Button>
           </form>
 
-          <div className="mt-6">
+          {/* <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />
@@ -343,7 +343,7 @@ function LoginForm() {
               )}
               Continue with Google
             </Button>
-          </div>
+          </div> */}
         </CardContent>
         <CardFooter className="flex flex-col space-y-2">
           <p className="text-sm text-gray-600 text-center">
