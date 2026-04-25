@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 
 type SupportCategory = 'crisis' | 'relationships' | 'intimacy' | 'mindfulness';
 
@@ -27,15 +28,15 @@ export function GlassSpecializedSupportSection() {
       gradient: 'from-indigo-600 to-cyan-600',
       title: 'A Helping Hand',
       subtitle: 'When You Need It Most',
-      description: 'Life can feel overwhelming. Whether you\'re dealing with stress, anxiety, depression, or just need someone to talk to, we\'re here to support you every step of the way.',
+      description: 'Immediate, compassionate support for life\'s most challenging moments. Connect with specialists who understand trauma, PTSD, and severe emotional distress.',
       features: [
-        { icon: '🌙', title: 'Crisis Support', desc: 'Immediate help when you need it most' },
-        { icon: '🧘', title: 'Stress Management', desc: 'Learn coping strategies that work' },
-        { icon: '💭', title: 'Anxiety Relief', desc: 'Overcome worry and find peace' },
-        { icon: '🌻', title: 'Depression Care', desc: 'Professional support for healing' }
+        { icon: '🌙', title: 'Trauma Informed', desc: 'Care that understands your past' },
+        { icon: '🧘', title: 'PTSD Support', desc: 'Specialized evidence-based therapy' },
+        { icon: '💭', title: 'Safe Space', desc: 'Judgment-free emotional support' },
+        { icon: '🌻', title: 'Healing Path', desc: 'Professional support for recovery' }
       ],
-      image: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=800&h=800&fit=crop',
-      cta: { text: 'Get Support Now', href: '/psychologists' }
+      image: '/images/support/mindgood-crisis-support.jpg',
+      cta: { text: 'Get Support Now', href: '/psychologists?specialization=trauma-healing' }
     },
     {
       id: 'relationships',
@@ -51,7 +52,7 @@ export function GlassSpecializedSupportSection() {
         { icon: '🤝', title: 'Communication Skills', desc: 'Learn healthy dialogue patterns' },
         { icon: '💔', title: 'Breakup Support', desc: 'Navigate separation with care' }
       ],
-      image: 'https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=800&h=600&fit=crop',
+      image: '/images/support/mindgood-relationship-support.jpg',
       cta: { text: 'Start Relationship Therapy', href: '/services' },
       stats: [{ value: '5000+', label: 'Couples Helped' }]
     },
@@ -71,7 +72,7 @@ export function GlassSpecializedSupportSection() {
         { icon: '✓', title: 'Communication about intimacy', desc: '' },
         { icon: '✓', title: 'Body image and self-esteem', desc: '' }
       ],
-      image: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=800&h=600&fit=crop',
+      image: '/images/support/mindgood-sexual-health-support.jpg',
       cta: { text: 'Learn More', href: '/sexual-health-support' },
       stats: [
         { value: '100%', label: 'Confidential' },
@@ -135,12 +136,13 @@ export function GlassSpecializedSupportSection() {
               href={categories[0].cta.href}
               className="group relative overflow-hidden rounded-3xl h-80 md:h-96"
             >
-              <img
+              <Image
                 src={categories[0].image}
                 alt={categories[0].label}
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-700"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
               <div className="absolute inset-0 p-8 flex flex-col justify-end">
                 <h3 className="text-white font-bold text-3xl md:text-4xl mb-2">
                   {categories[0].label}
@@ -154,42 +156,57 @@ export function GlassSpecializedSupportSection() {
             {/* Top Row - Relationships (Medium) */}
             <Link
               href={categories[1].cta.href}
-              className="group relative overflow-hidden rounded-3xl h-80 md:h-96 backdrop-blur-md bg-white/40 dark:bg-gray-800/40 border border-white/60 dark:border-gray-700/60"
+              className="group relative overflow-hidden rounded-3xl h-80 md:h-96"
             >
+              <Image
+                src={categories[1].image}
+                alt={categories[1].label}
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-700"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
               <div className="absolute inset-0 p-8 flex flex-col justify-end">
-                <h3 className="text-gray-900 dark:text-white font-bold text-3xl md:text-4xl mb-2">
+                <h3 className="text-white font-bold text-3xl md:text-4xl mb-2">
                   {categories[1].label}
                 </h3>
-                <p className="text-gray-700 dark:text-gray-300 text-base md:text-lg max-w-md">
+                <p className="text-white/90 text-base md:text-lg max-w-md">
                   {categories[1].description}
                 </p>
               </div>
             </Link>
 
-            {/* Bottom Row - Sexual Health (Medium with beige bg) */}
+            {/* Bottom Row - Sexual Health (Medium) */}
             <Link
               href={categories[2].cta.href}
-              className="group relative overflow-hidden rounded-3xl h-64 md:h-80 bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30"
+              className="group relative overflow-hidden rounded-3xl h-64 md:h-80"
             >
+              <Image
+                src={categories[2].image}
+                alt={categories[2].label}
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-700"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
               <div className="absolute inset-0 p-8 flex flex-col justify-end">
-                <h3 className="text-gray-900 dark:text-white font-bold text-3xl md:text-4xl mb-2">
+                <h3 className="text-white font-bold text-3xl md:text-4xl mb-2">
                   {categories[2].label}
                 </h3>
-                <p className="text-gray-700 dark:text-gray-300 text-base md:text-lg max-w-md">
+                <p className="text-white/90 text-base md:text-lg max-w-md">
                   {categories[2].description}
                 </p>
               </div>
             </Link>
 
-            {/* Bottom Row - Mindfulness (Large with image) */}
+            {/* Bottom Row - Mindfulness (Large) */}
             <Link
               href={categories[3].cta.href}
               className="group relative overflow-hidden rounded-3xl h-64 md:h-80"
             >
-              <img
+              <Image
                 src={categories[3].image}
                 alt={categories[3].label}
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-700"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-emerald-900/80 via-emerald-900/40 to-transparent"></div>
               <div className="absolute inset-0 p-8 flex flex-col justify-end">
