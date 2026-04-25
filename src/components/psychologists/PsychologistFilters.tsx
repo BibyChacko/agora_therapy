@@ -3,82 +3,36 @@
 import React, { useState } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { FiFilter, FiX } from 'react-icons/fi';
+import SearchableSelect from '../ui/SearchableSelect';
+import { LANGUAGES, getLanguageName } from '@/lib/constants/languages';
+import { AVAILABLE_SERVICES } from '@/types/models/service';
 
 interface PsychologistFiltersProps {
   initialFilters?: { specialization: string; language: string; minExperience: string };
 }
-
-// Common specializations - can be moved to a constants file later
-const SPECIALIZATIONS = [
-  'Anxiety',
-  'Depression',
-  'Stress Management',
-  'Relationship Issues',
-  'Career Counseling',
-  'Family Therapy',
-  'Trauma',
-  'Addiction',
-  'ADHD',
-  'OCD',
-];
-
-// Common languages - can be moved to a constants file later
-const LANGUAGES = [
-  'English',
-  'Spanish',
-  'French',
-  'German',
-  'Chinese',
-  'Japanese',
-  'Arabic',
-  'Hindi',
-  'Portuguese',
-  'Malayalam',
-  'Tamil',
-  'Telugu',
-  'Kannada'
-];
 
 const PsychologistFilters: React.FC<PsychologistFiltersProps> = ({ initialFilters }) => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // State for filters
   const [language, setLanguage] = useState(initialFilters?.language || '');
   const [specialization, setSpecialization] = useState(initialFilters?.specialization || '');
   const [minExperience, setMinExperience] = useState(initialFilters?.minExperience || '');
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  // Update URL params
-  const updateParams = (newFilters: { specialization: string; language: string; minExperience: string }) => {
+  const updateParams = (filters: { specialization: string; language: string; minExperience: string }) => {
     const params = new URLSearchParams(searchParams.toString());
     
-    if (newFilters.specialization) params.set('specialization', newFilters.specialization);
+    if (filters.specialization) params.set('specialization', filters.specialization);
     else params.delete('specialization');
     
-    if (newFilters.language) params.set('language', newFilters.language);
+    if (filters.language) params.set('language', filters.language);
     else params.delete('language');
     
-    if (newFilters.minExperience) params.set('minExperience', newFilters.minExperience);
+    if (filters.minExperience) params.set('minExperience', filters.minExperience);
     else params.delete('minExperience');
-
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
-  };
-
-  // Update local state when initialFilters change (from URL)
-  React.useEffect(() => {
-    if (initialFilters) {
-      setLanguage(initialFilters.language || '');
-      setSpecialization(initialFilters.specialization || '');
-      setMinExperience(initialFilters.minExperience || '');
-    }
-  }, [initialFilters]);
-  
-  // Handle filter changes
-  const handleLanguageChange = (value: string) => {
-    setLanguage(value);
-    updateParams({ specialization, language: value, minExperience });
+    
+    router.push(`${pathname}?${params.toString()}`);
   };
 
   const handleSpecializationChange = (value: string) => {
@@ -86,39 +40,55 @@ const PsychologistFilters: React.FC<PsychologistFiltersProps> = ({ initialFilter
     updateParams({ specialization: value, language, minExperience });
   };
 
+  const handleLanguageChange = (value: string) => {
+    setLanguage(value);
+    updateParams({ specialization, language: value, minExperience });
+  };
+
   const handleExperienceChange = (value: string) => {
     setMinExperience(value);
     updateParams({ specialization, language, minExperience: value });
   };
-  
-  // Reset filters
+
   const resetFilters = () => {
     setLanguage('');
     setSpecialization('');
     setMinExperience('');
-    router.push(pathname, { scroll: false });
+    router.push(pathname);
   };
-  
+
+  // Prepare options for SearchableSelect
+  const languageOptions = LANGUAGES.map(lang => ({
+    id: lang.code,
+    name: lang.name,
+    description: lang.nativeName,
+    group: lang.region
+  }));
+
+  const specializationOptions = AVAILABLE_SERVICES.map(service => ({
+    id: service.id,
+    name: service.name,
+    description: service.description,
+    group: service.category.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+  }));
+
   return (
     <>
-      {/* Mobile Filter Button */}
-      <div className="lg:hidden mb-6">
-        <button
-          onClick={() => setIsFilterOpen(!isFilterOpen)}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-md text-gray-700 dark:text-gray-300"
-        >
-          <FiFilter />
-          {isFilterOpen ? 'Hide Filters' : 'Show Filters'}
+      {/* Mobile Toggle Button (Only visible on mobile) */}
+      <div className="md:hidden mb-4">
+        <button className="w-full flex items-center justify-center p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300">
+          <FiFilter className="mr-2" /> Filters
         </button>
       </div>
-      
-      {/* Filter Container */}
-      <div className={`${isFilterOpen ? 'block' : 'hidden'} lg:block bg-white dark:bg-gray-900 rounded-lg shadow-md p-5`}>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white">Filters</h2>
-          <button
+
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-6 sticky top-24">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
+            <FiFilter className="mr-2 text-teal-600" /> Filters
+          </h2>
+          <button 
             onClick={resetFilters}
-            className="text-sm text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300"
+            className="text-sm text-teal-600 hover:text-teal-700 font-medium"
           >
             Reset All
           </button>
@@ -126,40 +96,24 @@ const PsychologistFilters: React.FC<PsychologistFiltersProps> = ({ initialFilter
         
         {/* Language Filter */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Language
-          </label>
-          <select
+          <SearchableSelect
+            label="Language"
             value={language}
-            onChange={(e) => handleLanguageChange(e.target.value)}
-            className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors"
-          >
-            <option value="">All Languages</option>
-            {LANGUAGES.map((lang) => (
-              <option key={lang} value={lang}>
-                {lang}
-              </option>
-            ))}
-          </select>
+            onChange={handleLanguageChange}
+            options={languageOptions}
+            placeholder="Search languages..."
+          />
         </div>
         
         {/* Specialization Filter */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Specialization
-          </label>
-          <select
+          <SearchableSelect
+            label="Specialization"
             value={specialization}
-            onChange={(e) => handleSpecializationChange(e.target.value)}
-            className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors"
-          >
-            <option value="">All Specializations</option>
-            {SPECIALIZATIONS.map((spec) => (
-              <option key={spec} value={spec}>
-                {spec}
-              </option>
-            ))}
-          </select>
+            onChange={handleSpecializationChange}
+            options={specializationOptions}
+            placeholder="Search specializations..."
+          />
         </div>
         
         {/* Experience Filter */}
@@ -186,7 +140,7 @@ const PsychologistFilters: React.FC<PsychologistFiltersProps> = ({ initialFilter
           <div className="flex flex-wrap gap-2">
             {language && (
               <div className="flex items-center bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300 text-xs px-2 py-1 rounded-full">
-                {language}
+                {getLanguageName(language)}
                 <button onClick={() => handleLanguageChange('')} className="ml-1">
                   <FiX />
                 </button>
@@ -194,7 +148,7 @@ const PsychologistFilters: React.FC<PsychologistFiltersProps> = ({ initialFilter
             )}
             {specialization && (
               <div className="flex items-center bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs px-2 py-1 rounded-full">
-                {specialization}
+                {AVAILABLE_SERVICES.find(s => s.id === specialization)?.name || specialization}
                 <button onClick={() => handleSpecializationChange('')} className="ml-1">
                   <FiX />
                 </button>

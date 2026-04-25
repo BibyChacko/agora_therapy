@@ -3,15 +3,20 @@ import { Metadata } from 'next';
 import PsychologistFilters from '@/components/psychologists/PsychologistFilters';
 import { TherapistCard } from '@/components/psychologists/TherapistCard';
 import { getPublicTherapists } from '@/lib/services/public-therapist-service';
+import { getLanguageName, LANGUAGES } from '@/lib/constants/languages';
+import { getServiceById, AVAILABLE_SERVICES } from '@/types/models/service';
 
 export async function generateMetadata({ searchParams }: { searchParams: Promise<any> }): Promise<Metadata> {
   const params = await searchParams;
-  const specialization = params.specialization;
-  const language = params.language;
+  const specializationCode = params.specialization;
+  const languageCode = params.language;
+  
+  const specializationName = specializationCode ? getServiceById(specializationCode)?.name : '';
+  const languageName = languageCode ? getLanguageName(languageCode) : '';
   
   const therapists = await getPublicTherapists({
-    specialization,
-    language,
+    specialization: specializationCode,
+    language: languageCode,
     minExperience: params.minExperience,
   });
 
@@ -21,17 +26,29 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
   let description = "Find verified psychologists and therapists in the UAE. We offer affordable mental health consultations in English, Arabic, Malayalam, Hindi, and more. Specifically designed for expats.";
 
   if (therapists.length > 0) {
-    description = `Connect with verified therapists like ${therapistNames}${therapists.length > 5 ? ' and more' : ''} in the UAE. Affordable sessions in ${language || 'multiple languages'} for expats.`;
+    const filterContext = specializationName || languageName 
+      ? ` for ${specializationName || ''} ${languageName ? `in ${languageName}` : ''}`
+      : '';
+    description = `Connect with ${therapists.length}+ verified therapists${filterContext} like ${therapistNames} in the UAE. Affordable sessions for expats.`;
   }
 
-  if (specialization || language) {
-    title = `${specialization || ''} ${language || ''} Therapists in UAE | MindGood`.trim();
+  if (specializationName || languageName) {
+    title = `${specializationName || ''} ${languageName || ''} Therapists in UAE | MindGood`.trim();
   }
 
   return {
     title,
     description,
-    keywords: ["therapists in UAE", "affordable therapy Dubai", "expat mental health UAE", "multilingual psychologists UAE", "online therapy UAE", "affordable counseling", specialization, language, ...therapists.slice(0, 3).map(t => t.name)].filter(Boolean) as string[],
+    keywords: [
+      "therapists in UAE", 
+      "affordable therapy Dubai", 
+      "expat mental health UAE", 
+      "multilingual psychologists UAE", 
+      "online therapy UAE", 
+      specializationName, 
+      languageName, 
+      ...therapists.slice(0, 3).map(t => t.name)
+    ].filter(Boolean) as string[],
     openGraph: {
       title,
       description,
@@ -73,25 +90,40 @@ export default async function PsychologistsPage({ searchParams }: { searchParams
     minExperience: params.minExperience,
   });
 
-  // JSON-LD structured data for SEO
+  // JSON-LD structured data for AEO
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "ItemList",
-    "numberOfItems": therapists.length,
-    "itemListElement": therapists.slice(0, 10).map((t, index) => ({
-      "@type": "ListItem",
-      "position": index + 1,
-      "item": {
-        "@type": "MedicalOrganization",
-        "name": t.name,
-        "description": t.bio,
-        "image": t.image,
-        "address": {
-          "@type": "PostalAddress",
-          "addressCountry": "UAE"
-        }
+    "@graph": [
+      {
+        "@type": "MedicalWebPage",
+        "@id": "https://mindgood.com/psychologists",
+        "name": "Find a Therapist in UAE",
+        "description": "Directory of verified psychologists and therapists in the UAE speaking multiple languages.",
+        "medicalSpecialty": AVAILABLE_SERVICES.map(s => s.name),
+        "knowsLanguage": LANGUAGES.map(l => l.name)
+      },
+      {
+        "@type": "ItemList",
+        "name": "Verified Therapists in UAE",
+        "numberOfItems": therapists.length,
+        "itemListElement": therapists.slice(0, 15).map((t, index) => ({
+          "@type": "ListItem",
+          "position": index + 1,
+          "item": {
+            "@type": "Physician",
+            "name": t.name,
+            "description": t.bio,
+            "image": t.image,
+            "medicalSpecialty": t.specializations.map(spec => getServiceById(spec)?.name || spec),
+            "knowsLanguage": t.languages.map(getLanguageName),
+            "address": {
+              "@type": "PostalAddress",
+              "addressCountry": "UAE"
+            }
+          }
+        }))
       }
-    }))
+    ]
   };
 
   return (
@@ -138,6 +170,22 @@ export default async function PsychologistsPage({ searchParams }: { searchParams
             </Suspense>
           </div>
         </div>
+
+        {/* SEO Enrichment Section (Hidden visually but accessible to crawlers) */}
+        <section className="mt-20 sr-only" aria-hidden="true">
+          <h2>Specialized Therapy Services in UAE</h2>
+          <ul>
+            {AVAILABLE_SERVICES.map(s => (
+              <li key={s.id}>{s.name}: {s.description}</li>
+            ))}
+          </ul>
+          <h2>Therapists speaking multiple languages</h2>
+          <ul>
+            {LANGUAGES.map(l => (
+              <li key={l.code}>{l.name} {l.nativeName ? `(${l.nativeName})` : ''}</li>
+            ))}
+          </ul>
+        </section>
       </div>
     </div>
   );
