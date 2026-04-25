@@ -16,38 +16,34 @@ export async function GET(request: NextRequest) {
     const minExperience = searchParams.get('minExperience');
     const featured = searchParams.get('featured') === 'true';
 
-    // Fetch all active users with therapist role
-    let usersQuery = db
-      .collection("users")
-      .where("role", "==", "therapist")
-      .where("status", "==", "active");
+    // Fetch all verified therapist profiles
+    let profilesQuery = db
+      .collection("therapistProfiles")
+      .where("verification.isVerified", "==", true);
 
-    const usersSnapshot = await usersQuery.get();
+    const profilesSnapshot = await profilesQuery.get();
 
-    // Fetch therapist profiles and filter by verification status
+    // Fetch user data for names and map the results
     const therapists = await Promise.all(
-      usersSnapshot.docs.map(async (doc) => {
-        const userData = doc.data();
+      profilesSnapshot.docs.map(async (doc) => {
+        const profileData = doc.data();
+        const therapistId = doc.id;
         
-        // Fetch therapist profile
-        const therapistProfileDoc = await db
-          .collection("therapistProfiles")
-          .doc(doc.id)
-          .get();
-
-        if (!therapistProfileDoc.exists) {
+        // Fetch corresponding user data for the name
+        const userDoc = await db.collection("users").doc(therapistId).get();
+        if (!userDoc.exists) {
+          return null;
+        }
+        
+        const userData = userDoc.data();
+        
+        // Skip if user is not active
+        if (userData?.status !== "active") {
           return null;
         }
 
-        const profileData = therapistProfileDoc.data();
-        
         // Get services from array field
         const services = profileData?.services || [];
-
-        // Only include verified therapists
-        if (!profileData?.verification?.isVerified) {
-          return null;
-        }
 
         // Apply filters
         if (featured && !profileData.isFeatured) {
@@ -71,12 +67,13 @@ export async function GET(request: NextRequest) {
         const normalizedRate = rawRate < 1000 ? rawRate * 100 : rawRate;
 
         return {
-          id: doc.id,
-          name: userData.profile?.displayName || `${userData.profile?.firstName} ${userData.profile?.lastName}`.trim(),
+          id: therapistId,
+          name: userData?.profile?.displayName || `${userData?.profile?.firstName} ${userData?.profile?.lastName}`.trim(),
           title: profileData.credentials?.licenseNumber 
             ? `Licensed Therapist - ${profileData.credentials.licenseState || ''}`
             : 'Therapist',
-          image: userData.profile?.avatarUrl || '/images/default-avatar.png',
+          // Prioritize photoURL from therapistProfiles, then avatarUrl from users
+          image: profileData?.photoURL || userData?.profile?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData?.profile?.displayName || 'T')}&background=random`,
           languages: profileData.practice?.languages || [],
           specializations: services,
           experience: profileData.practice?.yearsExperience || 0,
@@ -91,7 +88,7 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    // Filter out null values (unverified or filtered out therapists)
+    // Filter out null values
     const verifiedTherapists = therapists.filter((t) => t !== null);
 
     return NextResponse.json({
