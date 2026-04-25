@@ -57,7 +57,7 @@ export async function GET(
     const therapist = {
       id: therapistProfileDoc.id,
       name: userData.profile?.displayName || `${userData.profile?.firstName} ${userData.profile?.lastName}`,
-      title: therapistProfileData.credentials?.specializations?.[0] || "Therapist",
+      title: `${therapistProfileData.practice?.yearsExperience || 0}+ Years Exp • ${therapistProfileData.credentials?.licenseState || ''}`,
       image: therapistProfileData.image || userData.profile?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.profile?.displayName || 'T')}&background=random`,
       languages: therapistProfileData.practice?.languages || [],
       specializations: services,
@@ -68,6 +68,7 @@ export async function GET(
       reviewCount: undefined, // TODO: Count from reviews
       isVerified: therapistProfileData.verification?.isVerified || false,
       isFeatured: therapistProfileData.isFeatured || false,
+      timezone: therapistProfileData.availability?.timezone || userData.profile?.timezone || 'UTC',
     };
 
     return NextResponse.json(therapist);

@@ -69,9 +69,7 @@ export async function GET(request: NextRequest) {
         return {
           id: therapistId,
           name: userData?.profile?.displayName || `${userData?.profile?.firstName} ${userData?.profile?.lastName}`.trim(),
-          title: profileData.credentials?.licenseNumber 
-            ? `Licensed Therapist - ${profileData.credentials.licenseState || ''}`
-            : 'Therapist',
+          title: `${profileData.practice?.yearsExperience || 0}+ Years Exp • ${profileData.credentials?.licenseState || ''}`,
           // Prioritize photoURL from therapistProfiles, then avatarUrl from users
           image: profileData?.photoURL || userData?.profile?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData?.profile?.displayName || 'T')}&background=random`,
           languages: profileData.practice?.languages || [],
@@ -84,6 +82,7 @@ export async function GET(request: NextRequest) {
           isVerified: true,
           isFeatured: profileData.isFeatured || false,
           verifiedAt: profileData.verification?.verifiedAt,
+          timezone: profileData.availability?.timezone || userData?.profile?.timezone || 'UTC',
         };
       })
     );

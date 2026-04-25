@@ -54,7 +54,7 @@ function PsychologistsContent() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-12">
+    <div className="container mx-auto px-2 py-2">
       <div className="space-y-12">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">Find Your Therapist</h1>
@@ -86,7 +86,7 @@ function PsychologistsContent() {
                 <p className="text-gray-600 dark:text-gray-400 text-lg">No therapists found matching your criteria.</p>
               </div>
             ) : (
-              <div className="grid md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3">
                 {therapists.map((therapist) => (
                   <TherapistCard key={therapist.id} therapist={therapist} />
                 ))}

@@ -99,6 +99,7 @@ export interface TherapistPublicView {
   reviewCount?: number;
   isVerified: boolean;
   isFeatured?: boolean;
+  timezone?: string;
 }
 
 /**
