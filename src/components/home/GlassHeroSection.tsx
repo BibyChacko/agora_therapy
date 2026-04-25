@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FaInstagram, FaLinkedin, FaYoutube, FaTiktok } from 'react-icons/fa';
 
 export function GlassHeroSection() {
   return (
@@ -91,11 +92,15 @@ export function GlassHeroSection() {
           <div className="relative">
             <div className="backdrop-blur-md bg-white/40 dark:bg-gray-800/40 border border-white/60 dark:border-gray-700/60 rounded-3xl overflow-hidden shadow-2xl">
               <div className="aspect-[4/5] relative">
-                <img
-                  src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=800&h=1000&fit=crop"
-                  alt="Mental Health Professional"
+                <video
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
                   className="w-full h-full object-cover"
-                />
+                >
+                  <source src="/video/mindgood_intro.mp4" type="video/mp4" />
+                </video>
                 
                 {/* Overlay gradient */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
@@ -109,17 +114,45 @@ export function GlassHeroSection() {
                         <div className="flex items-center gap-2 mt-1">
                           <div className="flex -space-x-2">
                             {[1, 2, 3].map((i) => (
-                              <div key={i} className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-400 to-teal-400 border-2 border-white"></div>
+                              <img
+                                key={i}
+                                src={`/images/people/p${i}.jpeg`}
+                                alt={`User ${i}`}
+                                className="w-6 h-6 rounded-full border-2 border-white object-cover"
+                              />
                             ))}
                           </div>
                           <span className="text-white/90 text-sm">1000+ Success Stories</span>
                         </div>
                       </div>
-                      <button className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center hover:bg-white transition-colors">
-                        <svg className="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
-                        </svg>
-                      </button>
+                      <div className="flex items-center gap-3">
+                        <Link 
+                          href="https://www.instagram.com/mindgood.life/" 
+                          target="_blank" 
+                          className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center hover:bg-white transition-all hover:scale-110 text-pink-600 shadow-lg"
+                        >
+                          <FaInstagram className="w-5 h-5" />
+                        </Link>
+                        <Link 
+                          href="https://www.linkedin.com/company/mind-good/posts/" 
+                          target="_blank" 
+                          className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center hover:bg-white transition-all hover:scale-110 text-[#0077b5] shadow-lg"
+                        >
+                          <FaLinkedin className="w-5 h-5" />
+                        </Link>
+                        <Link 
+                          href="#" 
+                          className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center hover:bg-white transition-all hover:scale-110 text-[#FF0000] shadow-lg"
+                        >
+                          <FaYoutube className="w-5 h-5" />
+                        </Link>
+                        <Link 
+                          href="#" 
+                          className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center hover:bg-white transition-all hover:scale-110 text-black shadow-lg"
+                        >
+                          <FaTiktok className="w-5 h-5" />
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 </div>

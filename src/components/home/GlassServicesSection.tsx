@@ -80,8 +80,9 @@ export function GlassServicesSection({ services }: GlassServicesSectionProps) {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-7xl mx-auto">
           {services.map((service, index) => (
-            <div
+            <Link
               key={service.id}
+              href={`/psychologists?specialization=${service.id}`}
               className="group backdrop-blur-md bg-white/50 dark:bg-gray-800/50 border border-white/60 dark:border-gray-700/60 rounded-3xl p-6 hover:scale-105 transition-all duration-300 hover:shadow-2xl hover:bg-white/70 dark:hover:bg-gray-800/70"
             >
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-500 to-blue-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">
@@ -93,7 +94,7 @@ export function GlassServicesSection({ services }: GlassServicesSectionProps) {
               <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
                 {service.description}
               </p>
-            </div>
+            </Link>
           ))}
         </div>
 

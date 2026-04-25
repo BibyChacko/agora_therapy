@@ -36,8 +36,9 @@ export function GlassLanguageSection({ languages }: GlassLanguageSectionProps) {
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 max-w-6xl mx-auto">
           {languages.map((language) => (
-            <div
+            <Link
               key={language.code}
+              href={`/psychologists?language=${language.code}`}
               className="group backdrop-blur-md bg-white/50 dark:bg-gray-800/50 border border-white/60 dark:border-gray-700/60 rounded-2xl p-6 hover:scale-105 transition-all duration-300 hover:shadow-xl hover:bg-white/70 dark:hover:bg-gray-800/70"
             >
               <div className="text-center">
@@ -53,7 +54,7 @@ export function GlassLanguageSection({ languages }: GlassLanguageSectionProps) {
                   </p>
                 )}
               </div>
-            </div>
+            </Link>
           ))}
         </div>
 

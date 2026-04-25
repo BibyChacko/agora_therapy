@@ -62,7 +62,8 @@ const PsychologistFilters: React.FC<PsychologistFiltersProps> = ({ initialFilter
     id: lang.code,
     name: lang.name,
     description: lang.nativeName,
-    group: lang.region
+    group: lang.region,
+    icon: lang.flag
   }));
 
   const specializationOptions = AVAILABLE_SERVICES.map(service => ({

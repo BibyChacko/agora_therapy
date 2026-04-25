@@ -8,6 +8,7 @@ interface Option {
   name: string;
   description?: string;
   group?: string;
+  icon?: string;
 }
 
 interface SearchableSelectProps {
@@ -83,7 +84,12 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
         `}
       >
         <span className={value ? "text-gray-900 dark:text-white" : "text-gray-400"}>
-          {selectedOption ? selectedOption.name : `Select ${label}`}
+          {selectedOption ? (
+            <span className="flex items-center gap-2">
+              {selectedOption.icon && <span>{selectedOption.icon}</span>}
+              {selectedOption.name}
+            </span>
+          ) : `Select ${label}`}
         </span>
         <div className="flex items-center gap-2">
           {value && (
@@ -139,7 +145,10 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
                         `}
                       >
                         <div className="flex flex-col">
-                          <span>{opt.name}</span>
+                          <span className="flex items-center gap-2">
+                            {opt.icon && <span>{opt.icon}</span>}
+                            {opt.name}
+                          </span>
                           {opt.description && (
                             <span className="text-[10px] opacity-60 font-normal line-clamp-1">{opt.description}</span>
                           )}
