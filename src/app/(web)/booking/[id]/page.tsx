@@ -35,13 +35,15 @@ export default function BookingPage() {
   // Booking state
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string>('');
-  const [duration, setDuration] = useState(50); // minutes
+  const [duration, setDuration] = useState(60); // minutes
   const [clientNotes, setClientNotes] = useState('');
   
   // Payment state
   const [clientSecret, setClientSecret] = useState('');
   const [appointmentId, setAppointmentId] = useState('');
   const [amount, setAmount] = useState(0);
+  const [therapistFee, setTherapistFee] = useState(0);
+  const [platformFee, setPlatformFee] = useState(0);
 
   useEffect(() => {
     fetchTherapist();
@@ -114,6 +116,8 @@ export default function BookingPage() {
       setClientSecret(data.clientSecret);
       setAppointmentId(data.appointmentId);
       setAmount(data.amount);
+      setTherapistFee(data.therapistFee);
+      setPlatformFee(data.platformFee);
       setStep('payment');
     } catch (error) {
       console.error('Error creating booking:', (error as Error).message);
@@ -158,7 +162,7 @@ export default function BookingPage() {
   }
 
   const timeSlots = generateTimeSlots();
-  const sessionFee = ((therapist.hourlyRate /100) * duration) / 60;
+  const sessionFee = (therapist.hourlyRate/100) + 15;
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -278,7 +282,7 @@ export default function BookingPage() {
                       <p className="font-medium mb-2">Session Information</p>
                       <ul className="space-y-1 text-blue-800 dark:text-blue-200">
                         <li>• Duration: {duration} minutes</li>
-                        <li>• Session Fee: ${(sessionFee / 100).toFixed(2)}</li>
+                        <li>• Session Fee: ${(sessionFee).toFixed(2)}</li>
                         <li>• Video session via secure platform</li>
                         <li>• You'll receive a confirmation email with meeting link</li>
                       </ul>
@@ -340,6 +344,14 @@ export default function BookingPage() {
                     <div className="flex justify-between">
                       <span className="text-gray-600 dark:text-gray-400">Duration:</span>
                       <span className="text-gray-900 dark:text-white font-medium">{duration} minutes</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 dark:text-gray-400">Therapist Fee:</span>
+                      <span className="text-gray-900 dark:text-white font-medium">${(therapistFee / 100).toFixed(2)}</span>
+                    </div>
+                     <div className="flex justify-between">
+                      <span className="text-gray-600 dark:text-gray-400">Platform Fee:</span>
+                      <span className="text-gray-900 dark:text-white font-medium">${(platformFee / 100).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
                       <span className="text-gray-900 dark:text-white font-medium">Total:</span>

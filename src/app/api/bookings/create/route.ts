@@ -77,8 +77,10 @@ export async function POST(request: NextRequest) {
       hourlyRate = hourlyRate * 100;
     }
 
-    // Calculate amount based on duration
-    const amount = Math.round((hourlyRate * duration) / 60);
+    // Calculate amounts
+    const therapistFee = Math.round((hourlyRate * duration) / 60);
+    const platformFee = 1500; // $15.00 in cents
+    const totalAmount = therapistFee + platformFee;
 
     // Prepare customer shipping information (required for Indian regulations)
     const customerName = clientData.profile?.displayName || 
@@ -87,7 +89,7 @@ export async function POST(request: NextRequest) {
     
     // Create Stripe PaymentIntent with customer details
     const paymentIntent = await stripe.paymentIntents.create({
-      amount,
+      amount: totalAmount,
       currency: therapistProfile.practice?.currency || "aed",
       description: `Therapy session - ${duration} minutes`,
       statement_descriptor_suffix: "MINDGOOD",
@@ -134,7 +136,9 @@ export async function POST(request: NextRequest) {
         platform: "agora",
       },
       payment: {
-        amount,
+        amount: totalAmount,
+        therapistFee,
+        platformFee,
         currency: therapistProfile.practice?.currency || "aed",
         status: "pending",
         transactionId: paymentIntent.id,
@@ -160,7 +164,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       appointmentId: appointmentRef.id,
       clientSecret: paymentIntent.client_secret,
-      amount,
+      amount: totalAmount,
+      therapistFee,
+      platformFee,
       currency: therapistProfile.practice?.currency || "aed",
     });
   } catch (error) {
