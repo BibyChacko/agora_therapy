@@ -384,7 +384,7 @@ export default function TherapistPayoutsPage() {
             <li className="flex items-start">
               <CheckCircle className="h-5 w-5 text-blue-600 mr-2 flex-shrink-0 mt-0.5" />
               <span>
-                Platform fee (15%) is automatically deducted from each session
+                Platform fee (3%) is automatically deducted from each session
               </span>
             </li>
             <li className="flex items-start">

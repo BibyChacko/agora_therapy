@@ -250,6 +250,19 @@ export function AuthDialog({ children, onOpenChange }: AuthDialogProps) {
                   </>
                 )}
               </Button>
+              
+              <div className="text-center text-sm pt-2">
+                <span className="text-gray-600 dark:text-gray-400">
+                  Don&apos;t have an account?{" "}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("signup")}
+                  className="text-teal-600 hover:text-teal-700 font-medium hover:underline underline-offset-4 transition-colors"
+                >
+                  Create one
+                </button>
+              </div>
             </form>
           </TabsContent>
 
@@ -309,6 +322,19 @@ export function AuthDialog({ children, onOpenChange }: AuthDialogProps) {
                       </div>
                     </div>
                   </Card>
+                </div>
+                
+                <div className="text-center text-sm pt-4 border-t">
+                  <span className="text-gray-600 dark:text-gray-400">
+                    Already have an account?{" "}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("signin")}
+                    className="text-teal-600 hover:text-teal-700 font-medium hover:underline underline-offset-4 transition-colors"
+                  >
+                    Sign in
+                  </button>
                 </div>
               </div>
             ) : (
@@ -517,6 +543,19 @@ export function AuthDialog({ children, onOpenChange }: AuthDialogProps) {
                     "Create Account"
                   )}
                 </Button>
+                
+                <div className="text-center text-sm pt-2">
+                  <span className="text-gray-600 dark:text-gray-400">
+                    Already have an account?{" "}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("signin")}
+                    className="text-teal-600 hover:text-teal-700 font-medium hover:underline underline-offset-4 transition-colors"
+                  >
+                    Sign in
+                  </button>
+                </div>
               </form>
             )}
           </TabsContent>

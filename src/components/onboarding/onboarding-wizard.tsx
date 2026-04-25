@@ -676,7 +676,7 @@ export function OnboardingWizard({ user, onComplete }: OnboardingWizardProps) {
                 )}
               </div>
 
-              <div className="space-y-2 md:col-span-2">
+              <div className="w-full h-80 space-y-2 md:col-span-2">
                 <LanguageMultiSelect
                   selectedLanguages={data.basicInfo.languages}
                   onLanguagesChange={(languages) => {
@@ -896,7 +896,7 @@ export function OnboardingWizard({ user, onComplete }: OnboardingWizardProps) {
                 </div>
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                Platform fee (15%) will be deducted from this amount
+                Platform fee (3%) will be deducted from this amount
               </p>
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -911,9 +911,9 @@ export function OnboardingWizard({ user, onComplete }: OnboardingWizardProps) {
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-700">Platform Fee (15%):</span>
+                    <span className="text-gray-700">Platform Fee (3%):</span>
                     <span className="text-red-600">
-                      -${((data.therapistProfile.practice.hourlyRate * 0.15) / 100).toFixed(2)}
+                      -${((data.therapistProfile.practice.hourlyRate * 0.03) / 100).toFixed(2)}
                     </span>
                   </div>
                   <div className="border-t border-blue-300 pt-2 flex justify-between">
@@ -921,7 +921,7 @@ export function OnboardingWizard({ user, onComplete }: OnboardingWizardProps) {
                       You Receive:
                     </span>
                     <span className="font-bold text-green-600">
-                      ${((data.therapistProfile.practice.hourlyRate * 0.85) / 100).toFixed(2)}
+                      ${((data.therapistProfile.practice.hourlyRate * 0.97) / 100).toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -941,7 +941,7 @@ export function OnboardingWizard({ user, onComplete }: OnboardingWizardProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="maxDailyHours">Max Daily Hours</Label>
                 <Input
@@ -963,7 +963,7 @@ export function OnboardingWizard({ user, onComplete }: OnboardingWizardProps) {
                   onChange={(e) => updateTherapistAvailability("advanceBookingDays", parseInt(e.target.value) || 30)}
                 />
               </div>
-            </div>
+            </div> */}
           </div>
         );
 

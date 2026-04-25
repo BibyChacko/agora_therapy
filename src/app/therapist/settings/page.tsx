@@ -625,7 +625,7 @@ export default function TherapistSettingsPage() {
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  Platform fee (15%) will be deducted from this amount
+                  Platform fee (3%) will be deducted from this amount
                 </p>
               </div>
 
@@ -641,9 +641,9 @@ export default function TherapistSettingsPage() {
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-700">Platform Fee (15%):</span>
+                    <span className="text-gray-700">Platform Fee (3%):</span>
                     <span className="text-red-600">
-                      -${((formData.hourlyRate * 0.15) / 100).toFixed(2)}
+                      -${((formData.hourlyRate * 0.03) / 100).toFixed(2)}
                     </span>
                   </div>
                   <div className="border-t border-blue-300 pt-2 flex justify-between">
@@ -651,7 +651,7 @@ export default function TherapistSettingsPage() {
                       You Receive:
                     </span>
                     <span className="font-bold text-green-600">
-                      ${((formData.hourlyRate * 0.85) / 100).toFixed(2)}
+                      ${((formData.hourlyRate * 0.97) / 100).toFixed(2)}
                     </span>
                   </div>
                 </div>
