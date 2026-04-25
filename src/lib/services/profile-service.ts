@@ -15,6 +15,7 @@ export interface ProfileUpdateData {
   timezone: string;
   locale: string;
   languages?: string[]; // Array of language codes
+  photoURL?: string;
 }
 
 export class ProfileService {
@@ -41,6 +42,11 @@ export class ProfileService {
       // Add languages if provided
       if (data.languages) {
         updateData["profile.languages"] = data.languages;
+      }
+
+      // Add photo if provided
+      if (data.photoURL) {
+        updateData["profile.avatarUrl"] = data.photoURL;
       }
 
       await updateDoc(userRef, updateData);

@@ -10,9 +10,12 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Camera, Upload, X, AlertCircle } from "lucide-react";
 import Image from "next/image";
+import { ProfileService } from "@/lib/services/profile-service";
+import { TherapistService } from "@/lib/services/therapist-service";
 
 interface PhotoUploadStepProps {
   userId: string;
+  role?: string;
   currentPhotoURL?: string;
   onPhotoUploaded: (photoURL: string) => void;
   uploading: boolean;
@@ -21,6 +24,7 @@ interface PhotoUploadStepProps {
 
 export function PhotoUploadStep({
   userId,
+  role,
   currentPhotoURL,
   onPhotoUploaded,
   uploading,
@@ -68,24 +72,16 @@ export function PhotoUploadStep({
       setUploading(true);
       setError(null);
 
-      // Create FormData
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("folder", `agora_therapy/avatars/${userId}`);
-
-      // Upload to API
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to upload photo");
+      let photoURL = "";
+      
+      // Save immediately to Firebase based on role
+      if (role === "therapist") {
+        photoURL = await TherapistService.uploadProfilePhoto(userId, file);
+      } else {
+        photoURL = await ProfileService.uploadProfilePhoto(userId, file);
       }
 
-      const data = await response.json();
-      onPhotoUploaded(data.url);
+      onPhotoUploaded(photoURL);
     } catch (error: any) {
       console.error("Error uploading photo:", error);
       setError(error.message || "Failed to upload photo. Please try again.");

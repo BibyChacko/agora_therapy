@@ -144,6 +144,7 @@ export function OnboardingWizard({ user, onComplete }: OnboardingWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [uploadingCertificate, setUploadingCertificate] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [certificateURLs, setCertificateURLs] = useState<string[]>([]);
   const isTherapist = user.role === "therapist";
   
@@ -160,6 +161,7 @@ export function OnboardingWizard({ user, onComplete }: OnboardingWizardProps) {
       timezone: user.profile?.timezone || "UTC",
       locale: user.profile?.locale || "en", // Default to English language code
       languages: user.profile?.languages || ["en"], // Default to English
+      photoURL: user.profile?.avatarUrl || "",
       gender: user.profile?.gender,
     },
     preferences: {
@@ -448,6 +450,7 @@ export function OnboardingWizard({ user, onComplete }: OnboardingWizardProps) {
       if (isTherapist && data.therapistProfile) {
         const therapistData = {
           ...data.therapistProfile,
+          photoURL: data.basicInfo.photoURL, // Ensure photo is saved to therapist profile
           credentials: {
             ...data.therapistProfile.credentials,
             licenseExpiry: Timestamp.fromDate(data.therapistProfile.credentials.licenseExpiry),
@@ -993,10 +996,11 @@ export function OnboardingWizard({ user, onComplete }: OnboardingWizardProps) {
         return (
           <PhotoUploadStep
             userId={user.id}
+            role={user.role}
             currentPhotoURL={data.basicInfo.photoURL}
             onPhotoUploaded={(photoURL) => updateBasicInfo("photoURL", photoURL)}
-            uploading={loading}
-            setUploading={setLoading}
+            uploading={uploadingPhoto}
+            setUploading={setUploadingPhoto}
           />
         );
 
