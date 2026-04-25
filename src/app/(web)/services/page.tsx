@@ -5,10 +5,27 @@ import { AVAILABLE_SERVICES } from '@/types/models/service';
 import { getPublicTherapists } from '@/lib/services/public-therapist-service';
 import { getLanguageName } from '@/lib/constants/languages';
 
-// Dynamic Metadata for SEO
+// Comprehensive Metadata for SEO
 export const metadata = {
-  title: 'Our Therapy Services | Specialized Mental Health Support in UAE',
-  description: 'Explore our range of specialized therapy services in the UAE, including anxiety treatment, couples therapy, depression support, and more. Multilingual therapists available.',
+  title: 'Psychology & Therapy Services in UAE | Multilingual Support | MindGood',
+  description: 'MindGood offers specialized online therapy in UAE. Our licensed psychologists provide support for anxiety, depression, digital burnout, imposter syndrome, relationship issues, and more in 60+ languages.',
+  keywords: 'online therapy uae, psychologists in dubai, digital well-being uae, imposter syndrome counseling, eco-anxiety support, hustle culture burnout, malayalam speaking psychologists, hindi therapy uae, anxiety treatment dubai',
+  alternates: {
+    canonical: 'https://mindgood.life/services',
+  },
+  openGraph: {
+    title: 'Professional Therapy Services | MindGood',
+    description: 'Specialized mental health support in your language. Connect with licensed psychologists online across the UAE.',
+    url: 'https://mindgood.life/services',
+    siteName: 'MindGood',
+    locale: 'en_AE',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Mental Health Services in UAE | MindGood',
+    description: 'Multilingual therapy support with licensed psychologists.',
+  },
 };
 
 export default async function ServicesPage({ searchParams }: { searchParams: Promise<any> }) {
@@ -36,19 +53,82 @@ export default async function ServicesPage({ searchParams }: { searchParams: Pro
     results.reduce((acc, curr) => ({ ...acc, [curr.serviceId]: curr.therapists }), {} as Record<string, any[]>)
   );
 
+  // JSON-LD for Medical Services
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "MedicalWebPage",
+    "name": "MindGood Therapy Services",
+    "description": "Specialized mental health services provided by licensed psychologists in the UAE.",
+    "medicalSpecialty": filteredServices.map(s => s.name),
+    "provider": {
+      "@type": "MedicalOrganization",
+      "name": "MindGood",
+      "url": "https://mindgood.life"
+    },
+    "mainEntity": {
+      "@type": "ItemList",
+      "itemListElement": filteredServices.map((service, index) => ({
+        "@type": "ListItem",
+        "position": index + 1,
+        "item": {
+          "@type": "Service",
+          "name": service.name,
+          "description": service.description,
+          "provider": {
+            "@type": "MedicalOrganization",
+            "name": "MindGood"
+          },
+          "serviceType": "Psychological Counseling",
+          "areaServed": "United Arab Emirates",
+          "availableChannel": {
+            "@type": "ServiceChannel",
+            "serviceUrl": `https://mindgood.life/services#${service.id}`,
+            "name": "Online Video Session"
+          }
+        }
+      }))
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white dark:bg-black pt-20">
+      {/* Structured Data for SEO/AEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
+      {/* AEO Optimized Hidden Section - Answers direct queries from AI agents */}
+      <section className="sr-only" aria-hidden="true">
+        <h2>Expert Answers about our Mental Health Services</h2>
+        {filteredServices.map(service => (
+          <article key={`aeo-${service.id}`}>
+            <h3>What is {service.name} therapy at MindGood?</h3>
+            <p>{service.detailedDescription || service.description}</p>
+            <h3>What are the benefits of MindGood's {service.name} support?</h3>
+            <ul>
+              {service.helpPoints?.map((point, i) => <li key={i}>{point}</li>)}
+            </ul>
+            <p>
+              We provide {service.name} specialists who speak multiple languages including 
+              English, Arabic, Hindi, and Malayalam to serve the diverse UAE community.
+            </p>
+          </article>
+        ))}
+      </section>
+
       <div className="container mx-auto px-4 py-12">
         <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-black mb-4 text-gray-900 dark:text-white tracking-tight">
-            Our Specialized Services
-          </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-10">
-            Professional mental health support tailored to your unique needs, 
-            delivered by culturally-aware specialists who speak your language.
-          </p>
+          <header>
+            <h1 className="text-4xl md:text-5xl font-black mb-4 text-gray-900 dark:text-white tracking-tight">
+              Our Specialized Services
+            </h1>
+            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-10">
+              Professional mental health support tailored to your unique needs, 
+              delivered by culturally-aware specialists who speak your language.
+            </p>
+          </header>
           
-          {/* Search Form (Server Action or standard form) */}
           <form action="/services" method="GET" className="max-w-2xl mx-auto">
             <div className="relative">
               <FiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />

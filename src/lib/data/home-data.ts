@@ -20,7 +20,7 @@ export async function getPopularLanguages(): Promise<Language[]> {
 
 export async function getServices(): Promise<Service[]> {
   // Use local constants for consistency with filters
-  return AVAILABLE_SERVICES.filter(s => s.isActive).slice(0, 6);
+  return AVAILABLE_SERVICES.filter(s => s.isActive).slice(0, 12);
 }
 
 export async function getFeaturedTherapists(): Promise<TherapistPublicView[]> {

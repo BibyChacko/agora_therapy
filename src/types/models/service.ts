@@ -21,7 +21,8 @@ export type ServiceCategory =
   | "addiction"
   | "trauma"
   | "wellness"
-  | "specialized";
+  | "specialized"
+  | "modern-life";
 
 export const AVAILABLE_SERVICES: Service[] = [
   // Mental Health
@@ -98,6 +99,98 @@ export const AVAILABLE_SERVICES: Service[] = [
       "Learn to manage manic and depressive episodes",
       "Build healthy routines and sleep habits",
       "Create a support system and crisis plan"
+    ],
+  },
+
+  // Modern Life (GenZ Focused)
+  {
+    id: "digital-wellbeing",
+    name: "Digital Well-being",
+    description: "Support for screen addiction, digital burnout, and social media fatigue",
+    category: "modern-life",
+    isActive: true,
+    detailedDescription: "In an always-on world, digital burnout is real. We help you establish a healthy relationship with technology, overcome screen addiction, and reclaim your focus.",
+    helpPoints: [
+      "Set healthy boundaries with social media and technology",
+      "Combat digital fatigue and 'doomscrolling' habits",
+      "Manage the psychological impact of constant connectivity",
+      "Reconnect with offline hobbies and relationships",
+      "Develop focus and presence in a distracted world"
+    ],
+  },
+  {
+    id: "imposter-syndrome",
+    name: "Imposter Syndrome",
+    description: "Overcoming the feeling of being a fraud in career and personal life",
+    category: "modern-life",
+    isActive: true,
+    detailedDescription: "Stop feeling like a fraud. We help you internalize your accomplishments, build genuine self-confidence, and overcome the fear of being 'found out'.",
+    helpPoints: [
+      "Identify and challenge 'imposter' thought patterns",
+      "Reframe perfectionism and the fear of failure",
+      "Build a realistic assessment of your skills and value",
+      "Develop strategies for navigating high-pressure environments",
+      "Cultivate self-compassion and genuine self-worth"
+    ],
+  },
+  {
+    id: "eco-anxiety",
+    name: "Eco-Anxiety",
+    description: "Coping with distress related to climate change and the future",
+    category: "modern-life",
+    isActive: true,
+    detailedDescription: "Anxiety about the planet's future is a valid and growing concern. We help you process climate-related distress and find ways to maintain hope and agency.",
+    helpPoints: [
+      "Process feelings of grief, fear, and hopelessness about the environment",
+      "Navigate 'existential dread' related to global changes",
+      "Find a balance between awareness and mental well-being",
+      "Convert anxiety into constructive individual and community action",
+      "Build emotional resilience for an uncertain future"
+    ],
+  },
+  {
+    id: "social-comparison",
+    name: "Social Comparison Trap",
+    description: "Breaking free from social media dysmorphia and comparison culture",
+    category: "modern-life",
+    isActive: true,
+    detailedDescription: "Break free from the 'perfection trap' of social media. We help you overcome body dysmorphia and the anxiety caused by constant social comparison.",
+    helpPoints: [
+      "Understand the psychological impact of curated social feeds",
+      "Address social media-induced body image concerns",
+      "Develop a stable sense of self independent of online validation",
+      "Practice 'digital minimalism' and mindful scrolling",
+      "Build genuine self-esteem and body positivity"
+    ],
+  },
+  {
+    id: "hustle-culture-burnout",
+    name: "Hustle Culture & Burnout",
+    description: "Managing toxic productivity and workplace exhaustion",
+    category: "modern-life",
+    isActive: true,
+    detailedDescription: "Exhausted by the 'grind'? We help you navigate toxic productivity, recover from burnout, and redefine success on your own terms.",
+    helpPoints: [
+      "Identify signs of burnout and chronic workplace stress",
+      "Challenge the 'always-on' mindset and hustle culture pressure",
+      "Set healthy professional boundaries without guilt",
+      "Learn to rest and recover effectively",
+      "Align your work habits with your long-term mental health"
+    ],
+  },
+  {
+    id: "modern-loneliness",
+    name: "Modern Loneliness",
+    description: "Navigating isolation and social anxiety in a digital age",
+    category: "modern-life",
+    isActive: true,
+    detailedDescription: "It's possible to be connected to everyone yet feel alone. We help you overcome social isolation and build meaningful, deep-level human connections.",
+    helpPoints: [
+      "Address social anxiety and the fear of missing out (FOMO)",
+      "Move from 'shallow' digital connections to deep relationships",
+      "Learn strategies for building community in a new city or environment",
+      "Manage feelings of isolation in remote work settings",
+      "Develop vulnerability and intimacy skills"
     ],
   },
 
@@ -403,6 +496,7 @@ export const SERVICE_CATEGORIES = [
   { value: "addiction", label: "Addiction & Recovery" },
   { value: "trauma", label: "Trauma & PTSD" },
   { value: "wellness", label: "Wellness & Growth" },
+  { value: "modern-life", label: "Modern Life & GenZ" },
   { value: "specialized", label: "Specialized Services" },
 ] as const;
 
