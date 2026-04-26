@@ -133,8 +133,8 @@ export default async function Home() {
       <GlassEmotionalJourneySection />
       <GlassSpecializedSupportSection />
       <GlassTherapistSection therapists={therapists} />
-      <GlassYogaSection />
-      <GlassRehabSection />
+      {/* <GlassYogaSection /> */}
+      {/* <GlassRehabSection /> */}
       <GlassLateNightSupportSection />
       {/* <GlassDaytimeSupportSection /> */}
       <GlassHowItWorksSection />

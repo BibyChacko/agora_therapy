@@ -6,7 +6,7 @@ interface Therapist {
   specialization?: string;
   languages: string[];
   rating?: number;
-  imageUrl?: string;
+  image?: string;
   bio?: string;
 }
 
@@ -47,7 +47,7 @@ export function GlassTherapistSection({ therapists }: GlassTherapistSectionProps
               {/* Therapist Image */}
               <div className="aspect-[3/4] relative overflow-hidden">
                 <img
-                  src={therapist.imageUrl || `https://images.unsplash.com/photo-${
+                  src={therapist.image || `https://images.unsplash.com/photo-${
                     index === 0 ? '1507003211169-0a1dd7228f2d' : 
                     index === 1 ? '1573496359142-b8d87734a5a2' : 
                     '1580489944761-15a19d654956'

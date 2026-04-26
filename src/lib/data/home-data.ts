@@ -1,8 +1,7 @@
 import { Language, LANGUAGES, POPULAR_INDIAN_LANGUAGES, POPULAR_INTERNATIONAL_LANGUAGES } from '@/lib/constants/languages';
 import { Service, AVAILABLE_SERVICES } from '@/types/models/service';
 import { TherapistPublicView } from '@/types/models/therapist';
-
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+import { getPublicTherapists } from '@/lib/services/public-therapist-service';
 
 export async function getPopularLanguages(): Promise<Language[]> {
   // Use local constants for consistency with filters as requested
@@ -25,17 +24,20 @@ export async function getServices(): Promise<Service[]> {
 
 export async function getFeaturedTherapists(): Promise<TherapistPublicView[]> {
   try {
-    const response = await fetch(`${BASE_URL}/api/public/therapists?featured=true`, {
-      next: { revalidate: 1800 }
-    });
+    // Attempt to get explicitly featured therapists first
+    let therapists = await getPublicTherapists({ featured: true });
     
-    if (response.ok) {
-      const data = await response.json();
-      return data.therapists.slice(0, 3);
+    // Fallback: If no featured therapists, get any active therapists 
+    // This addresses the "We dont have any featured therapists for now" request
+    if (!therapists || therapists.length === 0) {
+      // Prioritize therapists with trauma-healing to match current focus, or just general
+      therapists = await getPublicTherapists({});
     }
+    
+    // Return top 8 (the UI currently shows 3, but this gives room for growth)
+    return therapists.slice(0, 8);
   } catch (error) {
-    console.error('Error fetching featured therapists:', error);
+    console.error('Error fetching therapists for home:', error);
+    return [];
   }
-  
-  return [];
 }
