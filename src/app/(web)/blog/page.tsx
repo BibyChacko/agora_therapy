@@ -15,73 +15,73 @@ const blogPosts = [
     id: 'managing-workplace-stress',
     title: 'Managing Workplace Stress in the Modern Era',
     excerpt: 'Learn effective strategies to handle workplace stress and maintain a healthy work-life balance in today\'s fast-paced professional environment.',
-    image: '/images/blog/workplace-stress.jpg',
+    image: '/images/blog/mindgood-workplace-stress-relief.jpg',
     date: 'July 10, 2025',
     author: 'Dr. Priya Sharma',
     authorImage: '/images/psychologists/priya-sharma.jpg',
     category: 'Job Stress',
     readTime: '5 min read',
-    languages: ['English', 'Hindi']
+    languages: ['English', 'Hindi', 'Malayalam', 'Tamil', 'Telugu', 'Kannada']
   },
   {
     id: 'understanding-anxiety',
     title: 'Understanding Anxiety: Signs, Symptoms, and Support',
     excerpt: 'Recognize the common signs of anxiety disorders and discover coping mechanisms that can help manage symptoms and improve quality of life.',
-    image: '/images/blog/anxiety.jpg',
+    image: '/images/blog/mindfulness-support-mindgood.jpg',
     date: 'July 5, 2025',
     author: 'Dr. Anand Kumar',
     authorImage: '/images/psychologists/anand-kumar.jpg',
     category: 'Anxiety',
     readTime: '7 min read',
-    languages: ['English', 'Malayalam', 'Tamil']
+    languages: ['English', 'Malayalam', 'Tamil', 'Hindi', 'Telugu', 'Kannada']
   },
   {
     id: 'parenting-challenges',
     title: 'Navigating Parenting Challenges in the Digital Age',
     excerpt: 'Explore strategies for effective parenting in an era dominated by technology and social media, while fostering healthy family relationships.',
-    image: '/images/blog/parenting.jpg',
+    image: '/images/blog/parenting-challenge-digital-era.jpg',
     date: 'June 28, 2025',
     author: 'Dr. Lakshmi Nair',
     authorImage: '/images/psychologists/lakshmi-nair.jpg',
     category: 'Family Orientation',
     readTime: '6 min read',
-    languages: ['English', 'Malayalam', 'Kannada']
+    languages: ['English', 'Malayalam', 'Kannada', 'Hindi', 'Tamil', 'Telugu']
   },
   {
     id: 'supporting-learning-disabilities',
     title: 'Supporting Children with Learning Disabilities: A Guide for Parents',
     excerpt: 'Practical advice for parents to help children with dyslexia, ADHD, and other learning disabilities thrive academically and socially.',
-    image: '/images/blog/learning-disabilities.jpg',
+    image: '/images/blog/learning-disability-support-mindgood.jpg',
     date: 'June 20, 2025',
     author: 'Dr. Rajesh Menon',
     authorImage: '/images/psychologists/rajesh-menon.jpg',
     category: 'Learning Disabilities',
     readTime: '8 min read',
-    languages: ['English', 'Tamil', 'Telugu']
+    languages: ['English', 'Tamil', 'Telugu', 'Hindi', 'Malayalam', 'Kannada']
   },
   {
     id: 'career-transitions',
     title: 'Navigating Career Transitions with Confidence',
     excerpt: 'Strategies to manage the psychological aspects of career changes, from handling uncertainty to building resilience during professional transitions.',
-    image: '/images/blog/career-transitions.jpg',
+    image: '/images/blog/career-transition-support-mindgood.jpg',
     date: 'June 15, 2025',
     author: 'Dr. Vikram Desai',
     authorImage: '/images/psychologists/vikram-desai.jpg',
     category: 'Career Building',
     readTime: '5 min read',
-    languages: ['English', 'Hindi', 'Kannada']
+    languages: ['English', 'Hindi', 'Kannada', 'Malayalam', 'Tamil', 'Telugu']  
   },
   {
     id: 'mindfulness-practices',
     title: 'Mindfulness Practices for Daily Mental Wellness',
     excerpt: 'Simple mindfulness techniques that can be incorporated into your daily routine to reduce stress, improve focus, and enhance overall mental wellbeing.',
-    image: '/images/blog/mindfulness.jpg',
+    image: '/images/blog/mindfulness-support-mindgood.jpg',
     date: 'June 8, 2025',
     author: 'Dr. Meena Krishnan',
     authorImage: '/images/psychologists/meena-krishnan.jpg',
     category: 'Anxiety',
     readTime: '4 min read',
-    languages: ['English', 'Tamil', 'Telugu', 'Malayalam']
+    languages: ['English', 'Tamil', 'Telugu', 'Malayalam', 'Hindi', 'Kannada']
   }
 ];
 

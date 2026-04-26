@@ -117,7 +117,7 @@ export default async function PsychologistsPage({ searchParams }: { searchParams
           { "@type": "City", "name": "Singapore" },
           { "@type": "City", "name": "London" }
         ],
-        "knowsLanguage": LANGUAGES.flatMap(g => g.items).map(l => l.label)
+        "knowsLanguage": LANGUAGES.map(l => l.name)
       },
       {
         "@type": "ItemList",
@@ -169,6 +169,7 @@ export default async function PsychologistsPage({ searchParams }: { searchParams
                 specialization: params.specialization || '',
                 language: params.language || '',
                 minExperience: params.minExperience || '',
+                location: params.location || '',
               }} 
             />
           </div>

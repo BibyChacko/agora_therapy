@@ -2,13 +2,13 @@
 
 import React, { useState } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { FiFilter, FiMapPin } from 'react-icons/fi';
+import { FiFilter, FiMapPin, FiGlobe, FiBriefcase } from 'react-icons/fi';
 import SearchableSelect from '../ui/SearchableSelect';
 import { LANGUAGES } from '@/lib/constants/languages';
 import { AVAILABLE_SERVICES } from '@/types/models/service';
 
 interface PsychologistFiltersProps {
-  initialFilters?: { specialization: string; language: string; minExperience: string; location: string };
+  initialFilters?: { specialization?: string; language?: string; minExperience?: string; location?: string };
 }
 
 const LOCATIONS = [
@@ -114,26 +114,21 @@ const PsychologistFilters: React.FC<PsychologistFiltersProps> = ({ initialFilter
           </button>
         </div>
         
-        {/* Location Filter - High Priority for SEO */}
+        {/* Location Filter */}
         <div className="mb-8">
-          <label className="block text-sm font-black text-gray-400 uppercase tracking-[0.2em] mb-3 ml-1">
-            Practice Location
-          </label>
           <SearchableSelect
+            label="Practice Location"
             options={LOCATIONS}
             value={location}
             onChange={handleLocationChange}
             placeholder="Search city or country..."
-            icon={<FiMapPin className="text-indigo-500" />}
           />
         </div>
 
         {/* Language Filter */}
         <div className="mb-8">
-          <label className="block text-sm font-black text-gray-400 uppercase tracking-[0.2em] mb-3 ml-1">
-            Language Spoken
-          </label>
           <SearchableSelect
+            label="Language Spoken"
             options={languageOptions}
             value={language}
             onChange={handleLanguageChange}
@@ -143,10 +138,8 @@ const PsychologistFilters: React.FC<PsychologistFiltersProps> = ({ initialFilter
         
         {/* Specialization Filter */}
         <div className="mb-8">
-          <label className="block text-sm font-black text-gray-400 uppercase tracking-[0.2em] mb-3 ml-1">
-            Clinical Focus
-          </label>
           <SearchableSelect
+            label="Clinical Focus"
             options={specializationOptions}
             value={specialization}
             onChange={handleSpecializationChange}
