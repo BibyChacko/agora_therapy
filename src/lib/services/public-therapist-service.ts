@@ -4,6 +4,7 @@ import { TherapistPublicView } from "@/types/models/therapist";
 export interface TherapistFilters {
   specialization?: string;
   language?: string;
+  location?: string;
   minExperience?: string;
   featured?: boolean;
 }
@@ -53,6 +54,10 @@ export async function getPublicTherapists(filters: TherapistFilters = {}): Promi
         return null;
       }
 
+      if (filters.location && !profileData.practice?.location?.toLowerCase().includes(filters.location.toLowerCase())) {
+        return null;
+      }
+
       if (filters.minExperience && (profileData.practice?.yearsExperience || 0) < parseInt(filters.minExperience)) {
         return null;
       }
@@ -73,6 +78,7 @@ export async function getPublicTherapists(filters: TherapistFilters = {}): Promi
         hourlyRate: normalizedRate,
         rating: 5.0, 
         reviewCount: 0,
+        location: profileData.practice?.location || 'Dubai, UAE',
         isVerified: true,
         isFeatured: profileData.isFeatured || false,
         timezone: profileData.availability?.timezone || userData?.profile?.timezone || 'UTC',
@@ -139,6 +145,7 @@ export async function getPublicTherapistById(id: string): Promise<TherapistPubli
     hourlyRate: hourlyRate,
     rating: 5.0, // TODO: Calculate from reviews
     reviewCount: 0, // TODO: Count from reviews
+    location: profileData.practice?.location || 'Dubai, UAE',
     isVerified: profileData.verification?.isVerified || false,
     isFeatured: profileData.isFeatured || false,
     timezone: profileData.availability?.timezone || userData.profile?.timezone || 'UTC',

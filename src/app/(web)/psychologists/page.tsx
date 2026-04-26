@@ -10,6 +10,7 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
   const params = await searchParams;
   const specializationCode = params.specialization;
   const languageCode = params.language;
+  const location = params.location || 'Dubai'; // Default to Dubai for UAE focus
   
   const specializationName = specializationCode ? getServiceById(specializationCode)?.name : '';
   const languageName = languageCode ? getLanguageName(languageCode) : '';
@@ -22,37 +23,44 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
 
   const therapistNames = therapists.slice(0, 5).map(t => t.name).join(", ");
   
-  let title = "Affordable Multilingual Therapists in UAE | MindGood";
-  let description = "Find verified psychologists and therapists in the UAE. We offer affordable mental health consultations in English, Arabic, Malayalam, Hindi, and more. Specifically designed for expats.";
-
-  if (therapists.length > 0) {
-    const filterContext = specializationName || languageName 
-      ? ` for ${specializationName || ''} ${languageName ? `in ${languageName}` : ''}`
-      : '';
-    description = `Connect with ${therapists.length}+ verified therapists${filterContext} like ${therapistNames} in the UAE. Affordable sessions for expats.`;
+  // Dynamic Title Logic
+  let title = "Licensed Online Psychologists & Therapists in UAE | MindGood";
+  if (languageName && specializationName) {
+    title = `${languageName} ${specializationName} Specialists in ${location} | MindGood`;
+  } else if (languageName) {
+    title = `${languageName} Speaking Psychologists in ${location}, UAE | MindGood`;
+  } else if (specializationName) {
+    title = `Expert ${specializationName} Therapy in ${location} | MindGood`;
   }
 
-  if (specializationName || languageName) {
-    title = `${specializationName || ''} ${languageName || ''} Therapists in UAE | MindGood`.trim();
+  // Dynamic Description Logic
+  let description = `Connect with ${therapists.length || 20}+ verified psychologists and therapists in ${location}. We offer specialized mental health support in ${languageName || 'English, Malayalam, Hindi, Arabic, and 50+ languages'}. Affordable sessions for GenZ and expats.`;
+  
+  if (therapists.length > 0) {
+    description = `Book an appointment with top-rated ${languageName || ''} therapists in ${location} like ${therapistNames}. Specialized support for ${specializationName || 'anxiety, stress, and relationships'}. Safe and confidential.`;
   }
 
   return {
     title,
     description,
     keywords: [
-      "therapists in UAE", 
-      "affordable therapy Dubai", 
-      "expat mental health UAE", 
-      "multilingual psychologists UAE", 
+      `${languageName || ''} psychologists ${location}`,
+      `${specializationName || ''} therapy ${location}`,
       "online therapy UAE", 
-      specializationName, 
-      languageName, 
+      "expat mental health Dubai", 
+      "Malayalam therapy Dubai",
+      "Tamil counseling UAE",
+      "affordable psychologist Dubai",
       ...therapists.slice(0, 3).map(t => t.name)
     ].filter(Boolean) as string[],
+    alternates: {
+      canonical: `https://mindgood.life/psychologists${languageCode ? `?language=${languageCode}` : ''}${specializationCode ? `&specialization=${specializationCode}` : ''}`,
+    },
     openGraph: {
       title,
       description,
       type: 'website',
+      url: `https://mindgood.life/psychologists`,
       locale: 'en_AE',
     }
   };
@@ -96,11 +104,20 @@ export default async function PsychologistsPage({ searchParams }: { searchParams
     "@graph": [
       {
         "@type": "MedicalWebPage",
-        "@id": "https://mindgood.com/psychologists",
-        "name": "Find a Therapist in UAE",
-        "description": "Directory of verified psychologists and therapists in the UAE speaking multiple languages.",
+        "@id": "https://mindgood.life/psychologists#webpage",
+        "name": "Licensed Psychologists & Online Therapy in UAE",
+        "description": "Directory of verified psychologists and therapists providing online counseling in 60+ languages across the UAE and globally.",
         "medicalSpecialty": AVAILABLE_SERVICES.map(s => s.name),
-        "knowsLanguage": LANGUAGES.map(l => l.name)
+        "areaServed": [
+          { "@type": "City", "name": "Dubai" },
+          { "@type": "City", "name": "Abu Dhabi" },
+          { "@type": "City", "name": "Sharjah" },
+          { "@type": "Country", "name": "United Arab Emirates" },
+          { "@type": "Country", "name": "India" },
+          { "@type": "City", "name": "Singapore" },
+          { "@type": "City", "name": "London" }
+        ],
+        "knowsLanguage": LANGUAGES.flatMap(g => g.items).map(l => l.label)
       },
       {
         "@type": "ItemList",

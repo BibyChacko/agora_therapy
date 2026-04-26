@@ -97,6 +97,7 @@ export interface TherapistPublicView {
   hourlyRate: number;
   rating?: number;
   reviewCount?: number;
+  location?: string;
   isVerified: boolean;
   isFeatured?: boolean;
   timezone?: string;

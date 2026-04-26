@@ -2,14 +2,23 @@
 
 import React, { useState } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { FiFilter, FiX } from 'react-icons/fi';
+import { FiFilter, FiMapPin } from 'react-icons/fi';
 import SearchableSelect from '../ui/SearchableSelect';
-import { LANGUAGES, getLanguageName } from '@/lib/constants/languages';
+import { LANGUAGES } from '@/lib/constants/languages';
 import { AVAILABLE_SERVICES } from '@/types/models/service';
 
 interface PsychologistFiltersProps {
-  initialFilters?: { specialization: string; language: string; minExperience: string };
+  initialFilters?: { specialization: string; language: string; minExperience: string; location: string };
 }
+
+const LOCATIONS = [
+  { id: 'dubai', name: 'Dubai', group: 'United Arab Emirates' },
+  { id: 'abu-dhabi', name: 'Abu Dhabi', group: 'United Arab Emirates' },
+  { id: 'sharjah', name: 'Sharjah', group: 'United Arab Emirates' },
+  { id: 'india', name: 'India', group: 'International' },
+  { id: 'singapore', name: 'Singapore', group: 'International' },
+  { id: 'london', name: 'London', group: 'International' },
+];
 
 const PsychologistFilters: React.FC<PsychologistFiltersProps> = ({ initialFilters }) => {
   const router = useRouter();
@@ -19,8 +28,9 @@ const PsychologistFilters: React.FC<PsychologistFiltersProps> = ({ initialFilter
   const [language, setLanguage] = useState(initialFilters?.language || '');
   const [specialization, setSpecialization] = useState(initialFilters?.specialization || '');
   const [minExperience, setMinExperience] = useState(initialFilters?.minExperience || '');
+  const [location, setLocation] = useState(initialFilters?.location || '');
 
-  const updateParams = (filters: { specialization: string; language: string; minExperience: string }) => {
+  const updateParams = (filters: { specialization: string; language: string; minExperience: string; location: string }) => {
     const params = new URLSearchParams(searchParams.toString());
     
     if (filters.specialization) params.set('specialization', filters.specialization);
@@ -31,29 +41,38 @@ const PsychologistFilters: React.FC<PsychologistFiltersProps> = ({ initialFilter
     
     if (filters.minExperience) params.set('minExperience', filters.minExperience);
     else params.delete('minExperience');
+
+    if (filters.location) params.set('location', filters.location);
+    else params.delete('location');
     
     router.push(`${pathname}?${params.toString()}`);
   };
 
   const handleSpecializationChange = (value: string) => {
     setSpecialization(value);
-    updateParams({ specialization: value, language, minExperience });
+    updateParams({ specialization: value, language, minExperience, location });
   };
 
   const handleLanguageChange = (value: string) => {
     setLanguage(value);
-    updateParams({ specialization, language: value, minExperience });
+    updateParams({ specialization, language: value, minExperience, location });
   };
 
   const handleExperienceChange = (value: string) => {
     setMinExperience(value);
-    updateParams({ specialization, language, minExperience: value });
+    updateParams({ specialization, language, minExperience: value, location });
+  };
+
+  const handleLocationChange = (value: string) => {
+    setLocation(value);
+    updateParams({ specialization, language, minExperience, location: value });
   };
 
   const resetFilters = () => {
     setLanguage('');
     setSpecialization('');
     setMinExperience('');
+    setLocation('');
     router.push(pathname);
   };
 
@@ -82,88 +101,74 @@ const PsychologistFilters: React.FC<PsychologistFiltersProps> = ({ initialFilter
         </button>
       </div>
 
-      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-6 sticky top-24">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
-            <FiFilter className="mr-2 text-teal-600" /> Filters
+      <div className="bg-white dark:bg-gray-900 rounded-[2rem] border border-gray-100 dark:border-gray-800 shadow-xl p-8 sticky top-24">
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-xl font-black text-gray-900 dark:text-white flex items-center tracking-tight">
+            <FiFilter className="mr-3 text-indigo-600" /> Filters
           </h2>
           <button 
             onClick={resetFilters}
-            className="text-sm text-teal-600 hover:text-teal-700 font-medium"
+            className="text-sm text-indigo-600 hover:text-indigo-700 font-bold uppercase tracking-wider"
           >
             Reset All
           </button>
         </div>
         
-        {/* Language Filter */}
-        <div className="mb-6">
+        {/* Location Filter - High Priority for SEO */}
+        <div className="mb-8">
+          <label className="block text-sm font-black text-gray-400 uppercase tracking-[0.2em] mb-3 ml-1">
+            Practice Location
+          </label>
           <SearchableSelect
-            label="Language"
+            options={LOCATIONS}
+            value={location}
+            onChange={handleLocationChange}
+            placeholder="Search city or country..."
+            icon={<FiMapPin className="text-indigo-500" />}
+          />
+        </div>
+
+        {/* Language Filter */}
+        <div className="mb-8">
+          <label className="block text-sm font-black text-gray-400 uppercase tracking-[0.2em] mb-3 ml-1">
+            Language Spoken
+          </label>
+          <SearchableSelect
+            options={languageOptions}
             value={language}
             onChange={handleLanguageChange}
-            options={languageOptions}
-            placeholder="Search languages..."
+            placeholder="Search language..."
           />
         </div>
         
         {/* Specialization Filter */}
-        <div className="mb-6">
+        <div className="mb-8">
+          <label className="block text-sm font-black text-gray-400 uppercase tracking-[0.2em] mb-3 ml-1">
+            Clinical Focus
+          </label>
           <SearchableSelect
-            label="Specialization"
+            options={specializationOptions}
             value={specialization}
             onChange={handleSpecializationChange}
-            options={specializationOptions}
-            placeholder="Search specializations..."
+            placeholder="Search clinical focus..."
           />
         </div>
         
         {/* Experience Filter */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Minimum Experience
+        <div>
+          <label className="block text-sm font-black text-gray-400 uppercase tracking-[0.2em] mb-3 ml-1">
+            Min. Experience
           </label>
-          <select
+          <select 
             value={minExperience}
             onChange={(e) => handleExperienceChange(e.target.value)}
-            className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors"
+            className="w-full p-4 bg-gray-50 dark:bg-gray-800 border-none rounded-2xl text-gray-900 dark:text-white font-bold focus:ring-2 focus:ring-indigo-500 transition-all appearance-none"
           >
             <option value="">Any Experience</option>
-            <option value="1">1+ years</option>
-            <option value="3">3+ years</option>
-            <option value="5">5+ years</option>
-            <option value="10">10+ years</option>
+            <option value="5">5+ Years</option>
+            <option value="10">10+ Years</option>
+            <option value="15">15+ Years</option>
           </select>
-        </div>
-        
-        {/* Active Filters */}
-        <div className="mt-4">
-          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Active Filters:</h3>
-          <div className="flex flex-wrap gap-2">
-            {language && (
-              <div className="flex items-center bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300 text-xs px-2 py-1 rounded-full">
-                {getLanguageName(language)}
-                <button onClick={() => handleLanguageChange('')} className="ml-1">
-                  <FiX />
-                </button>
-              </div>
-            )}
-            {specialization && (
-              <div className="flex items-center bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs px-2 py-1 rounded-full">
-                {AVAILABLE_SERVICES.find(s => s.id === specialization)?.name || specialization}
-                <button onClick={() => handleSpecializationChange('')} className="ml-1">
-                  <FiX />
-                </button>
-              </div>
-            )}
-            {minExperience && (
-              <div className="flex items-center bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 text-xs px-2 py-1 rounded-full">
-                {minExperience}+ years
-                <button onClick={() => handleExperienceChange('')} className="ml-1">
-                  <FiX />
-                </button>
-              </div>
-            )}
-          </div>
         </div>
       </div>
     </>
