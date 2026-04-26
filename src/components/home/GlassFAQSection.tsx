@@ -5,7 +5,7 @@ import { useState } from "react";
 const faqs = [
   {
     question: "How does online therapy work?",
-    answer: "Our online therapy platform connects you with licensed therapists through secure video calls, chat, or phone sessions. Simply browse our therapists, book a session that fits your schedule, and connect from the comfort of your home. All sessions are confidential and HIPAA-compliant."
+    answer: "Our online therapy platform connects you with licensed therapists through secure video sessions. Simply browse our therapists, book a session that fits your schedule, and connect from the comfort of your home. All sessions are confidential and HIPAA-compliant."
   },
   {
     question: "What is the difference between a therapist and a counselor?",
@@ -13,7 +13,7 @@ const faqs = [
   },
   {
     question: "How much does a therapy session cost?",
-    answer: "Our sessions start from $50 USD for a one-hour session. Pricing may vary based on the therapist's specialization and experience. We accept various payment methods including credit cards, debit cards, Apple Pay, and Google Pay. Many insurance plans also cover online therapy."
+    answer: "Our sessions start from $30 USD for a one-hour session. Pricing may vary based on the therapist's specialization and experience. We accept various payment methods including credit cards, debit cards, Apple Pay, and Google Pay. Many insurance plans also cover online therapy."
   },
   {
     question: "Can I switch therapists if needed?",
@@ -43,10 +43,13 @@ export function GlassFAQSection() {
             <div className="relative">
               <div className="backdrop-blur-md bg-white/40 dark:bg-gray-800/40 border border-white/60 dark:border-gray-700/60 rounded-3xl overflow-hidden shadow-2xl">
                 <div className="aspect-[4/5] relative">
-                  <img
-                    src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=800&h=1000&fit=crop"
-                    alt="Need Help"
-                    className="w-full h-full object-cover"
+                  <iframe 
+                    src="https://assets.pinterest.com/ext/embed.html?id=160792649202014334" 
+                    height="907" 
+                    width="450" 
+                    frameBorder="0" 
+                    scrolling="no" 
+                    className="absolute inset-0 w-full h-full border-0 pointer-events-none"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
                   
@@ -63,7 +66,7 @@ export function GlassFAQSection() {
               </div>
 
               {/* Floating contact card */}
-              <div className="absolute -bottom-6 -right-6 backdrop-blur-xl bg-white/80 dark:bg-gray-800/80 border border-white/90 dark:border-gray-700/90 rounded-2xl p-6 shadow-2xl max-w-xs">
+              {/* <div className="absolute -bottom-6 -right-6 backdrop-blur-xl bg-white/80 dark:bg-gray-800/80 border border-white/90 dark:border-gray-700/90 rounded-2xl p-6 shadow-2xl max-w-xs">
                 <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 font-medium">
                   Get instant support via WhatsApp
                 </p>
@@ -78,7 +81,7 @@ export function GlassFAQSection() {
                   </svg>
                   Chat Now
                 </a>
-              </div>
+              </div> */}
             </div>
 
             {/* Right - FAQ */}
