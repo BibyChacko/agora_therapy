@@ -19,7 +19,7 @@ const blogPosts = [
     date: 'July 10, 2025',
     author: 'Dr. Priya Sharma',
     authorImage: '/images/psychologists/priya-sharma.jpg',
-    category: 'Job Stress',
+    category: 'Stress Management',
     readTime: '5 min read',
     languages: ['English', 'Hindi', 'Malayalam', 'Tamil', 'Telugu', 'Kannada']
   },
@@ -43,7 +43,7 @@ const blogPosts = [
     date: 'June 28, 2025',
     author: 'Dr. Lakshmi Nair',
     authorImage: '/images/psychologists/lakshmi-nair.jpg',
-    category: 'Family Orientation',
+    category: 'Parenting',
     readTime: '6 min read',
     languages: ['English', 'Malayalam', 'Kannada', 'Hindi', 'Tamil', 'Telugu']
   },
@@ -55,7 +55,7 @@ const blogPosts = [
     date: 'June 20, 2025',
     author: 'Dr. Rajesh Menon',
     authorImage: '/images/psychologists/rajesh-menon.jpg',
-    category: 'Learning Disabilities',
+    category: 'Specialized',
     readTime: '8 min read',
     languages: ['English', 'Tamil', 'Telugu', 'Hindi', 'Malayalam', 'Kannada']
   },
@@ -67,7 +67,7 @@ const blogPosts = [
     date: 'June 15, 2025',
     author: 'Dr. Vikram Desai',
     authorImage: '/images/psychologists/vikram-desai.jpg',
-    category: 'Career Building',
+    category: 'Modern Life',
     readTime: '5 min read',
     languages: ['English', 'Hindi', 'Kannada', 'Malayalam', 'Tamil', 'Telugu']  
   },
@@ -79,7 +79,7 @@ const blogPosts = [
     date: 'June 8, 2025',
     author: 'Dr. Meena Krishnan',
     authorImage: '/images/psychologists/meena-krishnan.jpg',
-    category: 'Anxiety',
+    category: 'Wellness',
     readTime: '4 min read',
     languages: ['English', 'Tamil', 'Telugu', 'Malayalam', 'Hindi', 'Kannada']
   }
@@ -185,7 +185,7 @@ export default function BlogPage() {
               </div>
               
               <div className="flex items-center justify-between">
-                <div className="flex items-center">
+                {/* <div className="flex items-center">
                   <div className="relative w-8 h-8 rounded-full overflow-hidden mr-2">
                     <Image 
                       src={post.authorImage} 
@@ -195,7 +195,7 @@ export default function BlogPage() {
                     />
                   </div>
                   <span className="text-sm text-gray-700 dark:text-gray-300">{post.author}</span>
-                </div>
+                </div> */}
                 
                 <div className="flex gap-1">
                   {post.languages.slice(0, 2).map((lang) => (
