@@ -1,6 +1,8 @@
 import { MetadataRoute } from 'next';
+import { blogPosts } from '@/lib/data/blogPosts';
+import { getPublicTherapists } from '@/lib/services/public-therapist-service';
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://mindgood.life';
   
   // Static pages
@@ -12,7 +14,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/blog',
     '/faq',
     '/contact',
-    '/yoga-for-mental-health',
     '/sexual-health-support',
   ];
 
@@ -22,6 +23,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     'ur', 'si', 'de', 'es', 'fr', 'it'
   ];
 
+  // 1. Generate Static Routes with language alternates
   const staticRoutes = staticPages.map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: new Date(),
@@ -34,7 +36,31 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   }));
 
-  // Add language-specific routes
+  // 2. Fetch and Generate Dynamic Psychologist Routes
+  let therapistRoutes: MetadataRoute.Sitemap = [];
+  try {
+    const therapists = await getPublicTherapists();
+    therapistRoutes = therapists.map((therapist) => ({
+      url: `${baseUrl}/psychologist/${therapist.id}`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.7,
+      // Note: If you add multilingual support for therapist profiles later, add alternates here
+    }));
+  } catch (error) {
+    console.error('Error generating therapist routes for sitemap:', error);
+  }
+
+  // 3. Generate Dynamic Blog Routes
+  const blogRoutes = blogPosts.map((post) => ({
+    url: `${baseUrl}/blog/${post.id}`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly' as const,
+    priority: 0.6,
+  }));
+
+  // 4. Generate Additional Language-Specific Static Routes (if needed)
+  // These are handled by 'alternates' in staticRoutes, but Google often likes explicit entries
   const languageRoutes = languages
     .filter(lang => lang !== 'en')
     .flatMap(lang => 
@@ -46,5 +72,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
       }))
     );
 
-  return [...staticRoutes, ...languageRoutes];
+  return [
+    ...staticRoutes, 
+    ...therapistRoutes, 
+    ...blogRoutes, 
+    ...languageRoutes
+  ];
 }
