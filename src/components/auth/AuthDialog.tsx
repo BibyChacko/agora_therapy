@@ -31,9 +31,10 @@ import type { UserRole } from "@/types/database";
 interface AuthDialogProps {
   children: React.ReactNode;
   onOpenChange?: (open: boolean) => void;
+  redirectUrl?: string;
 }
 
-export function AuthDialog({ children, onOpenChange }: AuthDialogProps) {
+export function AuthDialog({ children, onOpenChange, redirectUrl }: AuthDialogProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"signin" | "signup">("signin");
@@ -89,7 +90,7 @@ export function AuthDialog({ children, onOpenChange }: AuthDialogProps) {
 
       await signInWithEmail(signInData.email, signInData.password);
       handleOpenChange(false);
-      router.push("/dashboard");
+      router.push(redirectUrl || "/dashboard");
       // Keep loading state active until navigation completes
   
     } catch (err: any) {
@@ -146,7 +147,7 @@ export function AuthDialog({ children, onOpenChange }: AuthDialogProps) {
       console.log("✅ AuthDialog - Signup successful, redirecting to onboarding");
       handleOpenChange(false);
       setTimeout(() => {
-        router.push("/onboarding");
+        router.push(redirectUrl || "/onboarding");
       }, 500);
     } catch (err: any) {
       console.error("Sign up error:", err);

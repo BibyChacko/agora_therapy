@@ -6,6 +6,7 @@ import { FiArrowLeft, FiStar, FiClock, FiBookOpen } from 'react-icons/fi';
 import { getLanguageName } from '@/lib/constants/languages';
 import { getServiceById } from '@/types/models/service';
 import { getPublicTherapistById } from '@/lib/services/public-therapist-service';
+import { BookConsultationButton } from '@/components/psychologists/BookConsultationButton';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -194,12 +195,7 @@ export default async function PsychologistDetail({ params }: Props) {
               <p className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
                 ${(psychologist.hourlyRate / 100).toFixed(2)}/hr
               </p>
-              <Link
-                href={`/booking/${psychologist.id}`}
-                className="block w-full py-3 text-center bg-gradient-to-r from-teal-500 to-blue-600 text-white rounded-md hover:opacity-90 transition-opacity font-bold"
-              >
-                Book Consultation
-              </Link>
+              <BookConsultationButton psychologistId={psychologist.id} />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
                 50-minute session
               </p>
