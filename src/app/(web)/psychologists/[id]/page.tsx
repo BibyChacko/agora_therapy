@@ -26,17 +26,30 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .map(spec => getServiceById(spec)?.name || spec)
     .join(', ');
 
-  const title = `${therapist.name} - ${therapist.title} | MindGood`;
-  const description = `${therapist.name} is a verified psychologist specializing in ${specializations}. With ${therapist.experience} years of experience, they provide affordable therapy in ${therapist.languages.map(getLanguageName).join(', ')}.`;
+  const languagesStr = therapist.languages.map(getLanguageName).join(', ');
+  
+  // Make the title punchy for WhatsApp/Social Media
+  const title = `${therapist.name} - ${therapist.title} (${languagesStr})`;
+  
+  // The description will show right below the title on social media
+  const description = `${therapist.name} is a verified psychologist specializing in ${specializations}. Book a consultation today. Languages: ${languagesStr}.`;
 
   return {
-    title,
+    title: `${title} | MindGood`,
     description,
     openGraph: {
       title,
       description,
-      images: [therapist.image],
+      images: [
+        {
+          url: therapist.image,
+          width: 800,
+          height: 600,
+          alt: `Photo of ${therapist.name}`,
+        }
+      ],
       type: 'profile',
+      siteName: 'MindGood',
     },
     twitter: {
       card: 'summary_large_image',
