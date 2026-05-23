@@ -12,7 +12,7 @@ import {
   sendEmailVerification,
   updateProfile,
   signOut,
-  onAuthStateChanged,
+  onIdTokenChanged,
   User,
   UserCredential,
 } from "firebase/auth";
@@ -29,7 +29,7 @@ googleProvider.setCustomParameters({
 
 // Auth state listener
 export function onAuthStateChange(callback: (user: User | null) => void) {
-  return onAuthStateChanged(auth, callback);
+  return onIdTokenChanged(auth, callback);
 }
 
 // Sign up with email and password

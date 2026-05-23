@@ -30,11 +30,10 @@ import {
   AlertCircle,
   Star,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { use } from "react";
-import { TherapistAdminView } from "@/types/models/therapist";
+import Image from "next/image";
+import { TherapistEditWizard, type AdminTherapistDetail } from "@/components/admin/TherapistEditWizard";
 
 export default function TherapistDetailPage({
   params,
@@ -42,11 +41,11 @@ export default function TherapistDetailPage({
   params: Promise<{ therapistId: string }>;
 }) {
   const { user, userData, loading } = useAuth();
-  const router = useRouter();
   const resolvedParams = use(params);
-  const [therapist, setTherapist] = useState<TherapistAdminView | null>(null);
+  const [therapist, setTherapist] = useState<AdminTherapistDetail | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   // Helper function to normalize hourly rate (handle both old dollar format and new cents format)
   const normalizeHourlyRate = (rate: number): number => {
@@ -62,7 +61,7 @@ export default function TherapistDetailPage({
   };
 
   // Calculate profile completeness
-  const calculateCompleteness = (therapist: TherapistAdminView): number => {
+  const calculateCompleteness = (therapist: AdminTherapistDetail): number => {
     if (!therapist.therapistProfile) return 0;
     
     const checks = [
@@ -87,13 +86,7 @@ export default function TherapistDetailPage({
     return Math.round((completed / checks.length) * 100);
   };
 
-  useEffect(() => {
-    if (user && userData?.role === "admin") {
-      fetchTherapistDetail();
-    }
-  }, [user, userData, resolvedParams.therapistId]);
-
-  const fetchTherapistDetail = async () => {
+  const fetchTherapistDetail = useCallback(async () => {
     try {
       setDataLoading(true);
       console.log('Fetching therapist:', resolvedParams.therapistId);
@@ -115,7 +108,13 @@ export default function TherapistDetailPage({
     } finally {
       setDataLoading(false);
     }
-  };
+  }, [resolvedParams.therapistId]);
+
+  useEffect(() => {
+    if (user && userData?.role === "admin") {
+      fetchTherapistDetail();
+    }
+  }, [user, userData?.role, fetchTherapistDetail]);
 
   const handleVerify = async () => {
     try {
@@ -243,6 +242,19 @@ export default function TherapistDetailPage({
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {editing && (
+          <div className="mb-8">
+            <TherapistEditWizard
+              therapist={therapist}
+              onCancel={() => setEditing(false)}
+              onSaved={async () => {
+                await fetchTherapistDetail();
+                setEditing(false);
+              }}
+            />
+          </div>
+        )}
+
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
@@ -253,6 +265,13 @@ export default function TherapistDetailPage({
               </Button>
             </Link>
             <div className="flex gap-2">
+              <Button
+                onClick={() => setEditing((v) => !v)}
+                disabled={actionLoading}
+                variant={editing ? "outline" : "default"}
+              >
+                {editing ? "Close Editor" : "Edit Profile"}
+              </Button>
               {therapist.therapistProfile?.verification?.isVerified && (
                 <Button
                   onClick={handleToggleFeatured}
@@ -287,9 +306,32 @@ export default function TherapistDetailPage({
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
-              {therapist.profile.displayName.charAt(0).toUpperCase()}
-            </div>
+            {(() => {
+              const photoUrl =
+                therapist.profile.avatarUrl || therapist.therapistProfile?.photoURL;
+              const fallbackText =
+                therapist.profile.displayName ||
+                therapist.profile.firstName ||
+                therapist.profile.lastName ||
+                "T";
+              const initial = fallbackText.charAt(0).toUpperCase();
+
+              return (
+                <div className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
+                  {photoUrl ? (
+                    <Image
+                      src={photoUrl}
+                      alt={`${therapist.profile.displayName || "Therapist"} photo`}
+                      width={80}
+                      height={80}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    initial
+                  )}
+                </div>
+              );
+            })()}
             <div className="flex-1">
               <h1 className="text-3xl font-bold text-gray-900">
                 {therapist.profile.displayName}
@@ -327,7 +369,7 @@ export default function TherapistDetailPage({
         </div>
 
         {/* Profile Completeness */}
-        {therapist.therapistProfile && (
+        {!editing && therapist.therapistProfile && (
           <Card className="mb-6">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
@@ -365,6 +407,7 @@ export default function TherapistDetailPage({
         )}
 
         {/* Contact Information */}
+        {!editing && (
         <Card className="mb-6">
           <CardHeader>
             <CardTitle>Contact Information</CardTitle>
@@ -390,6 +433,7 @@ export default function TherapistDetailPage({
             </div>
           </CardContent>
         </Card>
+        )}
 
         {/* Services */}
         {therapist.therapistProfile && (
@@ -420,6 +464,7 @@ export default function TherapistDetailPage({
         {/* Credentials */}
         {therapist.therapistProfile && (
           <>
+            {!editing && (
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle>Credentials</CardTitle>
@@ -504,8 +549,10 @@ export default function TherapistDetailPage({
                 </div>
               </CardContent>
             </Card>
+            )}
 
             {/* Practice Information */}
+            {!editing && (
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle>Practice Information</CardTitle>
@@ -590,6 +637,7 @@ export default function TherapistDetailPage({
                 </div>
               </CardContent>
             </Card>
+            )}
 
             {/* Availability Settings */}
             <Card className="mb-6">
