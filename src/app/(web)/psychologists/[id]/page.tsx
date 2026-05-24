@@ -34,9 +34,43 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // The description will show right below the title on social media
   const description = `${therapist.name} is a verified psychologist specializing in ${specializations}. Book a consultation today. Languages: ${languagesStr}.`;
 
+  const keywords = [
+    therapist.name,
+    'psychologist',
+    'therapist',
+    'counseling',
+    ...therapist.specializations.map(spec => getServiceById(spec)?.name || spec),
+    ...therapist.languages.map(getLanguageName),
+    'online therapy',
+    'mental health',
+  ];
+
+  // Generate language alternates for this specific psychologist
+  // Following the same structure as sitemap.ts
+  const baseUrl = 'https://mindgood.life';
+  const route = `/psychologists/${id}`;
+  const supportedLanguages = [
+    'en', 'hi', 'ta', 'te', 'ml', 'kn', 'mr', 'gu', 'bn', 'pa',
+    'ur', 'si', 'de', 'es', 'fr', 'it'
+  ];
+  
+  const langs = Object.fromEntries(
+    supportedLanguages.map(lang => [
+      lang, 
+      `${baseUrl}${lang === 'en' ? '' : `/${lang}`}${route}`
+    ])
+  );
+
   return {
     title: `${title} | MindGood`,
     description,
+    keywords,
+    alternates: {
+      languages: {
+        ...langs,
+        'x-default': `${baseUrl}${route}`,
+      },
+    },
     openGraph: {
       title,
       description,
@@ -81,6 +115,7 @@ export default async function PsychologistDetail({ params }: Props) {
       "experienceInYears": psychologist.experience
     },
     "knowsLanguage": psychologist.languages.map(getLanguageName),
+    "availableLanguage": psychologist.languages.map(getLanguageName), // AEO: helps AI answer "which languages does this doctor speak?"
     "priceRange": `$$`,
     "address": {
       "@type": "PostalAddress",

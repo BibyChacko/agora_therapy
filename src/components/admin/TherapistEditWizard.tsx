@@ -474,8 +474,8 @@ export function TherapistEditWizard({
               </div>
 
               <div className="flex gap-2">
-                <label className="inline-flex items-center">
                   <input
+                    id="photo-upload-input"
                     type="file"
                     accept="image/jpeg,image/jpg,image/png,image/webp"
                     className="hidden"
@@ -499,11 +499,14 @@ export function TherapistEditWizard({
                       }
                     }}
                   />
-                  <Button type="button" disabled={uploadingPhoto}>
+                  <Button 
+                    type="button" 
+                    disabled={uploadingPhoto}
+                    onClick={() => document.getElementById('photo-upload-input')?.click()}
+                  >
                     <Upload className="w-4 h-4 mr-2" />
                     {uploadingPhoto ? "Uploading..." : "Upload"}
                   </Button>
-                </label>
 
                 {form.therapistProfile.photoURL && (
                   <Button
@@ -669,8 +672,9 @@ export function TherapistEditWizard({
                 <span className="text-xs text-gray-500">{certs.length}/6</span>
               </div>
 
-              <label className="inline-flex items-center">
+              <div>
                 <input
+                  id="certificate-upload-input"
                   type="file"
                   accept="application/pdf"
                   multiple
@@ -710,11 +714,16 @@ export function TherapistEditWizard({
                     }
                   }}
                 />
-                <Button type="button" disabled={uploadingCertificate} variant="outline">
+                <Button 
+                  type="button" 
+                  disabled={uploadingCertificate} 
+                  variant="outline"
+                  onClick={() => document.getElementById('certificate-upload-input')?.click()}
+                >
                   <Upload className="w-4 h-4 mr-2" />
                   {uploadingCertificate ? "Uploading..." : "Upload PDFs"}
                 </Button>
-              </label>
+              </div>
 
               {certs.length > 0 && (
                 <div className="space-y-2">

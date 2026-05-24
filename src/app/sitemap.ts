@@ -15,6 +15,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '/faq',
     '/contact',
     '/sexual-health-support',
+    '/privacy',
+    '/terms',
+    '/yoga-for-mental-health',
   ];
 
   // Supported language codes
@@ -65,12 +68,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let therapistRoutes: MetadataRoute.Sitemap = [];
   try {
     const therapists = await getPublicTherapists();
-    therapistRoutes = therapists.map((therapist) => ({
-      url: `${baseUrl}/psychologist/${therapist.id}`,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
-      priority: 0.7,
-    }));
+    therapistRoutes = languages.flatMap((lang) => 
+      therapists.map((therapist) => {
+        const route = `/psychologists/${therapist.id}`;
+        const isEn = lang === 'en';
+        const path = isEn ? route : `/${lang}${route}`;
+        return {
+          url: `${baseUrl}${path}`,
+          lastModified: new Date(),
+          changeFrequency: 'daily' as const,
+          priority: isEn ? 0.8 : 0.7,
+          alternates: getAlternates(route),
+        };
+      })
+    );
   } catch (error) {
     console.error('Error generating therapist routes for sitemap:', error);
   }
