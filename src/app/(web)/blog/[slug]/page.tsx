@@ -15,9 +15,44 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   
   if (!blogPost) return { title: 'Post Not Found' };
 
+  const baseUrl = 'https://mindgood.life';
+  const canonicalUrl = `${baseUrl}/blog/${slug}`;
+
+  // Generate localized alternates if the blog supports multiple languages
+  const supportedLanguages = blogPost.languages.map(l => {
+    // Map full names back to codes for hreflang (simple mapping)
+    const langMap: Record<string, string> = {
+      'English': 'en', 'Hindi': 'hi', 'Malayalam': 'ml', 'Tamil': 'ta', 
+      'Telugu': 'te', 'Kannada': 'kn'
+    };
+    return langMap[l] || 'en';
+  });
+
+  const langs = Object.fromEntries(
+    supportedLanguages.map(lang => [
+      lang, 
+      `${baseUrl}${lang === 'en' ? '' : `/${lang}`}/blog/${slug}`
+    ])
+  );
+
   return {
     title: `${blogPost.title} | MindGood Blog`,
     description: blogPost.excerpt,
+    keywords: [
+      blogPost.category,
+      'mental health',
+      'psychology blog',
+      'therapy',
+      blogPost.author,
+      ...blogPost.title.split(' ').filter(w => w.length > 4)
+    ],
+    alternates: {
+      canonical: canonicalUrl,
+      languages: {
+        ...langs,
+        'x-default': canonicalUrl,
+      }
+    },
     openGraph: {
       title: blogPost.title,
       description: blogPost.excerpt,

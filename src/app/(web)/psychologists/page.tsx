@@ -40,6 +40,12 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
     description = `Book an appointment with top-rated ${languageName || ''} therapists in ${location} like ${therapistNames}. Specialized support for ${specializationName || 'anxiety, stress, and relationships'}. Safe and confidential.`;
   }
 
+  const queryParams = new URLSearchParams();
+  if (languageCode) queryParams.set('language', languageCode);
+  if (specializationCode) queryParams.set('specialization', specializationCode);
+  const queryString = queryParams.toString();
+  const canonicalUrl = `https://mindgood.life/psychologists${queryString ? `?${queryString}` : ''}`;
+
   return {
     title,
     description,
@@ -54,7 +60,7 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
       ...therapists.slice(0, 3).map(t => t.name)
     ].filter(Boolean) as string[],
     alternates: {
-      canonical: `https://mindgood.life/psychologists${languageCode ? `?language=${languageCode}` : ''}${specializationCode ? `&specialization=${specializationCode}` : ''}`,
+      canonical: canonicalUrl,
     },
     openGraph: {
       title,
