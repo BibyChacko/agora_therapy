@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   description:
     "Connect with psychologists who speak your language. Professional mental health support in Malayalam, Tamil, Hindi, Telugu, and Kannada.",
   keywords:
-    "mental health, psychologist, counseling, therapy, Malayalam, Tamil, Hindi, Telugu, Kannada, job stress, career building, family orientation, learning disabilities, dyslexia",
+    "mental health, psychologist in Dubai, best psychologist in Dubai, therapist in UAE, anxiety counseling Dubai, depression therapy, couples therapy Dubai, trauma therapist, child psychologist Dubai, affordable therapy UAE, Malayalam speaking psychologist, Tamil counseling UAE, Hindi therapist Dubai, online therapy, career counseling, stress management, counseling near me",
   icons: {
     icon: "/mindgood.ico",
     apple: "/Mindgood.png",
