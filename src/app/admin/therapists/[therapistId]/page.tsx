@@ -19,6 +19,8 @@ import {
   ArrowLeft,
   CheckCircle,
   XCircle,
+  UserCheck,
+  UserX,
   Mail,
   Phone,
   Calendar,
@@ -208,6 +210,50 @@ export default function TherapistDetailPage({
     }
   };
 
+  const handleUserStatusChange = async (newStatus: "active" | "inactive") => {
+    const actionLabel = newStatus === "inactive" ? "deactivate" : "reactivate";
+
+    if (
+      !confirm(
+        `Are you sure you want to ${actionLabel} this therapist account?`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      const response = await fetch(`/api/admin/users/${therapist.id}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert(`Therapist ${actionLabel}d successfully.`);
+        await fetchTherapistDetail();
+      } else {
+        alert(`Error: ${data.error || `Failed to ${actionLabel} therapist`}`);
+      }
+    } catch (error) {
+      console.error(`Error trying to ${actionLabel} therapist:`, error);
+      alert("An unexpected error occurred. Please try again.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const getStatusBadgeClassName = (status: string) =>
+    status === "active"
+      ? "bg-green-100 text-green-800"
+      : status === "inactive"
+      ? "bg-gray-100 text-gray-800"
+      : "bg-red-100 text-red-800";
+
   if (loading || dataLoading) {
     return <PageLoadingSpinner text="Loading therapist details..." />;
   }
@@ -272,6 +318,25 @@ export default function TherapistDetailPage({
               >
                 {editing ? "Close Editor" : "Edit Profile"}
               </Button>
+              {therapist.status === "active" ? (
+                <Button
+                  onClick={() => handleUserStatusChange("inactive")}
+                  disabled={actionLoading}
+                  variant="outline"
+                >
+                  <UserX className="w-4 h-4 mr-2" />
+                  Deactivate
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => handleUserStatusChange("active")}
+                  disabled={actionLoading}
+                  variant="outline"
+                >
+                  <UserCheck className="w-4 h-4 mr-2" />
+                  Activate
+                </Button>
+              )}
               {therapist.therapistProfile?.verification?.isVerified && (
                 <Button
                   onClick={handleToggleFeatured}
@@ -349,11 +414,9 @@ export default function TherapistDetailPage({
                   </span>
                 )}
                 <span
-                  className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                    therapist.status === "active"
-                      ? "bg-blue-100 text-blue-800"
-                      : "bg-red-100 text-red-800"
-                  }`}
+                  className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusBadgeClassName(
+                    therapist.status
+                  )}`}
                 >
                   {therapist.status}
                 </span>
