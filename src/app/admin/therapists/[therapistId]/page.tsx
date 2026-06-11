@@ -213,6 +213,11 @@ export default function TherapistDetailPage({
   const handleUserStatusChange = async (newStatus: "active" | "inactive") => {
     const actionLabel = newStatus === "inactive" ? "deactivate" : "reactivate";
 
+    if (!therapist) {
+      alert("Therapist details are not available.");
+      return;
+    }
+
     if (
       !confirm(
         `Are you sure you want to ${actionLabel} this therapist account?`
