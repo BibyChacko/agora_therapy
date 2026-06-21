@@ -1,77 +1,45 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminFirestore } from "@/lib/firebase/admin";
+import { getPublicTherapistById } from "@/lib/services/public-therapist-service";
+import { createRateLimitResponse } from "@/lib/server/rate-limit";
+import { applyCacheHeaders } from "@/lib/server/http-cache";
 
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const rateLimit = createRateLimitResponse(request, {
+      keyPrefix: "public-therapist-detail",
+      windowMs: 60 * 1000,
+      maxRequests: 90,
+    });
+
+    if (!rateLimit.ok) {
+      return rateLimit.response;
+    }
+
     const { id } = await context.params;
-    const db = getAdminFirestore();
+    const therapist = await getPublicTherapistById(id);
 
-    // Get therapist profile
-    const therapistProfileDoc = await db
-      .collection("therapistProfiles")
-      .doc(id)
-      .get();
-
-    if (!therapistProfileDoc.exists) {
+    if (!therapist) {
       return NextResponse.json(
         { error: "Therapist not found" },
         { status: 404 }
       );
     }
 
-    const therapistProfileData = therapistProfileDoc.data();
+    const response = NextResponse.json(therapist);
 
-    // Check if therapist is verified
-    if (!therapistProfileData?.verification?.isVerified) {
-      return NextResponse.json(
-        { error: "Therapist not found" },
-        { status: 404 }
-      );
-    }
+    applyCacheHeaders(response, {
+      sMaxAge: 300,
+      staleWhileRevalidate: 600,
+    });
 
-    // Get services from array field
-    const services = therapistProfileData?.services || [];
+    Object.entries(rateLimit.headers).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
 
-    // Get user data for name and photo
-    const userDoc = await db.collection("users").doc(id).get();
-    const userData = userDoc.data();
-
-    if (!userData) {
-      return NextResponse.json(
-        { error: "Therapist not found" },
-        { status: 404 }
-      );
-    }
-
-    // Normalize hourly rate (handle both old dollar format and new cents format)
-    let hourlyRate = therapistProfileData.practice?.hourlyRate || 0;
-    if (hourlyRate < 1000) {
-      // Likely in dollars, convert to cents
-      hourlyRate = hourlyRate * 100;
-    }
-
-    // Build therapist public view
-    const therapist = {
-      id: therapistProfileDoc.id,
-      name: userData.profile?.displayName || `${userData.profile?.firstName} ${userData.profile?.lastName}`,
-      title: `${therapistProfileData.practice?.yearsExperience || 0}+ Years Exp • ${therapistProfileData.credentials?.licenseState || ''}`,
-      image: therapistProfileData.photoURL || userData.profile?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.profile?.displayName || 'T')}&background=random`,
-      languages: therapistProfileData.practice?.languages || [],
-      specializations: services,
-      experience: therapistProfileData.practice?.yearsExperience || 0,
-      bio: therapistProfileData.practice?.bio || "",
-      hourlyRate: hourlyRate,
-      rating: undefined, // TODO: Calculate from reviews
-      reviewCount: undefined, // TODO: Count from reviews
-      isVerified: therapistProfileData.verification?.isVerified || false,
-      isFeatured: therapistProfileData.isFeatured || false,
-      timezone: therapistProfileData.availability?.timezone || userData.profile?.timezone || 'UTC',
-    };
-
-    return NextResponse.json(therapist);
+    return response;
   } catch (error) {
     console.error("Error fetching therapist:", error);
     return NextResponse.json(

@@ -1,5 +1,6 @@
 import { getAdminFirestore } from "@/lib/firebase/admin";
 import { TherapistPublicView } from "@/types/models/therapist";
+import { unstable_cache } from "next/cache";
 
 export interface TherapistFilters {
   specialization?: string;
@@ -9,7 +10,9 @@ export interface TherapistFilters {
   featured?: boolean;
 }
 
-export async function getPublicTherapists(filters: TherapistFilters = {}): Promise<TherapistPublicView[]> {
+async function getPublicTherapistsFromDb(
+  filters: TherapistFilters = {}
+): Promise<TherapistPublicView[]> {
   const db = getAdminFirestore();
   
   // Fetch all verified therapist profiles
@@ -90,7 +93,9 @@ export async function getPublicTherapists(filters: TherapistFilters = {}): Promi
   return therapists.filter((t): t is TherapistPublicView => t !== null);
 }
 
-export async function getPublicTherapistById(id: string): Promise<TherapistPublicView | null> {
+async function getPublicTherapistByIdFromDb(
+  id: string
+): Promise<TherapistPublicView | null> {
   const db = getAdminFirestore();
   
   // Get therapist profile
@@ -150,4 +155,45 @@ export async function getPublicTherapistById(id: string): Promise<TherapistPubli
     isFeatured: profileData.isFeatured || false,
     timezone: profileData.availability?.timezone || userData.profile?.timezone || 'UTC',
   };
+}
+
+function normalizeFilters(filters: TherapistFilters = {}) {
+  return {
+    specialization: filters.specialization || "",
+    language: filters.language || "",
+    location: filters.location || "",
+    minExperience: filters.minExperience || "",
+    featured: Boolean(filters.featured),
+  };
+}
+
+export async function getPublicTherapists(
+  filters: TherapistFilters = {}
+): Promise<TherapistPublicView[]> {
+  const normalizedFilters = normalizeFilters(filters);
+  const cacheKey = JSON.stringify(normalizedFilters);
+
+  const cachedLoader = unstable_cache(
+    async () => getPublicTherapistsFromDb(normalizedFilters),
+    ["public-therapists", cacheKey],
+    {
+      revalidate: 300,
+    }
+  );
+
+  return cachedLoader();
+}
+
+export async function getPublicTherapistById(
+  id: string
+): Promise<TherapistPublicView | null> {
+  const cachedLoader = unstable_cache(
+    async () => getPublicTherapistByIdFromDb(id),
+    ["public-therapist", id],
+    {
+      revalidate: 300,
+    }
+  );
+
+  return cachedLoader();
 }

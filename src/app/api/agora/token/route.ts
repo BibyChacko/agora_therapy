@@ -1,11 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { RtcTokenBuilder, RtcRole } from "agora-token";
+import { createRateLimitResponse } from "@/lib/server/rate-limit";
 
 const AGORA_APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
 const AGORA_APP_CERTIFICATE = process.env.AGORA_APP_CERTIFICATE!;
 
 export async function POST(request: NextRequest) {
   try {
+    const rateLimit = createRateLimitResponse(request, {
+      keyPrefix: "agora-token",
+      windowMs: 60 * 1000,
+      maxRequests: 10,
+    });
+
+    if (!rateLimit.ok) {
+      return rateLimit.response;
+    }
+
     const body = await request.json();
     const { channelName, userId } = body;
 
@@ -58,13 +69,19 @@ export async function POST(request: NextRequest) {
 
     console.log("✅ Token generated successfully");
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       token,
       appId: AGORA_APP_ID,
       channelName,
       uid,
       expiresAt: privilegeExpiredTs,
     });
+
+    Object.entries(rateLimit.headers).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+
+    return response;
   } catch (error) {
     console.error("❌ Error generating Agora token:", error);
     return NextResponse.json(

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
+import { createRateLimitResponse } from "@/lib/server/rate-limit";
 
 // Configure cloudinary
 cloudinary.config({
@@ -10,6 +11,16 @@ cloudinary.config({
 
 export async function POST(request: NextRequest) {
   try {
+    const rateLimit = createRateLimitResponse(request, {
+      keyPrefix: "upload-post",
+      windowMs: 10 * 60 * 1000,
+      maxRequests: 20,
+    });
+
+    if (!rateLimit.ok) {
+      return rateLimit.response;
+    }
+
     const formData = await request.formData();
     const file = formData.get("file") as File;
     const folder = formData.get("folder") as string || "uploads";
@@ -36,11 +47,17 @@ export async function POST(request: NextRequest) {
       uploadStream.end(buffer);
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       message: "Uploaded successfully",
       url: (uploadResult as any).secure_url,
       publicId: (uploadResult as any).public_id
     }, { status: 200 });
+
+    Object.entries(rateLimit.headers).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+
+    return response;
 
   } catch (error) {
     console.error("Cloudinary upload error:", error);
@@ -50,6 +67,16 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const rateLimit = createRateLimitResponse(request, {
+      keyPrefix: "upload-delete",
+      windowMs: 10 * 60 * 1000,
+      maxRequests: 30,
+    });
+
+    if (!rateLimit.ok) {
+      return rateLimit.response;
+    }
+
     const body = await request.json();
     const { publicId } = body;
 
@@ -59,10 +86,16 @@ export async function DELETE(request: NextRequest) {
 
     const deleteResult = await cloudinary.uploader.destroy(publicId);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       message: "Deleted successfully",
       result: deleteResult
     }, { status: 200 });
+
+    Object.entries(rateLimit.headers).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+
+    return response;
 
   } catch (error) {
     console.error("Cloudinary delete error:", error);

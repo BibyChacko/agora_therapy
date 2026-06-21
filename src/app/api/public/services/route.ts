@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { AVAILABLE_SERVICES, SERVICE_CATEGORIES } from "@/types/models/service";
+import { applyCacheHeaders } from "@/lib/server/http-cache";
 
 /**
  * Public API to fetch available therapy services/specializations
@@ -10,10 +11,15 @@ export async function GET() {
     // Only return active services
     const activeServices = AVAILABLE_SERVICES.filter(service => service.isActive);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       services: activeServices,
       categories: SERVICE_CATEGORIES,
       total: activeServices.length,
+    });
+
+    return applyCacheHeaders(response, {
+      sMaxAge: 3600,
+      staleWhileRevalidate: 86400,
     });
   } catch (error) {
     console.error("Error fetching services:", error);
