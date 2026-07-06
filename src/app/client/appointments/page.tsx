@@ -217,10 +217,35 @@ Status: ${appointment.payment?.status || "Pending"}
             </span>
           </div>
 
+          {appointment.session?.meetingId && (
+            <div>
+              <span className="font-medium">Meeting ID: </span>
+              <span>{appointment.session.meetingId}</span>
+            </div>
+          )}
+
+          {appointment.session?.meetingPasscode && (
+            <div>
+              <span className="font-medium">Passcode: </span>
+              <span>{appointment.session.meetingPasscode}</span>
+            </div>
+          )}
+
           {appointment.communication?.clientNotes && (
             <div>
               <span className="font-medium">Notes: </span>
               <span>{appointment.communication.clientNotes}</span>
+            </div>
+          )}
+
+          {appointment.communication?.therapistNotes && (
+            <div className="rounded-lg border border-teal-200 bg-teal-50 p-3">
+              <span className="font-medium text-teal-900">
+                Therapist Note:
+              </span>{" "}
+              <span className="text-teal-900">
+                {appointment.communication.therapistNotes}
+              </span>
             </div>
           )}
 

@@ -7,6 +7,7 @@ import { getLanguageName } from '@/lib/constants/languages';
 import { getServiceById } from '@/types/models/service';
 import { getPublicTherapistById } from '@/lib/services/public-therapist-service';
 import { BookConsultationButton } from '@/components/psychologists/BookConsultationButton';
+import { gccAreas, siteUrl } from '@/lib/seo';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -45,31 +46,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     'mental health',
   ];
 
-  // Generate language alternates for this specific psychologist
-  // Following the same structure as sitemap.ts
-  const baseUrl = 'https://mindgood.life';
-  const route = `/psychologists/${id}`;
-  const supportedLanguages = [
-    'en', 'hi', 'ta', 'te', 'ml', 'kn', 'mr', 'gu', 'bn', 'pa',
-    'ur', 'si', 'de', 'es', 'fr', 'it'
-  ];
-  
-  const langs = Object.fromEntries(
-    supportedLanguages.map(lang => [
-      lang, 
-      `${baseUrl}${lang === 'en' ? '' : `/${lang}`}${route}`
-    ])
-  );
-
   return {
     title: `${title} | MindGood`,
     description,
     keywords,
     alternates: {
-      languages: {
-        ...langs,
-        'x-default': `${baseUrl}${route}`,
-      },
+      canonical: `${siteUrl}/psychologists/${id}`,
     },
     openGraph: {
       title,
@@ -119,8 +101,9 @@ export default async function PsychologistDetail({ params }: Props) {
     "priceRange": `$$`,
     "address": {
       "@type": "PostalAddress",
-      "addressCountry": "UAE"
+      "addressCountry": "AE"
     },
+    "areaServed": gccAreas,
     "aggregateRating": psychologist.rating ? {
       "@type": "AggregateRating",
       "ratingValue": psychologist.rating,

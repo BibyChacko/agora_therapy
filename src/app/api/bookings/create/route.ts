@@ -4,6 +4,10 @@ import { FieldValue } from "firebase-admin/firestore";
 import Stripe from "stripe";
 import { verifyRequestUser } from "@/lib/server/firebase-request-auth";
 import { AvailableSlotsService } from "@/lib/services/available-slots-service";
+import {
+  getTherapySessionConfig,
+  normalizeTherapySessionType,
+} from "@/lib/session/therapy-session";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-07-30.basil",
@@ -36,8 +40,8 @@ export async function POST(request: NextRequest) {
       therapistId,
       timeSlotId,
       scheduledFor, // ISO string
-      duration = 50, // minutes
-      sessionType = "individual",
+      duration,
+      sessionType = "single",
       clientNotes,
     } = body;
 
@@ -48,6 +52,10 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const normalizedSessionType = normalizeTherapySessionType(sessionType);
+    const sessionConfig = getTherapySessionConfig(normalizedSessionType);
+    const sessionDuration = duration || sessionConfig.duration;
 
     if (timeSlotId) {
       const availability = await AvailableSlotsService.checkSlotAvailability(
@@ -93,7 +101,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate amounts
-    const therapistFee = Math.round((hourlyRate * duration) / 60);
+    const therapistFee = Math.round((hourlyRate * sessionDuration) / 60);
     const platformFee = 1500; // $15.00 in cents
     const totalAmount = therapistFee + platformFee;
 
@@ -106,7 +114,7 @@ export async function POST(request: NextRequest) {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: totalAmount,
       currency: therapistProfile.practice?.currency || "aed",
-      description: `Therapy session - ${duration} minutes`,
+      description: `${sessionConfig.label} - ${sessionDuration} minutes`,
       statement_descriptor_suffix: "MINDGOOD",
       receipt_email: clientData.email,
       shipping: {
@@ -126,8 +134,9 @@ export async function POST(request: NextRequest) {
         clientName: customerName,
         clientEmail: clientData.email,
         scheduledFor,
-        duration: duration.toString(),
-        sessionType,
+        duration: sessionDuration.toString(),
+        sessionType: normalizedSessionType,
+        maxClientParticipants: sessionConfig.clientParticipants.toString(),
         service: "Online Therapy Session",
         company: "Nextauras Global Services LLC FZ",
       },
@@ -144,12 +153,14 @@ export async function POST(request: NextRequest) {
       clientId,
       scheduledFor: new Date(scheduledFor),
       timeSlotId: timeSlotId || "",
-      duration,
+      duration: sessionDuration,
       status: "pending",
       session: {
-        type: sessionType,
+        type: normalizedSessionType,
         deliveryType: "video",
         platform: "agora",
+        maxClientParticipants: sessionConfig.clientParticipants,
+        totalParticipantLimit: sessionConfig.totalParticipants,
       },
       payment: {
         amount: totalAmount,

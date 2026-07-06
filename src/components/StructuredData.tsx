@@ -1,70 +1,78 @@
 import Script from 'next/script';
+import { dubaiAddress, gccAreas, organizationName, seoLanguages, siteName, siteUrl, supportEmail, supportPhone } from '@/lib/seo';
 
 export function StructuredData() {
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "MedicalBusiness",
-    "@id": "https://mindgood.life/#organization",
-    "name": "MindGood",
-    "legalName": "Nextauras Global Solutions",
-    "url": "https://mindgood.life",
-    "logo": "https://mindgood.life/Mindgood.png",
+    "@id": `${siteUrl}/#organization`,
+    "name": siteName,
+    "legalName": organizationName,
+    "url": siteUrl,
+    "logo": `${siteUrl}/Mindgood.png`,
     "foundingDate": "2025",
-    "telephone": "+971505134930",
+    "email": supportEmail,
+    "telephone": supportPhone,
+    "address": {
+      "@type": "PostalAddress",
+      ...dubaiAddress,
+    },
     "contactPoint": {
       "@type": "ContactPoint",
-      "telephone": "+971505134930",
+      "telephone": supportPhone,
+      "email": supportEmail,
       "contactType": "Customer Service",
-      "availableLanguage": [
-        "English", "Hindi", "Tamil", "Telugu", "Malayalam", "Kannada", 
-        "Marathi", "Gujarati", "Bengali", "Punjabi", "Urdu", "Sinhala",
-        "German", "Spanish", "French", "Italian"
-      ],
-      "areaServed": "Worldwide"
+      "areaServed": gccAreas,
+      "availableLanguage": seoLanguages,
     },
     "sameAs": [
-      "https://mindgood.life"
+      "https://mindgood.life",
+      "https://www.instagram.com/mindgood.life/",
+      "https://www.linkedin.com/company/mind-good/posts/",
     ],
-    "description": "MindGood provides online therapy and counseling services in 50+ languages. Connect with licensed psychologists and therapists from anywhere in the world for professional mental health support.",
-    "priceRange": "$$$",
+    "description": "MindGood provides multilingual online therapy and counselling for individuals, couples, and families in Dubai, the UAE, and across the GCC.",
+    "priceRange": "$$",
+    "areaServed": gccAreas,
     "medicalSpecialty": [
-      "Psychiatry",
       "Psychology",
       "Mental Health Counseling",
       "Clinical Psychology",
-      "Psychotherapy"
-    ]
+      "Psychotherapy",
+      "Couples Therapy",
+      "Anxiety Therapy",
+      "Depression Counselling"
+    ],
+    "knowsAbout": [
+      "Online therapy in Dubai",
+      "Multilingual counselling in the UAE",
+      "Expat mental health support",
+      "Couples therapy in Dubai",
+      "Anxiety and stress therapy",
+    ],
   };
 
   const serviceSchema = {
     "@context": "https://schema.org",
     "@type": "Service",
-    "@id": "https://mindgood.life/#service",
+    "@id": `${siteUrl}/#service`,
+    "name": "Online Therapy and Counselling",
     "serviceType": "Online Therapy and Counseling",
     "provider": {
-      "@id": "https://mindgood.life/#organization"
+      "@id": `${siteUrl}/#organization`
     },
-    "areaServed": {
-      "@type": "Place",
-      "name": "Worldwide"
-    },
+    "areaServed": gccAreas,
     "availableChannel": {
       "@type": "ServiceChannel",
-      "serviceUrl": "https://mindgood.life",
-      "servicePhone": "+971505134930",
-      "availableLanguage": [
-        "English", "Hindi", "Tamil", "Telugu", "Malayalam", "Kannada",
-        "Marathi", "Gujarati", "Bengali", "Punjabi", "Urdu", "Sinhala",
-        "German", "Spanish", "French", "Italian"
-      ]
+      "serviceUrl": siteUrl,
+      "servicePhone": supportPhone,
+      "availableLanguage": seoLanguages,
     },
     "offers": {
       "@type": "Offer",
+      "url": `${siteUrl}/psychologists`,
       "priceSpecification": {
         "@type": "PriceSpecification",
-        "price": "50",
-        "priceCurrency": "USD",
-        "minPrice": "50"
+        "priceCurrency": "AED",
       },
       "availability": "https://schema.org/InStock",
       "availabilityStarts": "2025-01-01"
@@ -83,32 +91,29 @@ export function StructuredData() {
       "opens": "00:00",
       "closes": "23:59"
     },
-    "termsOfService": "https://mindgood.life/terms",
-    "description": "Professional online therapy and counseling services available 24/7 in 50+ languages. One-hour sessions starting from $50 USD. Connect with licensed psychologists and therapists via video, chat, or phone."
+    "termsOfService": `${siteUrl}/terms`,
+    "description": "Professional online therapy and counselling for Dubai, the UAE, and the GCC with multilingual psychologists supporting anxiety, stress, relationships, trauma, and family wellbeing."
   };
 
   const websiteSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "@id": "https://mindgood.life/#website",
-    "url": "https://mindgood.life",
-    "name": "MindGood",
-    "description": "Online Therapy & Counseling in Your Language | 24/7 Mental Health Support",
+    "@id": `${siteUrl}/#website`,
+    "url": siteUrl,
+    "name": siteName,
+    "description": "Online therapy in Dubai, UAE and GCC with multilingual psychologists.",
     "publisher": {
-      "@id": "https://mindgood.life/#organization"
+      "@id": `${siteUrl}/#organization`
     },
     "potentialAction": {
       "@type": "SearchAction",
       "target": {
         "@type": "EntryPoint",
-        "urlTemplate": "https://mindgood.life/psychologists?search={search_term_string}"
+        "urlTemplate": `${siteUrl}/psychologists?search={search_term_string}`
       },
       "query-input": "required name=search_term_string"
     },
-    "inLanguage": [
-      "en", "hi", "ta", "te", "ml", "kn", "mr", "gu", "bn", "pa", 
-      "ur", "si", "de", "es", "fr", "it"
-    ]
+    "inLanguage": ["en", "ar", "hi", "ml", "ta", "te", "kn", "ur"]
   };
 
   const breadcrumbSchema = {
@@ -119,7 +124,7 @@ export function StructuredData() {
         "@type": "ListItem",
         "position": 1,
         "name": "Home",
-        "item": "https://mindgood.life"
+        "item": siteUrl
       }
     ]
   };
@@ -127,14 +132,14 @@ export function StructuredData() {
   const professionalServiceSchema = {
     "@context": "https://schema.org",
     "@type": "ProfessionalService",
-    "name": "MindGood Online Therapy",
-    "image": "https://mindgood.life/Mindgood.png",
-    "url": "https://mindgood.life",
-    "telephone": "+971505134930",
-    "priceRange": "$$$",
+    "name": `${siteName} Online Therapy`,
+    "image": `${siteUrl}/Mindgood.png`,
+    "url": siteUrl,
+    "telephone": supportPhone,
+    "priceRange": "$$",
     "address": {
       "@type": "PostalAddress",
-      "addressCountry": "AE"
+      ...dubaiAddress,
     },
     "geo": {
       "@type": "GeoCoordinates",
@@ -155,8 +160,9 @@ export function StructuredData() {
       "opens": "00:00",
       "closes": "23:59"
     },
+    "areaServed": gccAreas,
     "paymentAccepted": "Credit Card, Debit Card, Apple Pay, Google Pay",
-    "currenciesAccepted": "USD"
+    "currenciesAccepted": "AED, USD"
   };
 
   return (

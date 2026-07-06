@@ -119,6 +119,18 @@ export default function FAQPage() {
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [openItems, setOpenItems] = useState<string[]>([]);
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqData.map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.answer,
+      },
+    })),
+  };
 
   const toggleItem = (id: string) => {
     setOpenItems(prev => 
@@ -138,12 +150,16 @@ export default function FAQPage() {
 
   return (
     <div className="container mx-auto px-4 py-16 mt-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl md:text-4xl font-bold mb-6 text-center text-gray-900 dark:text-white">
           Frequently Asked Questions
         </h1>
         <p className="text-center text-gray-700 dark:text-gray-300 mb-12 max-w-2xl mx-auto">
-          Find answers to common questions about MindGood`s services, appointments, payments, and more. If you can`t find what you`re looking for, please contact our support team.
+          Find answers to common questions about MindGood`s therapy services, appointments, payments, and multilingual support for Dubai, the UAE, and the GCC. If you can`t find what you`re looking for, please contact our support team.
         </p>
         
         {/* Search */}

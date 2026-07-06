@@ -4,6 +4,11 @@ import { FieldValue } from "firebase-admin/firestore";
 import Stripe from "stripe";
 import { emailService } from "@/lib/services/email-service";
 import { RtcTokenBuilder, RtcRole } from "agora-token";
+import {
+  generateMeetingPasscode,
+  getTherapySessionConfig,
+  normalizeTherapySessionType,
+} from "@/lib/session/therapy-session";
 
 // Disable body parsing for Stripe webhooks
 export const runtime = 'nodejs';
@@ -88,8 +93,14 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
     const appointmentDoc = appointmentsSnapshot.docs[0];
     const appointmentData = appointmentDoc.data();
 
+    const sessionConfig = getTherapySessionConfig(
+      normalizeTherapySessionType(appointmentData.session?.type)
+    );
+
     // Generate Agora channel and tokens
     const channelName = `session_${appointmentDoc.id}`;
+    const meetingId = appointmentDoc.id;
+    const meetingPasscode = generateMeetingPasscode();
     const expirationTime = Math.floor(Date.now() / 1000) + 24 * 3600; // 24 hours
 
     // Generate tokens for both client and therapist
@@ -123,8 +134,17 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
     await appointmentDoc.ref.update({
       status: "confirmed",
       "payment.status": "paid",
+      "payment.paidAt": FieldValue.serverTimestamp(),
       "session.channelId": channelName,
       "session.joinUrl": meetingLink,
+      "session.meetingId": meetingId,
+      "session.meetingPasscode": meetingPasscode,
+      "session.maxClientParticipants":
+        appointmentData.session?.maxClientParticipants ||
+        sessionConfig.clientParticipants,
+      "session.totalParticipantLimit":
+        appointmentData.session?.totalParticipantLimit ||
+        sessionConfig.totalParticipants,
       "metadata.confirmedAt": FieldValue.serverTimestamp(),
       "metadata.updatedAt": FieldValue.serverTimestamp(),
     });
@@ -135,11 +155,23 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
       .doc(appointmentDoc.id)
       .set({
         appointmentId: appointmentDoc.id,
+        meetingId,
+        meetingPasscode,
         channelName,
         clientToken,
         therapistToken,
         clientUid,
         therapistUid,
+        maxClientParticipants:
+          appointmentData.session?.maxClientParticipants ||
+          sessionConfig.clientParticipants,
+        totalParticipantLimit:
+          appointmentData.session?.totalParticipantLimit ||
+          sessionConfig.totalParticipants,
+        participantIds: [
+          `client:${appointmentData.clientId}`,
+          `therapist:${appointmentData.therapistId}`,
+        ],
         appId: AGORA_APP_ID,
         expiresAt: new Date(expirationTime * 1000),
         createdAt: FieldValue.serverTimestamp(),
@@ -174,6 +206,12 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
         appointmentDate: appointmentData.scheduledFor.toDate(),
         duration: appointmentData.duration,
         meetingLink,
+        meetingId,
+        meetingPasscode,
+        sessionTypeLabel: sessionConfig.label,
+        maxClientParticipants:
+          appointmentData.session?.maxClientParticipants ||
+          sessionConfig.clientParticipants,
         amount: appointmentData.payment.amount,
         currency: appointmentData.payment.currency,
       });

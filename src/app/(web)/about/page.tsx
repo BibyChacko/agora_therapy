@@ -5,15 +5,15 @@ import { FiUsers, FiGlobe, FiHeart, FiCheck } from 'react-icons/fi';
 import { StructuredData } from '@/components/StructuredData';
 
 export const metadata: Metadata = {
-  title: 'About MindGood | Leading Multilingual Mental Health Platform in UAE & India',
-  description: 'Learn about MindGood, our mission to provide accessible mental health support in 60+ languages. We bridge the gap between cultural understanding and professional psychology for GenZ and modern professionals globally.',
-  keywords: 'about MindGood, mental health mission, multilingual therapy UAE, Indian languages psychologist, GenZ mental health, culturally sensitive counseling, online therapy platform',
+  title: 'About MindGood | Multilingual Therapy for Dubai, UAE & GCC',
+  description: 'Learn how MindGood supports Dubai, UAE, and GCC clients with multilingual, culturally aware online therapy for individuals, couples, and families.',
+  keywords: 'about MindGood, multilingual therapy Dubai, psychologist UAE, expat mental health Dubai, counselling GCC, culturally sensitive therapy UAE',
   alternates: {
     canonical: 'https://mindgood.life/about',
   },
   openGraph: {
-    title: 'About MindGood | Our Mission for Global Mental Wellness',
-    description: 'MindGood is breaking language barriers in mental healthcare. Discover our story, mission, and commitment to culturally-aware therapy.',
+    title: 'About MindGood | Therapy for Dubai, UAE & GCC',
+    description: 'MindGood helps multilingual and multicultural communities access therapy that feels clinically sound and culturally familiar.',
     url: 'https://mindgood.life/about',
     siteName: 'MindGood',
     type: 'website',
@@ -47,10 +47,10 @@ export default function AboutPage() {
                 MindGood was founded in 2025 with a simple yet powerful vision: to ensure that quality mental health support is never restricted by language or cultural background.
               </p>
               <p>
-                Based in the UAE and serving a global audience, we recognized that expressing deep-seated emotions is most effective in one's mother tongue. Whether it's Malayalam, Arabic, Hindi, or German, your language is the key to your healing.
+                Based in Dubai and serving clients across the UAE and wider GCC, we recognized that expressing deep-seated emotions is often easier in one's mother tongue. Whether it is Malayalam, Arabic, Hindi, Tamil, or English, your language can become a bridge to healing.
               </p>
               <p>
-                Today, MindGood is a leading platform connecting thousands of individuals with licensed psychologists who don't just speak their language, but truly understand their cultural nuances.
+                Today, MindGood is building a trusted platform for residents, expats, couples, and families who want licensed psychologists that understand both their language and the realities of multicultural life in the region.
               </p>
             </div>
           </div>
@@ -132,8 +132,8 @@ export default function AboutPage() {
           <article>
             <h3>Where is MindGood based and what areas does it serve?</h3>
             <p>
-              MindGood is based in the UAE and serves a global audience, with a strong focus on expatriate communities and individuals 
-              seeking therapy in their native Indian or International languages.
+              MindGood is based in Dubai and supports clients across the UAE and GCC, with a strong focus on expatriate communities and individuals
+              seeking therapy in their native Indian, Arabic, and international languages.
             </p>
           </article>
           <article>

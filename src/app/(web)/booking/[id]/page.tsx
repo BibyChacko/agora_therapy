@@ -12,6 +12,10 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useAuth } from '@/lib/hooks/useAuth';
 import CheckoutForm from '@/components/booking/CheckoutForm';
+import {
+  THERAPY_SESSION_CONFIGS,
+  type SupportedTherapySessionType,
+} from '@/lib/session/therapy-session';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -35,7 +39,8 @@ export default function BookingPage() {
   // Booking state
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string>('');
-  const [duration, setDuration] = useState(60); // minutes
+  const [selectedSessionType, setSelectedSessionType] =
+    useState<SupportedTherapySessionType>('single');
   const [clientNotes, setClientNotes] = useState('');
   
   // Payment state
@@ -102,8 +107,8 @@ export default function BookingPage() {
         body: JSON.stringify({
           therapistId,
           scheduledFor: scheduledFor.toISOString(),
-          duration,
-          sessionType: 'individual',
+          duration: selectedSessionConfig.duration,
+          sessionType: selectedSessionType,
           clientNotes,
         }),
       });
@@ -162,7 +167,10 @@ export default function BookingPage() {
   }
 
   const timeSlots = generateTimeSlots();
-  const sessionFee = (therapist.hourlyRate/100) + 15;
+  const selectedSessionConfig =
+    THERAPY_SESSION_CONFIGS.find((config) => config.value === selectedSessionType) ||
+    THERAPY_SESSION_CONFIGS[0];
+  const sessionFee = ((therapist.hourlyRate / 100) * selectedSessionConfig.duration) / 60 + 15;
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -245,6 +253,34 @@ export default function BookingPage() {
                   {/* Time Slots */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Therapy Format
+                    </label>
+                    <div className="grid gap-3 mb-6">
+                      {THERAPY_SESSION_CONFIGS.map((sessionConfig) => (
+                        <button
+                          key={sessionConfig.value}
+                          type="button"
+                          onClick={() => setSelectedSessionType(sessionConfig.value)}
+                          className={`rounded-lg border p-4 text-left transition-colors ${
+                            selectedSessionType === sessionConfig.value
+                              ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/20'
+                              : 'border-gray-200 bg-white hover:border-teal-300 dark:border-gray-700 dark:bg-gray-800'
+                          }`}
+                        >
+                          <div className="font-medium text-gray-900 dark:text-white">
+                            {sessionConfig.label}
+                          </div>
+                          <div className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                            {sessionConfig.description}
+                          </div>
+                          <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                            {sessionConfig.duration} minutes
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Select Time
                     </label>
                     {selectedDate ? (
@@ -281,10 +317,11 @@ export default function BookingPage() {
                     <div className="text-sm text-blue-900 dark:text-blue-100">
                       <p className="font-medium mb-2">Session Information</p>
                       <ul className="space-y-1 text-blue-800 dark:text-blue-200">
-                        <li>• Duration: {duration} minutes</li>
+                        <li>• Session Type: {selectedSessionConfig.label}</li>
+                        <li>• Duration: {selectedSessionConfig.duration} minutes</li>
                         <li>• Session Fee: ${(sessionFee).toFixed(2)}</li>
                         <li>• Video session via secure platform</li>
-                        <li>• You'll receive a confirmation email with meeting link</li>
+                        <li>• You&apos;ll receive a meeting link, meeting ID, and passcode after payment</li>
                       </ul>
                     </div>
                   </div>
@@ -343,7 +380,11 @@ export default function BookingPage() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600 dark:text-gray-400">Duration:</span>
-                      <span className="text-gray-900 dark:text-white font-medium">{duration} minutes</span>
+                      <span className="text-gray-900 dark:text-white font-medium">{selectedSessionConfig.duration} minutes</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 dark:text-gray-400">Session type:</span>
+                      <span className="text-gray-900 dark:text-white font-medium">{selectedSessionConfig.label}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600 dark:text-gray-400">Therapist Fee:</span>
@@ -379,7 +420,7 @@ export default function BookingPage() {
                 </div>
                 <h2 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">Booking Confirmed!</h2>
                 <p className="text-gray-700 dark:text-gray-300 mb-6 max-w-md mx-auto">
-                  Your appointment with {therapist.name} has been successfully booked. You will receive a confirmation email with the meeting link shortly.
+                  Your appointment with {therapist.name} has been successfully booked. We&apos;ll email the meeting link, meeting ID, and passcode after payment confirmation.
                 </p>
 
                 <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg max-w-md mx-auto mb-8">
@@ -388,7 +429,8 @@ export default function BookingPage() {
                     <p><strong>Therapist:</strong> {therapist.name}</p>
                     <p><strong>Date:</strong> {selectedDate?.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
                     <p><strong>Time:</strong> {selectedTime}</p>
-                    <p><strong>Duration:</strong> {duration} minutes</p>
+                    <p><strong>Session Type:</strong> {selectedSessionConfig.label}</p>
+                    <p><strong>Duration:</strong> {selectedSessionConfig.duration} minutes</p>
                   </div>
                 </div>
 

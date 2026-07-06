@@ -92,7 +92,8 @@ export default function TherapistAppointmentsPage() {
   const [selectedTab, setSelectedTab] = useState("upcoming");
   const [selectedAppointment, setSelectedAppointment] =
     useState<AppointmentWithClient | null>(null);
-  const [notes, setNotes] = useState("");
+  const [clientNote, setClientNote] = useState("");
+  const [privateSummary, setPrivateSummary] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -162,19 +163,6 @@ export default function TherapistAppointmentsPage() {
         newStatus
       );
 
-      // If adding notes, also update them
-      if (notes.trim() && selectedAppointment) {
-        // Add therapist notes to the communication object
-        const appointment = await AppointmentService.getAppointment(
-          appointmentId
-        );
-        if (appointment) {
-          // Update the appointment document with therapist notes
-          // This would typically require an updateAppointment method
-          console.log("Adding therapist notes:", notes.trim());
-        }
-        setNotes("");
-      }
       setError(null);
     } catch (error) {
       console.error("Error updating appointment:", error);
@@ -184,26 +172,23 @@ export default function TherapistAppointmentsPage() {
     }
   };
 
-  const handleAddNotes = async (appointmentId: string) => {
-    if (!notes.trim()) return;
+  const handleSaveSessionNotes = async (appointmentId: string) => {
+    if (!clientNote.trim() && !privateSummary.trim()) return;
 
     setIsUpdating(true);
     try {
-      // For now, we'll add this to the communication.therapistNotes field
-      // This would require extending the AppointmentService with an updateAppointmentNotes method
-      console.log(
-        "Adding therapist notes to appointment:",
-        appointmentId,
-        notes.trim()
-      );
+      await AppointmentService.updateTherapistSessionNotes(appointmentId, {
+        therapistNotes: clientNote.trim(),
+        internalNotes: privateSummary.trim(),
+      });
 
-      // Simulate success for now
-      setNotes("");
+      setClientNote("");
+      setPrivateSummary("");
       setSelectedAppointment(null);
       setError(null);
     } catch (error) {
-      console.error("Error adding notes:", error);
-      setError("Failed to add notes");
+      console.error("Error saving notes:", error);
+      setError("Failed to save post-session notes");
     } finally {
       setIsUpdating(false);
     }
@@ -412,8 +397,15 @@ export default function TherapistAppointmentsPage() {
 
                               {appointment.communication?.therapistNotes && (
                                 <div className="mt-2 text-sm text-gray-600 bg-blue-50 p-2 rounded">
-                                  <strong>My Notes:</strong>{" "}
+                                  <strong>Client Note:</strong>{" "}
                                   {appointment.communication.therapistNotes}
+                                </div>
+                              )}
+
+                              {appointment.communication?.internalNotes && (
+                                <div className="mt-2 text-sm text-gray-600 bg-gray-100 p-2 rounded">
+                                  <strong>Private Summary:</strong>{" "}
+                                  {appointment.communication.internalNotes}
                                 </div>
                               )}
                             </div>
@@ -490,43 +482,74 @@ export default function TherapistAppointmentsPage() {
                                   size="sm"
                                   onClick={() => {
                                     setSelectedAppointment(appointment);
-                                    setNotes(
+                                    setClientNote(
                                       appointment.communication
                                         ?.therapistNotes || ""
                                     );
+                                    setPrivateSummary(
+                                      appointment.communication?.internalNotes || ""
+                                    );
                                   }}
+                                  disabled={selectedTab === "upcoming"}
                                 >
                                   <FileText className="w-4 h-4 mr-2" />
-                                  {appointment.communication?.therapistNotes
-                                    ? "Edit Notes"
-                                    : "Add Notes"}
+                                  {appointment.communication?.therapistNotes ||
+                                  appointment.communication?.internalNotes
+                                    ? "Edit Session Notes"
+                                    : "Post-Session Notes"}
                                 </Button>
                               </DialogTrigger>
                               <DialogContent>
                                 <DialogHeader>
                                   <DialogTitle>
-                                    {appointment.communication?.therapistNotes
-                                      ? "Edit Notes"
-                                      : "Add Notes"}
+                                    {appointment.communication?.therapistNotes ||
+                                    appointment.communication?.internalNotes
+                                      ? "Edit Post-Session Notes"
+                                      : "Add Post-Session Notes"}
                                   </DialogTitle>
                                 </DialogHeader>
                                 <div className="space-y-4">
                                   <div>
-                                    <Label htmlFor="notes">Session Notes</Label>
+                                    <Label htmlFor="client-note">
+                                      Note To Client
+                                    </Label>
                                     <Textarea
-                                      id="notes"
-                                      placeholder="Add your notes about this session..."
-                                      value={notes}
-                                      onChange={(e) => setNotes(e.target.value)}
+                                      id="client-note"
+                                      placeholder="Share follow-up guidance or a note the client can see..."
+                                      value={clientNote}
+                                      onChange={(e) =>
+                                        setClientNote(e.target.value)
+                                      }
                                       rows={4}
                                     />
+                                    <p className="mt-2 text-xs text-gray-500">
+                                      This is visible to the client after the session.
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="private-summary">
+                                      Private Summary
+                                    </Label>
+                                    <Textarea
+                                      id="private-summary"
+                                      placeholder="Add your therapist-only summary for this session..."
+                                      value={privateSummary}
+                                      onChange={(e) =>
+                                        setPrivateSummary(e.target.value)
+                                      }
+                                      rows={5}
+                                    />
+                                    <p className="mt-2 text-xs text-gray-500">
+                                      This stays private and is not shown to the client.
+                                    </p>
                                   </div>
                                 </div>
                                 <DialogFooter>
                                   <Button
                                     variant="outline"
                                     onClick={() => {
-                                      setNotes("");
+                                      setClientNote("");
+                                      setPrivateSummary("");
                                       setSelectedAppointment(null);
                                     }}
                                   >
@@ -534,9 +557,13 @@ export default function TherapistAppointmentsPage() {
                                   </Button>
                                   <Button
                                     onClick={() =>
-                                      handleAddNotes(appointment.id)
+                                      handleSaveSessionNotes(appointment.id)
                                     }
-                                    disabled={isUpdating || !notes.trim()}
+                                    disabled={
+                                      isUpdating ||
+                                      (!clientNote.trim() &&
+                                        !privateSummary.trim())
+                                    }
                                   >
                                     {isUpdating ? (
                                       <LoadingSpinner size="sm" />

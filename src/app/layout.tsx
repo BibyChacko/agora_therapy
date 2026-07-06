@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Providers } from "@/lib/providers";
 import { LayoutWrapper } from "@/components/layout/LayoutWrapper";
+import { defaultKeywords, siteName, siteUrl } from "@/lib/seo";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -15,14 +16,45 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MindGood - Multilingual Mental Health Support",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: `${siteName} | Online Therapy in Dubai, UAE & GCC`,
+    template: `%s | ${siteName}`,
+  },
   description:
-    "Connect with psychologists who speak your language. Professional mental health support in Malayalam, Tamil, Hindi, Telugu, and Kannada.",
-  keywords:
-    "mental health, psychologist in Dubai, best psychologist in Dubai, therapist in UAE, anxiety counseling Dubai, depression therapy, couples therapy Dubai, trauma therapist, child psychologist Dubai, affordable therapy UAE, Malayalam speaking psychologist, Tamil counseling UAE, Hindi therapist Dubai, online therapy, career counseling, stress management, counseling near me",
+    "MindGood connects individuals, couples, and families in Dubai, the UAE, and across the GCC with licensed online psychologists and multilingual therapy support.",
+  keywords: defaultKeywords,
+  applicationName: siteName,
   icons: {
     icon: "/mindgood.ico",
     apple: "/Mindgood.png",
+  },
+  alternates: {
+    canonical: siteUrl,
+  },
+  openGraph: {
+    title: `${siteName} | Online Therapy in Dubai, UAE & GCC`,
+    description:
+      "Book confidential online therapy with multilingual psychologists supporting Dubai, the UAE, and the wider GCC.",
+    url: siteUrl,
+    siteName,
+    locale: "en_AE",
+    type: "website",
+    images: [
+      {
+        url: "/images/hero-image.webp",
+        width: 1200,
+        height: 630,
+        alt: "MindGood online therapy in Dubai, UAE and GCC",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${siteName} | Online Therapy in Dubai, UAE & GCC`,
+    description:
+      "Confidential online therapy for Dubai, the UAE, and the GCC with multilingual psychologists.",
+    images: ["/images/hero-image.webp"],
   },
 };
 
@@ -36,6 +68,9 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/mindgood.ico" />
         <link rel="icon" href="/Logo.svg" />
+        <meta name="geo.region" content="AE-DU" />
+        <meta name="geo.placename" content="Dubai" />
+        <meta name="ICBM" content="25.2048, 55.2708" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

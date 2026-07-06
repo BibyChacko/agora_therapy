@@ -8,6 +8,7 @@ import ical from 'ical-generator';
 
 interface EmailConfig {
   to: string | string[];
+  bcc?: string | string[];
   subject: string;
   html: string;
   text?: string;
@@ -18,6 +19,12 @@ interface EmailConfig {
   }>;
 }
 
+const BOOKING_CONFIRMATION_BCC = [
+  "hello@mindgood.life",
+  "dhanyageorge98@gmail.com",
+  "bibychackokply@gmail.com",
+];
+
 interface AppointmentEmailData {
   clientName: string;
   clientEmail: string;
@@ -26,6 +33,10 @@ interface AppointmentEmailData {
   appointmentDate: Date;
   duration: number; // minutes
   meetingLink: string;
+  meetingId: string;
+  meetingPasscode: string;
+  sessionTypeLabel: string;
+  maxClientParticipants: number;
   amount: number;
   currency: string;
 }
@@ -57,6 +68,7 @@ class EmailService {
       const info = await this.transporter.sendMail({
         from: `"Mindgood Therapy" <${process.env.SMTP_USER}>`,
         to: config.to,
+        bcc: config.bcc,
         subject: config.subject,
         text: config.text,
         html: config.html,
@@ -170,6 +182,18 @@ class EmailService {
                 <span class="detail-value">${data.duration} minutes</span>
               </div>
               <div class="detail-row">
+                <span class="detail-label">Session:</span>
+                <span class="detail-value">${data.sessionTypeLabel}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Meeting ID:</span>
+                <span class="detail-value">${data.meetingId}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Passcode:</span>
+                <span class="detail-value">${data.meetingPasscode}</span>
+              </div>
+              <div class="detail-row">
                 <span class="detail-label">Amount Paid:</span>
                 <span class="detail-value">${data.currency.toUpperCase()} ${(data.amount / 100).toFixed(2)}</span>
               </div>
@@ -182,6 +206,10 @@ class EmailService {
 
             <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; border-radius: 4px; margin: 20px 0;">
               <strong>📌 Important:</strong> Please join the session 5 minutes early to test your audio and video.
+            </div>
+
+            <div style="background: #ecfeff; border-left: 4px solid #0891b2; padding: 15px; border-radius: 4px; margin: 20px 0;">
+              <strong>Guests:</strong> This booking includes access for up to ${data.maxClientParticipants} participant${data.maxClientParticipants > 1 ? "s" : ""} on the client side using the Meeting ID and Passcode above.
             </div>
 
             <p>If you need to reschedule or have any questions, please contact us at ${process.env.SMTP_USER}</p>
@@ -258,6 +286,18 @@ class EmailService {
                 <span class="detail-value">${data.duration} minutes</span>
               </div>
               <div class="detail-row">
+                <span class="detail-label">Session:</span>
+                <span class="detail-value">${data.sessionTypeLabel}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Meeting ID:</span>
+                <span class="detail-value">${data.meetingId}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Passcode:</span>
+                <span class="detail-value">${data.meetingPasscode}</span>
+              </div>
+              <div class="detail-row">
                 <span class="detail-label">Session Fee:</span>
                 <span class="detail-value">${data.currency.toUpperCase()} ${(data.amount / 100).toFixed(2)}</span>
               </div>
@@ -313,6 +353,10 @@ class EmailService {
       appointmentDate: data.appointmentDate,
       duration: data.duration,
       meetingLink: data.meetingLink,
+      meetingId: data.meetingId,
+      meetingPasscode: data.meetingPasscode,
+      sessionTypeLabel: data.sessionTypeLabel,
+      maxClientParticipants: data.maxClientParticipants,
       amount: data.amount,
       currency: data.currency,
     });
@@ -324,6 +368,7 @@ class EmailService {
     console.log("📤 Sending email to client:", data.clientEmail);
     await this.sendEmail({
       to: data.clientEmail,
+      bcc: BOOKING_CONFIRMATION_BCC,
       subject: '✅ Your Therapy Appointment is Confirmed',
       html: this.generateClientConfirmationEmail(data),
       attachments: [
@@ -340,6 +385,7 @@ class EmailService {
     console.log("📤 Sending email to therapist:", data.therapistEmail);
     await this.sendEmail({
       to: data.therapistEmail,
+      bcc: BOOKING_CONFIRMATION_BCC,
       subject: '📅 New Appointment Booked',
       html: this.generateTherapistNotificationEmail(data),
       attachments: [

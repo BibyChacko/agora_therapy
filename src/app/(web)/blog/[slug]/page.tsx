@@ -8,6 +8,7 @@ import { getPublicTherapists } from '@/lib/services/public-therapist-service';
 import { TherapistCard } from '@/components/psychologists/TherapistCard';
 import ReadingProgressBar from '@/components/blog/ReadingProgressBar';
 import BlogLanguageSelector from '@/components/blog/BlogLanguageSelector';
+import { siteUrl } from '@/lib/seo';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -15,25 +16,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   
   if (!blogPost) return { title: 'Post Not Found' };
 
-  const baseUrl = 'https://mindgood.life';
-  const canonicalUrl = `${baseUrl}/blog/${slug}`;
-
-  // Generate localized alternates if the blog supports multiple languages
-  const supportedLanguages = blogPost.languages.map(l => {
-    // Map full names back to codes for hreflang (simple mapping)
-    const langMap: Record<string, string> = {
-      'English': 'en', 'Hindi': 'hi', 'Malayalam': 'ml', 'Tamil': 'ta', 
-      'Telugu': 'te', 'Kannada': 'kn'
-    };
-    return langMap[l] || 'en';
-  });
-
-  const langs = Object.fromEntries(
-    supportedLanguages.map(lang => [
-      lang, 
-      `${baseUrl}${lang === 'en' ? '' : `/${lang}`}/blog/${slug}`
-    ])
-  );
+  const canonicalUrl = `${siteUrl}/blog/${slug}`;
 
   return {
     title: `${blogPost.title} | MindGood Blog`,
@@ -48,10 +31,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     ],
     alternates: {
       canonical: canonicalUrl,
-      languages: {
-        ...langs,
-        'x-default': canonicalUrl,
-      }
     },
     openGraph: {
       title: blogPost.title,

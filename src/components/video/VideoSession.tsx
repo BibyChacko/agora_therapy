@@ -19,9 +19,11 @@ import { Bell, Clock3 } from "lucide-react";
 interface VideoSessionProps {
   appointmentId: string;
   userId: string;
-  userRole: "therapist" | "client";
+  userRole: "therapist" | "client" | "guest";
   duration: number; // Duration in minutes
   scheduledFor: Date; // Scheduled start time
+  guestName?: string;
+  meetingPasscode?: string;
   onSessionEnd?: () => void;
   className?: string;
 }
@@ -38,9 +40,16 @@ export function VideoSession({
   userRole,
   duration,
   scheduledFor,
+  guestName,
+  meetingPasscode,
   onSessionEnd,
   className = "",
 }: VideoSessionProps) {
+  const SESSION_DURATION_SECONDS = 60 * 60;
+  const BUFFER_DURATION_SECONDS = 5 * 60;
+  const TOTAL_SESSION_SECONDS =
+    SESSION_DURATION_SECONDS + BUFFER_DURATION_SECONDS;
+
   const [sessionState, setSessionState] = useState<VideoSessionState>(
     agoraService.getCurrentState()
   );
@@ -61,10 +70,12 @@ export function VideoSession({
   // Generate channel name based on appointment ID
   const channelName = `therapy_session_${appointmentId}`;
 
-  // Calculate end time from the scheduled start and actual booked duration.
-  const sessionDurationSeconds = Math.max(duration, 1) * 60;
+  // Fixed live-session window: 60 minutes plus a 5 minute wrap-up buffer.
+  const sessionDurationSeconds = SESSION_DURATION_SECONDS;
+  const bufferDurationSeconds = BUFFER_DURATION_SECONDS;
+  const totalSessionSeconds = TOTAL_SESSION_SECONDS;
   const sessionEndTimestamp =
-    scheduledFor.getTime() + sessionDurationSeconds * 1000;
+    scheduledFor.getTime() + totalSessionSeconds * 1000;
 
   const addNotification = useCallback((title: string, description: string) => {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -200,7 +211,11 @@ export function VideoSession({
       return;
     }
 
-    const elapsedSeconds = Math.max(0, sessionDurationSeconds - timeRemaining);
+    const elapsedSeconds = Math.max(0, totalSessionSeconds - timeRemaining);
+    const mainSessionTimeRemaining = Math.max(
+      0,
+      timeRemaining - bufferDurationSeconds
+    );
     const milestoneDefinitions = [
       {
         key: "half",
@@ -216,9 +231,19 @@ export function VideoSession({
       },
       {
         key: "five-minutes",
-        shouldTrigger: timeRemaining > 0 && timeRemaining <= 5 * 60,
+        shouldTrigger:
+          mainSessionTimeRemaining > 0 &&
+          mainSessionTimeRemaining <= 5 * 60,
         title: "5 minutes remaining",
         description: "Please begin wrapping up the therapy session.",
+      },
+      {
+        key: "buffer",
+        shouldTrigger:
+          timeRemaining > 0 && timeRemaining <= bufferDurationSeconds,
+        title: "Buffer time started",
+        description:
+          "The scheduled hour is complete. You are now in the 5 minute wrap-up buffer.",
       },
       {
         key: "one-minute",
@@ -237,7 +262,14 @@ export function VideoSession({
         addNotification(milestone.title, milestone.description);
       }
     });
-  }, [addNotification, sessionDurationSeconds, sessionState.isConnected, timeRemaining]);
+  }, [
+    addNotification,
+    bufferDurationSeconds,
+    sessionDurationSeconds,
+    sessionState.isConnected,
+    timeRemaining,
+    totalSessionSeconds,
+  ]);
 
   // Format time as MM:SS
   const formatTime = (seconds: number): string => {
@@ -279,6 +311,8 @@ export function VideoSession({
         userId,
         userRole,
         channelName,
+        guestName,
+        meetingPasscode,
       };
 
       // In a real implementation, you'd get the Firebase token from useAuth or similar
@@ -355,6 +389,12 @@ export function VideoSession({
     );
   }
 
+  const isInBufferTime =
+    timeRemaining > 0 && timeRemaining <= bufferDurationSeconds;
+  const displaySessionTimeRemaining = isInBufferTime
+    ? bufferDurationSeconds
+    : Math.max(0, timeRemaining - bufferDurationSeconds);
+
   return (
       <div className={`space-y-4 ${className}`}>
       {/* Connection Status and Timer */}
@@ -367,11 +407,18 @@ export function VideoSession({
         {/* Session Timer */}
         <Card className={`${timeRemaining <= 120 ? 'border-red-500 bg-red-50' : timeRemaining <= 300 ? 'border-yellow-500 bg-yellow-50' : 'border-green-500 bg-green-50'}`}>
           <CardContent className="py-2 px-4">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <div className={`w-2 h-2 rounded-full ${timeRemaining <= 120 ? 'bg-red-500 animate-pulse' : timeRemaining <= 300 ? 'bg-yellow-500' : 'bg-green-500'}`} />
-              <span className={`font-mono text-lg font-bold ${timeRemaining <= 120 ? 'text-red-700' : timeRemaining <= 300 ? 'text-yellow-700' : 'text-green-700'}`}>
-                {formatTime(timeRemaining)}
-              </span>
+              <div>
+                <div className={`font-mono text-lg font-bold ${timeRemaining <= 120 ? 'text-red-700' : timeRemaining <= 300 ? 'text-yellow-700' : 'text-green-700'}`}>
+                  {formatTime(timeRemaining)}
+                </div>
+                <div className="text-xs text-gray-600">
+                  {isInBufferTime
+                    ? `Buffer time: ${formatTime(timeRemaining)} remaining`
+                    : `Main session: ${formatTime(displaySessionTimeRemaining)} remaining`}
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -409,6 +456,15 @@ export function VideoSession({
           <Clock3 className="h-4 w-4" />
           <AlertDescription className="text-red-800">
             ⚠️ Session will end in {Math.ceil(timeRemaining / 60)} minute{Math.ceil(timeRemaining / 60) !== 1 ? 's' : ''}. Please wrap up your conversation.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {isInBufferTime && (
+        <Alert className="border-yellow-500 bg-yellow-50">
+          <Clock3 className="h-4 w-4" />
+          <AlertDescription className="text-yellow-900">
+            The 60-minute session is complete. You are now using the 5-minute buffer period.
           </AlertDescription>
         </Alert>
       )}

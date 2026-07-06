@@ -5,7 +5,7 @@ import { useState } from "react";
 const faqs = [
   {
     question: "How does online therapy work?",
-    answer: "Our online therapy platform connects you with licensed therapists through secure video sessions. Simply browse our therapists, book a session that fits your schedule, and connect from the comfort of your home. All sessions are confidential and HIPAA-compliant."
+    answer: "MindGood connects you with licensed psychologists through secure online sessions. Browse therapists, filter by language or concern, book a time that suits you, and join confidential therapy from anywhere in Dubai, the UAE, or the GCC."
   },
   {
     question: "What is the difference between a therapist and a counselor?",
@@ -13,7 +13,7 @@ const faqs = [
   },
   {
     question: "How much does a therapy session cost?",
-    answer: "Our sessions start from $30 USD for a one-hour session. Pricing may vary based on the therapist's specialization and experience. We accept various payment methods including credit cards, debit cards, Apple Pay, and Google Pay. Many insurance plans also cover online therapy."
+    answer: "Session pricing varies by therapist, specialization, and format. You can review each psychologist's fees before booking, and we support common digital payment methods for clients in Dubai, the UAE, and the GCC."
   },
   {
     question: "Can I switch therapists if needed?",
@@ -21,7 +21,7 @@ const faqs = [
   },
   {
     question: "Is my information kept confidential?",
-    answer: "Yes, complete confidentiality is our priority. All sessions and communications are encrypted and HIPAA-compliant. Your therapist is bound by professional ethics and legal requirements to maintain confidentiality, except in rare cases where there's a risk of harm."
+    answer: "Yes. Confidentiality is a core part of care at MindGood. Sessions and communications are protected, and your psychologist follows professional and legal confidentiality standards, except in limited situations involving immediate safety concerns."
   }
 ];
 
@@ -56,10 +56,10 @@ export function GlassFAQSection() {
                   {/* Overlay text */}
                   <div className="absolute bottom-8 left-8 right-8">
                     <h3 className="text-white text-3xl font-bold mb-2">
-                      Need any help? Don&apos;t worry.
+                      Need support in Dubai or the GCC?
                     </h3>
                     <p className="text-white/90 text-lg">
-                      We&apos;re here to support you 24/7
+                      We&apos;re here to help you find the right therapist
                     </p>
                   </div>
                 </div>

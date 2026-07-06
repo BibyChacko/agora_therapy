@@ -4,27 +4,28 @@ import { FiArrowRight, FiSearch } from 'react-icons/fi';
 import { AVAILABLE_SERVICES } from '@/types/models/service';
 import { getPublicTherapists } from '@/lib/services/public-therapist-service';
 import { getLanguageName } from '@/lib/constants/languages';
+import { gccAreas, siteUrl } from '@/lib/seo';
 
 // Comprehensive Metadata for SEO
 export const metadata = {
-  title: 'Psychology & Therapy Services in UAE | Multilingual Support | MindGood',
-  description: 'MindGood offers specialized online therapy in UAE. Our licensed psychologists provide support for anxiety, depression, digital burnout, imposter syndrome, relationship issues, and more in 60+ languages.',
-  keywords: 'online therapy uae, psychologists in dubai, digital well-being uae, imposter syndrome counseling, eco-anxiety support, hustle culture burnout, malayalam speaking psychologists, hindi therapy uae, anxiety treatment dubai',
+  title: 'Therapy Services in Dubai, UAE & GCC | MindGood',
+  description: 'Explore online therapy services for Dubai, the UAE, and the GCC. MindGood offers multilingual support for anxiety, depression, couples therapy, trauma, burnout, and relationship challenges.',
+  keywords: 'online therapy dubai, psychologists in dubai, counselling uae, couples therapy dubai, anxiety therapist dubai, trauma therapy uae, malayalam psychologist dubai, hindi therapy dubai, arabic therapist uae',
   alternates: {
-    canonical: 'https://mindgood.life/services',
+    canonical: `${siteUrl}/services`,
   },
   openGraph: {
-    title: 'Professional Therapy Services | MindGood',
-    description: 'Specialized mental health support in your language. Connect with licensed psychologists online across the UAE.',
-    url: 'https://mindgood.life/services',
+    title: 'Therapy Services in Dubai, UAE & GCC | MindGood',
+    description: 'Specialized multilingual therapy for Dubai, the UAE, and the GCC.',
+    url: `${siteUrl}/services`,
     siteName: 'MindGood',
     locale: 'en_AE',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Mental Health Services in UAE | MindGood',
-    description: 'Multilingual therapy support with licensed psychologists.',
+    title: 'Therapy Services in Dubai, UAE & GCC | MindGood',
+    description: 'Multilingual therapy support for anxiety, relationships, trauma, and stress.',
   },
 };
 
@@ -58,12 +59,12 @@ export default async function ServicesPage({ searchParams }: { searchParams: Pro
     "@context": "https://schema.org",
     "@type": "MedicalWebPage",
     "name": "MindGood Therapy Services",
-    "description": "Specialized mental health services provided by licensed psychologists in the UAE.",
+    "description": "Specialized mental health services provided by licensed psychologists supporting clients in Dubai, the UAE, and across the GCC.",
     "medicalSpecialty": filteredServices.map(s => s.name),
     "provider": {
       "@type": "MedicalOrganization",
       "name": "MindGood",
-      "url": "https://mindgood.life"
+      "url": siteUrl
     },
     "mainEntity": {
       "@type": "ItemList",
@@ -79,10 +80,10 @@ export default async function ServicesPage({ searchParams }: { searchParams: Pro
             "name": "MindGood"
           },
           "serviceType": "Psychological Counseling",
-          "areaServed": "United Arab Emirates",
+          "areaServed": gccAreas,
           "availableChannel": {
             "@type": "ServiceChannel",
-            "serviceUrl": `https://mindgood.life/services#${service.id}`,
+            "serviceUrl": `${siteUrl}/services#${service.id}`,
             "name": "Online Video Session"
           }
         }
@@ -110,8 +111,9 @@ export default async function ServicesPage({ searchParams }: { searchParams: Pro
               {service.helpPoints?.map((point, i) => <li key={i}>{point}</li>)}
             </ul>
             <p>
-              We provide {service.name} specialists who speak multiple languages including 
-              English, Arabic, Hindi, and Malayalam to serve the diverse UAE community.
+              We provide {service.name} specialists who speak multiple languages including
+              English, Arabic, Hindi, Malayalam, Tamil, and Urdu to support Dubai residents,
+              expat families, and clients across the GCC.
             </p>
           </article>
         ))}
@@ -124,8 +126,8 @@ export default async function ServicesPage({ searchParams }: { searchParams: Pro
               Our Specialized Services
             </h1>
             <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-10">
-              Professional mental health support tailored to your unique needs, 
-              delivered by culturally-aware specialists who speak your language.
+              Professional mental health support for Dubai, the UAE, and the GCC,
+              delivered by culturally aware specialists who speak your language.
             </p>
           </header>
           
@@ -146,6 +148,27 @@ export default async function ServicesPage({ searchParams }: { searchParams: Pro
               </p>
             )}
           </form>
+
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Link
+              href="/online-counselling-dubai"
+              className="rounded-full bg-teal-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-teal-700"
+            >
+              Online Counselling Dubai
+            </Link>
+            <Link
+              href="/anxiety-therapy-dubai"
+              className="rounded-full bg-gray-900 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-black dark:bg-white dark:text-black"
+            >
+              Anxiety Therapy Dubai
+            </Link>
+            <Link
+              href="/couples-therapy-dubai"
+              className="rounded-full border border-gray-300 px-5 py-2.5 text-sm font-bold text-gray-900 transition hover:border-teal-500 dark:border-gray-700 dark:text-white"
+            >
+              Couples Therapy Dubai
+            </Link>
+          </div>
         </div>
 
         {filteredServices.length === 0 ? (

@@ -25,6 +25,7 @@ import { TherapistService } from "@/lib/services/therapist-service";
 import { getUserTimezone } from "@/lib/utils/timezone-utils";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useToast } from "@/lib/hooks/useToast";
+import { getTherapySessionConfig } from "@/lib/session/therapy-session";
 import type {
   EnhancedAvailableSlot,
   SessionType,
@@ -147,7 +148,28 @@ export function BookingConfirmation({
   };
 
   const getSessionTypeInfo = () => {
+    const therapyConfig = getTherapySessionConfig(sessionType);
     const sessionTypes = {
+      single: {
+        label: therapyConfig.label,
+        icon: User,
+        description: therapyConfig.description,
+      },
+      couple: {
+        label: therapyConfig.label,
+        icon: Users,
+        description: therapyConfig.description,
+      },
+      couples: {
+        label: therapyConfig.label,
+        icon: Users,
+        description: therapyConfig.description,
+      },
+      family: {
+        label: therapyConfig.label,
+        icon: Users,
+        description: therapyConfig.description,
+      },
       individual: {
         label: "Individual Session",
         icon: User,
@@ -169,7 +191,7 @@ export function BookingConfirmation({
         description: "Follow-up appointment",
       },
     };
-    return sessionTypes[sessionType] || sessionTypes.individual;
+    return sessionTypes[sessionType] || sessionTypes.single;
   };
 
   if (loading) {

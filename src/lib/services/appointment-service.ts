@@ -229,6 +229,10 @@ export class AppointmentService {
 
       // Get session type limits for group sessions
       const sessionTypeLimits = {
+        single: 1,
+        couple: 2,
+        family: 4,
+        couples: 2,
         individual: 1,
         consultation: 1,
         follow_up: 1,
@@ -493,6 +497,32 @@ export class AppointmentService {
     } catch (error) {
       console.error("Error updating appointment status:", error);
       throw new Error("Failed to update appointment status");
+    }
+  }
+
+  /**
+   * Save therapist post-session notes.
+   * therapistNotes is visible to the client.
+   * internalNotes remains private to the therapist/admin side.
+   */
+  static async updateTherapistSessionNotes(
+    appointmentId: string,
+    notes: {
+      therapistNotes?: string;
+      internalNotes?: string;
+    }
+  ): Promise<void> {
+    try {
+      const docRef = documents.appointment(appointmentId);
+
+      await updateDoc(docRef, {
+        "communication.therapistNotes": notes.therapistNotes || "",
+        "communication.internalNotes": notes.internalNotes || "",
+        "metadata.updatedAt": serverTimestamp(),
+      });
+    } catch (error) {
+      console.error("Error updating therapist session notes:", error);
+      throw new Error("Failed to save therapist notes");
     }
   }
 

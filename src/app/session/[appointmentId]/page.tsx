@@ -2,14 +2,15 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/hooks/useAuth";
-import { AppointmentService } from "@/lib/services/appointment-service";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Video } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import type { Appointment } from "@/types/database";
+import { getTherapySessionConfig } from "@/lib/session/therapy-session";
 
 // Dynamically import VideoSession with no SSR
 const VideoSession = dynamic(
@@ -23,59 +24,91 @@ const VideoSession = dynamic(
 export default function SessionPage() {
   const params = useParams();
   const router = useRouter();
-  const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const { user, loading: authLoading } = useAuth();
   const [appointment, setAppointment] = useState<Appointment | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [userRole, setUserRole] = useState<"therapist" | "client" | null>(null);
+  const [userRole, setUserRole] = useState<"therapist" | "client" | "guest" | null>(null);
+  const [meetingPasscode, setMeetingPasscode] = useState("");
+  const [guestName, setGuestName] = useState("");
+  const [isVerifyingGuest, setIsVerifyingGuest] = useState(false);
 
   const appointmentId = params.appointmentId as string;
 
   useEffect(() => {
-    const loadAppointment = async () => {
-      if (!user || !appointmentId) return;
+    const passcodeFromQuery = searchParams.get("passcode");
+    const guestFromQuery = searchParams.get("guest");
+
+    if (passcodeFromQuery && !meetingPasscode) {
+      setMeetingPasscode(passcodeFromQuery);
+    }
+
+    if (guestFromQuery && !guestName) {
+      setGuestName(guestFromQuery);
+    }
+  }, [guestName, meetingPasscode, searchParams]);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      setLoading(false);
+    }
+  }, [authLoading, user]);
+
+  useEffect(() => {
+    const loadAuthenticatedAppointment = async () => {
+      if (!appointmentId || !user) {
+        return;
+      }
 
       try {
         setLoading(true);
-        const apt = await AppointmentService.getAppointment(appointmentId);
-        
-        if (!apt) {
-          setError("Appointment not found");
-          return;
+        setError(null);
+
+        const response = await fetch(`/api/session/access/${appointmentId}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({}),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to load session");
         }
 
-        // Determine user role
-        if (apt.therapistId === user.uid) {
-          setUserRole("therapist");
-        } else if (apt.clientId === user.uid) {
-          setUserRole("client");
-        } else {
-          setError("You are not authorized to join this session");
-          return;
+        if (
+          data.appointment.status !== "confirmed" &&
+          data.appointment.status !== "in_progress"
+        ) {
+          throw new Error(
+            `This session is ${data.appointment.status}. Only confirmed sessions can be joined.`
+          );
         }
 
-        // Check if appointment is confirmed or in progress
-        if (apt.status !== "confirmed" && apt.status !== "in_progress") {
-          setError(`This session is ${apt.status}. Only confirmed sessions can be joined.`);
-          return;
-        }
-
-        setAppointment(apt);
+        setAppointment(data.appointment as Appointment);
+        setUserRole(data.viewerRole);
       } catch (err) {
         console.error("Error loading appointment:", err);
-        setError("Failed to load appointment details");
+        setError(
+          err instanceof Error ? err.message : "Failed to load appointment details"
+        );
       } finally {
         setLoading(false);
       }
     };
 
-    loadAppointment();
-  }, [user, appointmentId]);
+    void loadAuthenticatedAppointment();
+  }, [appointmentId, user]);
 
   const handleSessionEnd = () => {
     // Redirect based on user role
     if (userRole === "therapist") {
       router.push("/therapist/appointments");
+    } else if (userRole === "guest") {
+      router.push("/");
     } else {
       router.push("/client/sessions");
     }
@@ -84,12 +117,63 @@ export default function SessionPage() {
   const handleGoBack = () => {
     if (userRole === "therapist") {
       router.push("/therapist/appointments");
+    } else if (userRole === "guest") {
+      router.push("/");
     } else {
       router.push("/client/sessions");
     }
   };
 
-  if (loading) {
+  const handleGuestAccess = async () => {
+    if (!meetingPasscode.trim() || !guestName.trim()) {
+      setError("Enter the meeting passcode and your name to join.");
+      return;
+    }
+
+    try {
+      setIsVerifyingGuest(true);
+      setError(null);
+      setLoading(true);
+
+      const response = await fetch(`/api/session/access/${appointmentId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          meetingPasscode: meetingPasscode.trim(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Unable to verify meeting credentials");
+      }
+
+      if (
+        data.appointment.status !== "confirmed" &&
+        data.appointment.status !== "in_progress"
+      ) {
+        throw new Error(
+          `This session is ${data.appointment.status}. Only confirmed sessions can be joined.`
+        );
+      }
+
+      setAppointment(data.appointment as Appointment);
+      setUserRole("guest");
+    } catch (err) {
+      console.error("Error verifying guest access:", err);
+      setError(
+        err instanceof Error ? err.message : "Unable to verify meeting credentials"
+      );
+    } finally {
+      setLoading(false);
+      setIsVerifyingGuest(false);
+    }
+  };
+
+  if (loading || authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <LoadingSpinner />
@@ -97,7 +181,57 @@ export default function SessionPage() {
     );
   }
 
-  if (error || !appointment || !userRole || !user) {
+  if (!user && !appointment) {
+    return (
+      <div className="container mx-auto max-w-xl px-4 py-10">
+        <div className="rounded-xl border bg-white p-6 shadow-sm">
+          <div className="mb-6 flex items-center gap-3">
+            <Video className="h-5 w-5 text-teal-600" />
+            <div>
+              <h1 className="text-xl font-semibold">Join Therapy Session</h1>
+              <p className="text-sm text-gray-600">
+                Enter the meeting passcode shared after booking.
+              </p>
+            </div>
+          </div>
+
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          <div className="space-y-4">
+            <div>
+              <label className="mb-2 block text-sm font-medium">Meeting ID</label>
+              <Input value={appointmentId} readOnly />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium">Your Name</label>
+              <Input
+                value={guestName}
+                onChange={(event) => setGuestName(event.target.value)}
+                placeholder="Enter your name"
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium">Passcode</label>
+              <Input
+                value={meetingPasscode}
+                onChange={(event) => setMeetingPasscode(event.target.value)}
+                placeholder="Enter meeting passcode"
+              />
+            </div>
+            <Button onClick={handleGuestAccess} className="w-full" disabled={isVerifyingGuest}>
+              {isVerifyingGuest ? "Verifying..." : "Join as Participant"}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !appointment || !userRole || (!user && userRole !== "guest")) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         <Alert variant="destructive" className="mb-4">
@@ -110,6 +244,8 @@ export default function SessionPage() {
       </div>
     );
   }
+
+  const sessionConfig = getTherapySessionConfig(appointment.session?.type);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50">
@@ -128,7 +264,11 @@ export default function SessionPage() {
               </div>
             </div>
             <div className="text-sm text-gray-600">
-              {userRole === "therapist" ? "Therapist View" : "Client View"}
+              {userRole === "therapist"
+                ? "Therapist View"
+                : userRole === "guest"
+                ? `Guest View${guestName ? ` • ${guestName}` : ""}`
+                : "Client View"}
             </div>
           </div>
         </div>
@@ -147,11 +287,24 @@ export default function SessionPage() {
             <p className="text-sm text-gray-600">
               Duration: {appointment.duration} minutes
             </p>
+            <p className="text-sm text-gray-600">
+              Session Type: {sessionConfig.label}
+            </p>
+            <p className="text-sm text-gray-600">
+              Meeting ID: {appointment.session?.meetingId || appointmentId}
+            </p>
+            {userRole !== "therapist" && (
+              <p className="text-sm text-gray-600">
+                Client-side participants allowed:{" "}
+                {appointment.session?.maxClientParticipants ||
+                  sessionConfig.clientParticipants}
+              </p>
+            )}
           </div>
 
           <VideoSession
             appointmentId={appointmentId}
-            userId={user.uid}
+            userId={user?.uid || `${appointmentId}:${guestName || "guest"}`}
             userRole={userRole}
             duration={appointment.duration || 60}
             scheduledFor={
@@ -159,6 +312,8 @@ export default function SessionPage() {
                 ? appointment.scheduledFor
                 : (appointment.scheduledFor as any)?.toDate?.() || new Date()
             }
+            guestName={userRole === "guest" ? guestName : undefined}
+            meetingPasscode={userRole === "guest" ? meetingPasscode : undefined}
             onSessionEnd={handleSessionEnd}
             className="w-full"
           />

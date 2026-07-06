@@ -24,14 +24,14 @@ export function GlassHeroSection() {
               </div>
               <div>
                 <p className="text-xl font-bold text-gray-900 dark:text-white">24/7</p>
-                <p className="text-xs text-gray-600 dark:text-gray-300">Available Support</p>
+                <p className="text-xs text-gray-600 dark:text-gray-300">Dubai, UAE & GCC</p>
               </div>
             </div>
 
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 dark:text-white leading-tight">
-              Your Life For Greater
+              Online Therapy for
               <span className="block bg-gradient-to-r from-purple-600 to-teal-600 bg-clip-text text-transparent">
-                Mental Wellness
+                Dubai, UAE & GCC
               </span>
             </h1>
 
@@ -44,8 +44,8 @@ export function GlassHeroSection() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   ),
-                  title: "Expert Therapists",
-                  description: "Connect with licensed professionals in 50+ languages"
+                  title: "Licensed Psychologists",
+                  description: "Connect with multilingual therapists who understand expat and regional mental health needs"
                 },
                 {
                   icon: (
@@ -53,8 +53,8 @@ export function GlassHeroSection() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                     </svg>
                   ),
-                  title: "Transformative Power of Therapy",
-                  description: "Evidence-based approaches tailored to your unique needs"
+                  title: "Support That Fits Your Life",
+                  description: "Evidence-based care for anxiety, relationships, burnout, stress, and life transitions"
                 },
                 {
                   icon: (
@@ -62,8 +62,8 @@ export function GlassHeroSection() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                   ),
-                  title: "Welcoming Community",
-                  description: "Join thousands finding support and healing together"
+                  title: "Confidential Online Sessions",
+                  description: "Private therapy for individuals, couples, and families across the UAE and GCC"
                 }
               ].map((feature, index) => (
                 <div

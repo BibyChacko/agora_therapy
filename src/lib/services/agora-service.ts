@@ -15,8 +15,10 @@ import { config } from "@/lib/config";
 export interface VideoSessionConfig {
   appointmentId: string;
   userId: string;
-  userRole: "therapist" | "client";
+  userRole: "therapist" | "client" | "guest";
   channelName: string;
+  guestName?: string;
+  meetingPasscode?: string;
 }
 
 export interface VideoSessionState {
@@ -42,6 +44,7 @@ export class AgoraService {
   private retryAttempts = 0;
   private maxRetries = 3;
   private retryTimeout: NodeJS.Timeout | null = null;
+  private currentUid: number | null = null;
 
   private currentState: VideoSessionState = {
     isConnected: false,
@@ -205,16 +208,14 @@ export class AgoraService {
 
     this.updateState({ connectionStatus: "reconnecting" });
 
-    const token = await this.generateToken(
-      this.sessionConfig.channelName,
-      this.sessionConfig.userId
-    );
+    const { token, uid } = await this.generateToken(this.sessionConfig);
+    this.currentUid = uid;
 
     await this.client.join(
       config.agora.appId,
       this.sessionConfig.channelName,
       token,
-      this.sessionConfig.userId
+      uid
     );
 
     // Republish local tracks if they exist
@@ -252,9 +253,8 @@ export class AgoraService {
   }
 
   private async generateToken(
-    channelName: string,
-    uid: string
-  ): Promise<string> {
+    sessionConfig: VideoSessionConfig
+  ): Promise<{ token: string; uid: number }> {
     try {
       const response = await fetch("/api/agora/token", {
         method: "POST",
@@ -262,8 +262,11 @@ export class AgoraService {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          channelName,
-          userId: uid,
+          appointmentId: sessionConfig.appointmentId,
+          channelName: sessionConfig.channelName,
+          userId: sessionConfig.userId,
+          meetingPasscode: sessionConfig.meetingPasscode,
+          guestName: sessionConfig.guestName,
         }),
       });
 
@@ -276,8 +279,8 @@ export class AgoraService {
         );
       }
 
-      const { token } = await response.json();
-      return token;
+      const { token, uid } = await response.json();
+      return { token, uid };
     } catch (error) {
       console.error("Error generating Agora token:", error);
       throw error;
@@ -304,14 +307,14 @@ export class AgoraService {
         this.getFirebaseToken = async () => firebaseToken;
       }
 
-      const token = await this.generateToken(config.channelName, config.userId);
+      const { token, uid } = await this.generateToken(config);
+      this.currentUid = uid;
 
-      // Use UID 0 for string-based user IDs
       await this.client.join(
         process.env.NEXT_PUBLIC_AGORA_APP_ID!,
         config.channelName,
         token,
-        0
+        uid
       );
 
       // Create and publish local tracks
@@ -358,6 +361,7 @@ export class AgoraService {
       await this.client.leave();
 
       this.sessionConfig = null;
+      this.currentUid = null;
       this.retryAttempts = 0;
       this.updateState({
         isConnected: false,

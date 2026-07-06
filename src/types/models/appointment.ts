@@ -14,7 +14,15 @@ export type AppointmentStatus =
   | "cancelled"
   | "no_show";
 
-export type SessionType = "individual" | "group" | "consultation" | "follow_up";
+export type SessionType =
+  | "single"
+  | "couple"
+  | "family"
+  | "individual"
+  | "couples"
+  | "group"
+  | "consultation"
+  | "follow_up";
 export type SessionDeliveryType = "video" | "phone" | "in_person";
 export type SessionPlatform = "agora" | "zoom" | "teams";
 
@@ -35,6 +43,10 @@ export interface Appointment {
     channelId?: string;
     accessToken?: string;
     joinUrl?: string;
+    meetingId?: string;
+    meetingPasscode?: string;
+    maxClientParticipants?: number;
+    totalParticipantLimit?: number;
   };
 
   payment: {

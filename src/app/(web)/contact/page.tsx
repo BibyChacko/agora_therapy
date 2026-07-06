@@ -4,9 +4,9 @@ import { FiMail, FiPhone, FiMapPin, FiMessageSquare } from 'react-icons/fi';
 
 
 export const metadata: Metadata = {
-  title: 'Contact Us | MindGood',
-  description: 'Get in touch with MindGood for questions about our mental health services, booking appointments, or general inquiries.',
-  keywords: 'contact MindGood, mental health support, psychologist appointment, help, inquiries',
+  title: 'Contact MindGood | Therapy Support in Dubai, UAE & GCC',
+  description: 'Contact MindGood for therapy bookings, psychologist matching, and multilingual mental health support across Dubai, the UAE, and the GCC.',
+  keywords: 'contact psychologist Dubai, contact therapist UAE, mental health support Dubai, counselling contact UAE, MindGood Dubai',
 };
 
 export default function ContactPage() {
@@ -15,7 +15,7 @@ export default function ContactPage() {
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">Contact Us</h1>
         <p className="text-lg text-gray-700 dark:text-gray-300 max-w-2xl mx-auto">
-          Have questions or need assistance? We`re here to help you on your mental health journey.
+          Have questions about booking therapy in Dubai, the UAE, or the GCC? We`re here to help you find the right support.
         </p>
       </div>
       
