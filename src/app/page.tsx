@@ -12,6 +12,7 @@ import { GlassFAQSection } from '@/components/home/GlassFAQSection';
 import { GlassYogaSection } from '@/components/home/GlassYogaSection';
 import { GlassRehabSection } from '@/components/home/GlassRehabSection';
 import { GlassCTASection } from '@/components/home/GlassCTASection';
+import { InstagramEmbedSection } from '@/components/home/InstagramEmbedSection';
 import { StructuredData } from '@/components/StructuredData';
 import { getPopularLanguages, getServices, getFeaturedTherapists } from '@/lib/data/home-data';
 
@@ -133,6 +134,7 @@ export default async function Home() {
       <GlassEmotionalJourneySection />
       <GlassSpecializedSupportSection />
       <GlassTherapistSection therapists={therapists} />
+      {/* <InstagramEmbedSection /> */}
       {/* <GlassYogaSection /> */}
       {/* <GlassRehabSection /> */}
       {/* <GlassLateNightSupportSection /> */}

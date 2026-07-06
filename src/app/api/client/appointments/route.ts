@@ -1,17 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminAuth, getAdminFirestore } from "@/lib/firebase/admin";
+import { getAdminFirestore } from "@/lib/firebase/admin";
+import { verifyRequestUser } from "@/lib/server/firebase-request-auth";
 
 export async function GET(request: NextRequest) {
   try {
-    // Verify authentication
-    const token = request.cookies.get("auth-token")?.value;
-    if (!token) {
+    const decodedToken = await verifyRequestUser(request);
+    if (!decodedToken) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const auth = getAdminAuth();
     const db = getAdminFirestore();
-    const decodedToken = await auth.verifyIdToken(token);
     const clientId = decodedToken.uid;
 
     // Get user to verify role

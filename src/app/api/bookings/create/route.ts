@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminAuth, getAdminFirestore } from "@/lib/firebase/admin";
+import { getAdminFirestore } from "@/lib/firebase/admin";
 import { FieldValue } from "firebase-admin/firestore";
 import Stripe from "stripe";
+import { verifyRequestUser } from "@/lib/server/firebase-request-auth";
+import { AvailableSlotsService } from "@/lib/services/available-slots-service";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-07-30.basil",
@@ -9,15 +11,12 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify authentication
-    const token = request.cookies.get("auth-token")?.value;
-    if (!token) {
+    const decodedToken = await verifyRequestUser(request);
+    if (!decodedToken) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const auth = getAdminAuth();
     const db = getAdminFirestore();
-    const decodedToken = await auth.verifyIdToken(token);
     const clientId = decodedToken.uid;
 
     // Get client user data
@@ -35,6 +34,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       therapistId,
+      timeSlotId,
       scheduledFor, // ISO string
       duration = 50, // minutes
       sessionType = "individual",
@@ -47,6 +47,21 @@ export async function POST(request: NextRequest) {
         { error: "Missing required fields" },
         { status: 400 }
       );
+    }
+
+    if (timeSlotId) {
+      const availability = await AvailableSlotsService.checkSlotAvailability(
+        therapistId,
+        timeSlotId,
+        new Date(scheduledFor)
+      );
+
+      if (!availability.available) {
+        return NextResponse.json(
+          { error: availability.reason || "Selected time slot is no longer available" },
+          { status: 409 }
+        );
+      }
     }
 
     // Get therapist data
@@ -128,6 +143,7 @@ export async function POST(request: NextRequest) {
       therapistId,
       clientId,
       scheduledFor: new Date(scheduledFor),
+      timeSlotId: timeSlotId || "",
       duration,
       status: "pending",
       session: {
