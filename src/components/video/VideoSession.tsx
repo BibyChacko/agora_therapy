@@ -15,6 +15,15 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Bell, Clock3 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 interface VideoSessionProps {
   appointmentId: string;
@@ -58,6 +67,11 @@ export function VideoSession({
   const [timeRemaining, setTimeRemaining] = useState<number>(0); // in seconds
   const [isSessionExpired, setIsSessionExpired] = useState(false);
   const [notifications, setNotifications] = useState<SessionNotification[]>([]);
+  const [isTherapistEndDialogOpen, setIsTherapistEndDialogOpen] =
+    useState(false);
+  const [therapistClientNote, setTherapistClientNote] = useState("");
+  const [therapistPrivateSummary, setTherapistPrivateSummary] = useState("");
+  const [isEndingSession, setIsEndingSession] = useState(false);
   const localVideoRef = useRef<HTMLDivElement>(null);
   const remoteVideoRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const milestonesTriggered = useRef<Set<string>>(new Set());
@@ -169,6 +183,47 @@ export function VideoSession({
     }
   }, [markSessionCompleted, onSessionEnd, sessionState.isConnected, userRole]);
 
+  const requestTherapistSessionEnd = useCallback(() => {
+    setIsTherapistEndDialogOpen(true);
+  }, []);
+
+  const completeTherapistSessionEnd = useCallback(async () => {
+    if (
+      !therapistClientNote.trim() ||
+      !therapistPrivateSummary.trim()
+    ) {
+      setError("Please add both a note to the client and a private summary.");
+      return;
+    }
+
+    try {
+      setIsEndingSession(true);
+      setError(null);
+
+      await AppointmentService.updateTherapistSessionNotes(appointmentId, {
+        therapistNotes: therapistClientNote.trim(),
+        internalNotes: therapistPrivateSummary.trim(),
+      });
+      await updateAppointmentStatus("completed");
+      await agoraService.leaveSession();
+      setIsTherapistEndDialogOpen(false);
+      onSessionEnd?.();
+    } catch (err) {
+      console.error("Failed to end therapist session:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to end video session"
+      );
+    } finally {
+      setIsEndingSession(false);
+    }
+  }, [
+    appointmentId,
+    onSessionEnd,
+    therapistClientNote,
+    therapistPrivateSummary,
+    updateAppointmentStatus,
+  ]);
+
   useEffect(() => {
     const unsubscribe = agoraService.onStateChange(setSessionState);
     return unsubscribe;
@@ -185,7 +240,11 @@ export function VideoSession({
       // Auto-end session when time expires (only if connected)
       if (remaining <= 0 && !isSessionExpired && sessionState.isConnected) {
         setIsSessionExpired(true);
-        void handleLeaveSession(true);
+        if (userRole === "therapist") {
+          requestTherapistSessionEnd();
+        } else {
+          void handleLeaveSession(true);
+        }
       }
     };
 
@@ -196,7 +255,14 @@ export function VideoSession({
     const interval = setInterval(updateTimer, 1000);
 
     return () => clearInterval(interval);
-  }, [handleLeaveSession, isSessionExpired, sessionEndTimestamp, sessionState.isConnected]);
+  }, [
+    handleLeaveSession,
+    isSessionExpired,
+    requestTherapistSessionEnd,
+    sessionEndTimestamp,
+    sessionState.isConnected,
+    userRole,
+  ]);
 
   useEffect(() => {
     if (!sessionState.isConnected) {
@@ -394,9 +460,81 @@ export function VideoSession({
   const displaySessionTimeRemaining = isInBufferTime
     ? bufferDurationSeconds
     : Math.max(0, timeRemaining - bufferDurationSeconds);
+  const handlePrimaryEndAction = () => {
+    if (userRole === "therapist") {
+      requestTherapistSessionEnd();
+      return;
+    }
+
+    void handleLeaveSession();
+  };
 
   return (
       <div className={`space-y-4 ${className}`}>
+      <Dialog
+        open={isTherapistEndDialogOpen}
+        onOpenChange={(open) => {
+          if (isEndingSession) return;
+          setIsTherapistEndDialogOpen(open);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>End Session</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="therapist-client-note">Note To Client</Label>
+              <Textarea
+                id="therapist-client-note"
+                value={therapistClientNote}
+                onChange={(event) => setTherapistClientNote(event.target.value)}
+                placeholder="Add the follow-up note the client should see after this session..."
+                rows={4}
+              />
+              <p className="mt-2 text-xs text-gray-500">
+                This will be visible to the client after the session ends.
+              </p>
+            </div>
+            <div>
+              <Label htmlFor="therapist-private-summary">Private Summary</Label>
+              <Textarea
+                id="therapist-private-summary"
+                value={therapistPrivateSummary}
+                onChange={(event) =>
+                  setTherapistPrivateSummary(event.target.value)
+                }
+                placeholder="Add your therapist-only summary for this session..."
+                rows={5}
+              />
+              <p className="mt-2 text-xs text-gray-500">
+                This remains private and is not visible to the client.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsTherapistEndDialogOpen(false)}
+              disabled={isEndingSession}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => void completeTherapistSessionEnd()}
+              disabled={
+                isEndingSession ||
+                !therapistClientNote.trim() ||
+                !therapistPrivateSummary.trim()
+              }
+            >
+              {isEndingSession ? "Ending..." : "End Session"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Connection Status and Timer */}
       <div className="flex items-center justify-between gap-4">
         <ConnectionStatus
@@ -561,7 +699,11 @@ export function VideoSession({
         onToggleVideo={handleToggleVideo}
         onToggleAudio={handleToggleAudio}
         onSwitchCamera={handleSwitchCamera}
-        onLeaveSession={handleLeaveSession}
+        onLeaveSession={handlePrimaryEndAction}
+        endButtonTitle={
+          userRole === "therapist" ? "End session" : "Leave session"
+        }
+        endButtonLabel={userRole === "therapist" ? undefined : "Leave Room"}
       />
     </div>
   );

@@ -157,6 +157,35 @@ export class AppointmentService {
   }
 
   /**
+   * Subscribe to a single appointment document.
+   */
+  static subscribeToAppointment(
+    appointmentId: string,
+    callback: (appointment: Appointment | null) => void
+  ): () => void {
+    const docRef = documents.appointment(appointmentId);
+
+    return onSnapshot(
+      docRef,
+      (snapshot) => {
+        if (!snapshot.exists()) {
+          callback(null);
+          return;
+        }
+
+        callback({
+          id: snapshot.id,
+          ...snapshot.data(),
+        } as Appointment);
+      },
+      (error) => {
+        console.error("Error in appointment subscription:", error);
+        callback(null);
+      }
+    );
+  }
+
+  /**
    * Check for booking conflicts with group session support
    */
   static async checkBookingConflicts(

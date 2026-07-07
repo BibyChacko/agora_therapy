@@ -11,6 +11,8 @@ interface VideoControlsProps {
   onToggleAudio: () => void;
   onSwitchCamera: () => void;
   onLeaveSession: () => void;
+  endButtonTitle?: string;
+  endButtonLabel?: string;
   className?: string;
 }
 
@@ -21,6 +23,8 @@ export function VideoControls({
   onToggleAudio,
   onSwitchCamera,
   onLeaveSession,
+  endButtonTitle = "Leave session",
+  endButtonLabel,
   className = "",
 }: VideoControlsProps) {
   return (
@@ -71,10 +75,17 @@ export function VideoControls({
         variant="destructive"
         size="lg"
         onClick={onLeaveSession}
-        className="w-12 h-12 rounded-full p-0"
-        title="End session"
+        className={
+          endButtonLabel
+            ? "rounded-full px-5"
+            : "w-12 h-12 rounded-full p-0"
+        }
+        title={endButtonTitle}
       >
         <PhoneOff className="h-5 w-5" />
+        {endButtonLabel ? (
+          <span className="ml-2 whitespace-nowrap">{endButtonLabel}</span>
+        ) : null}
       </Button>
     </div>
   );

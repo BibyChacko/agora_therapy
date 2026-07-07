@@ -103,6 +103,51 @@ export default function SessionPage() {
     void loadAuthenticatedAppointment();
   }, [appointmentId, user]);
 
+  useEffect(() => {
+    if (!appointmentId || !userRole || userRole === "therapist" || !appointment) {
+      return;
+    }
+
+    const interval = window.setInterval(async () => {
+      try {
+        const response = await fetch(`/api/session/access/${appointmentId}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(
+            userRole === "guest"
+              ? { meetingPasscode: meetingPasscode.trim() }
+              : {}
+          ),
+        });
+
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok || !data?.appointment) {
+          return;
+        }
+
+        if (
+          data.appointment.status === "completed" ||
+          data.appointment.status === "cancelled"
+        ) {
+          setError("This session has been ended by the therapist.");
+          handleSessionEnd();
+        }
+      } catch (pollError) {
+        console.error("Failed to poll session status:", pollError);
+      }
+    }, 5000);
+
+    return () => window.clearInterval(interval);
+  }, [
+    appointment,
+    appointmentId,
+    meetingPasscode,
+    userRole,
+  ]);
+
   const handleSessionEnd = () => {
     // Redirect based on user role
     if (userRole === "therapist") {
