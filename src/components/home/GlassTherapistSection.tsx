@@ -42,7 +42,7 @@ export function GlassTherapistSection({ therapists }: GlassTherapistSectionProps
           {displayTherapists.map((therapist, index) => (
             <div
               key={therapist.id}
-              className="group backdrop-blur-md bg-white/50 dark:bg-gray-800/50 border border-white/60 dark:border-gray-700/60 rounded-3xl overflow-hidden hover:scale-105 transition-all duration-300 hover:shadow-2xl"
+              className="group flex h-full flex-col backdrop-blur-md bg-white/50 dark:bg-gray-800/50 border border-white/60 dark:border-gray-700/60 rounded-3xl overflow-hidden hover:scale-105 transition-all duration-300 hover:shadow-2xl"
             >
               {/* Therapist Image */}
               <div className="aspect-[3/4] relative overflow-hidden">
@@ -70,7 +70,9 @@ export function GlassTherapistSection({ therapists }: GlassTherapistSectionProps
                 {/* Bottom info */}
                 <div className="absolute bottom-0 left-0 right-0 p-6">
                   <h3 className="text-white font-bold text-2xl mb-2">{therapist.name}</h3>
-                  <p className="text-white/90 text-sm mb-3">{therapist.specialization || therapist.bio || 'Licensed Mental Health Professional'}</p>
+                  <p className="text-white/90 text-sm mb-3">
+                    {therapist.specialization || "Licensed Mental Health Professional"}
+                  </p>
                   <div className="flex flex-wrap gap-2">
                     {therapist.languages.slice(0, 3).map((lang, idx) => (
                       <span
@@ -84,8 +86,8 @@ export function GlassTherapistSection({ therapists }: GlassTherapistSectionProps
                 </div>
               </div>
 
-              {/* Card footer */}
-              <div className="p-6">
+              {/* Card body */}
+              <div className="flex flex-1 flex-col p-6">
                 <Link
                   href={`/psychologists/${therapist.id}`}
                   className="block w-full text-center py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-full font-semibold hover:from-purple-700 hover:to-blue-700 transition-all duration-300"

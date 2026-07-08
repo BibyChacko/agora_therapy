@@ -106,49 +106,45 @@ export function GlassHeroSection() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
                 
                 {/* Bottom info card */}
-                <div className="absolute bottom-6 left-6 right-6">
-                  <div className="backdrop-blur-xl bg-white/20 border border-white/40 rounded-2xl p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-white font-semibold text-lg">View Patient Stories</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <div className="flex -space-x-2">
-                            {[1, 2, 3].map((i) => (
-                              <img
-                                key={i}
-                                src={`/images/people/p${i}.jpeg`}
-                                alt={`User ${i}`}
-                                className="w-6 h-6 rounded-full border-2 border-white object-cover"
-                              />
-                            ))}
-                          </div>
-                          <span className="text-white/90 text-sm">1000+ Success Stories</span>
-                        </div>
+                <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6">
+                  <div className="backdrop-blur-xl bg-white/20 border border-white/40 rounded-2xl p-4 sm:p-5">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="pr-0 sm:pr-4">
+                        <p className="text-white font-semibold text-base sm:text-lg">Follow Mindgood</p>
+                        <p className="mt-1 text-sm leading-6 text-white/90">
+                          Stay connected for mental wellness tips, updates, and new resources across our social channels.
+                        </p>
                       </div>
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-wrap items-center gap-3 sm:justify-end">
                         <Link 
                           href="https://www.instagram.com/mindgood.life/" 
                           target="_blank" 
-                          className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center hover:bg-white transition-all hover:scale-110 text-pink-600 shadow-lg"
+                          rel="noreferrer"
+                          aria-label="Follow Mindgood on Instagram"
+                          className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-pink-600 shadow-lg transition-all hover:scale-110 hover:bg-white"
                         >
                           <FaInstagram className="w-5 h-5" />
                         </Link>
                         <Link 
                           href="https://www.linkedin.com/company/mind-good/posts/" 
                           target="_blank" 
-                          className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center hover:bg-white transition-all hover:scale-110 text-[#0077b5] shadow-lg"
+                          rel="noreferrer"
+                          aria-label="Follow Mindgood on LinkedIn"
+                          className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-[#0077b5] shadow-lg transition-all hover:scale-110 hover:bg-white"
                         >
                           <FaLinkedin className="w-5 h-5" />
                         </Link>
                         <Link 
                           href="#" 
-                          className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center hover:bg-white transition-all hover:scale-110 text-[#FF0000] shadow-lg"
+                          aria-label="Visit Mindgood on YouTube"
+                          className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-[#FF0000] shadow-lg transition-all hover:scale-110 hover:bg-white"
                         >
                           <FaYoutube className="w-5 h-5" />
                         </Link>
                         <Link 
                           href="#" 
-                          className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center hover:bg-white transition-all hover:scale-110 text-black shadow-lg"
+                          aria-label="Visit Mindgood on TikTok"
+                          className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-black shadow-lg transition-all hover:scale-110 hover:bg-white"
                         >
                           <FaTiktok className="w-5 h-5" />
                         </Link>
