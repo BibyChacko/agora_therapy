@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mindgood Platform Gap Analysis</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 11pt;
+      line-height: 1.45;
+      color: #111111;
+      margin: 0;
+      padding: 0;
+    }
+
+    .page {
+      max-width: 7.5in;
+      margin: 0 auto;
+      padding: 0.2in 0.1in;
+    }
+
+    .kicker {
+      font-size: 10pt;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #5f6b7a;
+      margin-bottom: 8pt;
+    }
+
+    h1 {
+      font-size: 23pt;
+      margin: 0 0 4pt 0;
+      color: #111111;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      font-size: 13pt;
+      color: #3f4954;
+      margin: 0 0 16pt 0;
+    }
+
+    .meta {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 16pt 0;
+    }
+
+    .meta td {
+      padding: 3pt 0;
+      vertical-align: top;
+      border: none;
+    }
+
+    .meta .label {
+      width: 110pt;
+      font-weight: 700;
+      color: #2e3a46;
+    }
+
+    .rule {
+      border-top: 2px solid #d7dfe7;
+      margin: 6pt 0 18pt 0;
+    }
+
+    h2 {
+      font-size: 16pt;
+      color: #2e74b5;
+      margin: 18pt 0 8pt 0;
+    }
+
+    h3 {
+      font-size: 12pt;
+      color: #1f4d78;
+      margin: 12pt 0 4pt 0;
+    }
+
+    p {
+      margin: 0 0 8pt 0;
+    }
+
+    ul, ol {
+      margin: 0 0 10pt 22pt;
+      padding: 0;
+    }
+
+    li {
+      margin: 0 0 4pt 0;
+    }
+
+    .callout {
+      background: #f4f7fa;
+      border-left: 4px solid #2e74b5;
+      padding: 10pt 12pt;
+      margin: 12pt 0 16pt 0;
+    }
+
+    .callout strong {
+      color: #153a63;
+    }
+
+    table.matrix {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10pt 0 14pt 0;
+      table-layout: fixed;
+    }
+
+    table.matrix th,
+    table.matrix td {
+      border: 1px solid #c9d3de;
+      padding: 7pt 8pt;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    table.matrix th {
+      background: #eef3f8;
+      color: #1d3551;
+      font-weight: 700;
+    }
+
+    .priority-high {
+      color: #9b1c1c;
+      font-weight: 700;
+    }
+
+    .priority-medium {
+      color: #7a5a00;
+      font-weight: 700;
+    }
+
+    .priority-low {
+      color: #1f3a5f;
+      font-weight: 700;
+    }
+
+    .section-note {
+      color: #5a6570;
+      font-size: 10pt;
+      margin-top: -2pt;
+      margin-bottom: 8pt;
+    }
+
+    .two-col {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10pt 0 14pt 0;
+    }
+
+    .two-col td {
+      width: 50%;
+      vertical-align: top;
+      padding-right: 10pt;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="kicker">Business Analysis Brief</div>
+    <h1>Mindgood Platform Gap Analysis</h1>
+    <p class="subtitle">Assessment of current product coverage, critical gaps, and requirements needed for a mature mental wellness platform</p>
+
+    <table class="meta">
+      <tr><td class="label">Prepared for</td><td>Mindgood product and delivery stakeholders</td></tr>
+      <tr><td class="label">Prepared on</td><td>July 7, 2026</td></tr>
+      <tr><td class="label">Assessment basis</td><td>Current application codebase, platform routes, data models, API flows, legal content, and operational features in the Mindgood repository</td></tr>
+      <tr><td class="label">Assessment lens</td><td>Business analysis, clinical operations readiness, trust and safety, platform maturity, and user journey completeness</td></tr>
+    </table>
+
+    <div class="rule"></div>
+
+    <h2>Executive Summary</h2>
+    <p>Mindgood already has the foundation of a strong therapy marketplace and service operations platform. The product supports therapist onboarding, therapist discovery, client booking, payments, video sessions, administrative oversight, and lightweight reflective journaling. From a business analysis perspective, the current solution is more mature as a therapist booking and session delivery platform than as a full mental wellness platform.</p>
+    <p>The most important gaps are concentrated in clinical workflow depth, crisis and safeguarding operations, privacy and compliance readiness, continuity-of-care tooling, and secure between-session support. These are the capabilities that usually separate a functional online therapy platform from a more complete, trusted mental wellness product.</p>
+
+    <div class="callout">
+      <strong>Overall BA conclusion:</strong> Mindgood is well-positioned as a digital therapy marketplace, but it still needs structured intake, assessments, care planning, safety workflows, secure messaging, stronger access control, and production-grade compliance controls before it can be considered a properly rounded mental wellness platform.
+    </div>
+
+    <h2>Current Platform Coverage</h2>
+    <p class="section-note">What the current product already does reasonably well</p>
+    <table class="matrix">
+      <tr>
+        <th style="width: 22%;">Capability Area</th>
+        <th style="width: 18%;">Current State</th>
+        <th>Observations</th>
+      </tr>
+      <tr>
+        <td>Therapist marketplace</td>
+        <td>Strong</td>
+        <td>Therapist profiles, services, specializations, languages, verification flow, and public therapist discovery are already present.</td>
+      </tr>
+      <tr>
+        <td>Scheduling and booking</td>
+        <td>Strong</td>
+        <td>Availability, time slots, booking, appointment records, and schedule management are clearly core strengths of the platform.</td>
+      </tr>
+      <tr>
+        <td>Video session delivery</td>
+        <td>Moderate to strong</td>
+        <td>Agora-based session flows exist, including session access checks and participant controls, though governance needs tightening.</td>
+      </tr>
+      <tr>
+        <td>Payments and payouts</td>
+        <td>Moderate</td>
+        <td>Stripe, payouts, and refunds are present, but some flow inconsistencies create trust and reconciliation risk.</td>
+      </tr>
+      <tr>
+        <td>Admin operations</td>
+        <td>Strong</td>
+        <td>Admin pages for therapists, users, reviews, appointments, payments, refunds, and settings indicate good operational intent.</td>
+      </tr>
+      <tr>
+        <td>Wellness engagement</td>
+        <td>Basic</td>
+        <td>Journaling exists, but it is not yet connected to measurable care plans, therapist review, or outcomes tracking.</td>
+      </tr>
+      <tr>
+        <td>Clinical workflows</td>
+        <td>Weak</td>
+        <td>There is little evidence of robust intake, screening, structured treatment planning, or measurement-based care.</td>
+      </tr>
+      <tr>
+        <td>Compliance readiness</td>
+        <td>Weak to moderate</td>
+        <td>Legal and privacy content exists, but some policies are still sample content and not yet production-grade.</td>
+      </tr>
+    </table>
+
+    <h2>Critical Gaps</h2>
+    <p class="section-note">Highest-priority issues to address before positioning Mindgood as a complete mental wellness platform</p>
+
+    <h3>1. Structured Clinical Intake Is Missing</h3>
+    <p>The platform currently captures basic user identity and therapist profile information, but does not appear to capture intake-grade client information such as presenting concerns, risk history, therapy goals, medication profile, previous therapy history, emergency contacts, consent records, or support preferences.</p>
+
+    <h3>2. Crisis and Safeguarding Workflows Are Not Operationalized</h3>
+    <p>Mindgood references crisis support and non-emergency disclaimers, but there is no visible product flow for risk detection, safety escalation, emergency contact use, crisis referral, therapist alerting, or incident handling. For a mental wellness platform, this is one of the most important trust gaps.</p>
+
+    <h3>3. Secure Therapist-Client Messaging Is Not Yet Live</h3>
+    <p>Between-session communication is a core part of ongoing mental wellness support. The current product does not yet offer production-ready secure asynchronous messaging, which limits continuity, check-ins, homework support, and lower-friction engagement between sessions.</p>
+
+    <h3>4. Care Documentation Is Too Light</h3>
+    <p>Therapists can add a client-visible note and a private summary, but there is no structured session note model, no treatment plan tracking, no goals library, no homework mechanism, and no clinically meaningful review of progress over time.</p>
+
+    <h3>5. Compliance and Consent Controls Need Production Hardening</h3>
+    <p>Privacy and terms pages still contain sample-document disclaimers, and client settings still contain unfinished profile and notification update flows. This creates a maturity gap in user trust, auditability, and regulatory defensibility.</p>
+
+    <h3>6. Access Control and Role Enforcement Need Strengthening</h3>
+    <p>Role-based protection is not yet stringent enough for a platform handling sensitive behavioral-health information. This does not only create technical risk; it also creates platform trust risk.</p>
+
+    <h3>7. Guest Participation in Sessions Needs Better Governance</h3>
+    <p>Couples and family sessions may justify guest access, but the product should still track participant approval, relationship role, informed consent, and a verifiable attendance record for all attendees.</p>
+
+    <h3>8. Wellness Tracking Is Present but Not Yet Meaningful</h3>
+    <p>Journaling is a positive start, but it is not yet connected to therapist review, goals, interventions, symptom scoring, or measurable outcome improvement. That limits its value beyond light reflection.</p>
+
+    <h2>Requirements Matrix</h2>
+    <p class="section-note">Priority requirements needed for a proper mental wellness platform</p>
+    <table class="matrix">
+      <tr>
+        <th style="width: 20%;">Domain</th>
+        <th style="width: 16%;">Priority</th>
+        <th style="width: 26%;">Required Outcome</th>
+        <th>Key Missing Components</th>
+      </tr>
+      <tr>
+        <td>Clinical intake</td>
+        <td class="priority-high">Must have</td>
+        <td>Collect intake information required to safely match, prepare, and support clients.</td>
+        <td>Presenting concerns, goals, symptom history, medications, past treatment, emergency contact, consent forms, and safeguarding questions.</td>
+      </tr>
+      <tr>
+        <td>Safety and crisis</td>
+        <td class="priority-high">Must have</td>
+        <td>Detect and route elevated-risk clients and give therapists a safe escalation path.</td>
+        <td>Risk flags, crisis content warnings, local emergency guidance, therapist incident workflow, emergency contact escalation, and audit logs.</td>
+      </tr>
+      <tr>
+        <td>Secure communication</td>
+        <td class="priority-high">Must have</td>
+        <td>Support safe, bounded communication between sessions.</td>
+        <td>Encrypted chat, read states, attachments, therapist availability boundaries, response-time expectations, and moderation controls.</td>
+      </tr>
+      <tr>
+        <td>Care continuity</td>
+        <td class="priority-high">Must have</td>
+        <td>Create continuity across sessions and visible progress for both therapist and client.</td>
+        <td>Structured notes, treatment plans, shared goals, homework, follow-up actions, journaling review, and post-session summaries.</td>
+      </tr>
+      <tr>
+        <td>Measurement-based care</td>
+        <td class="priority-high">Must have</td>
+        <td>Measure symptom change and treatment effectiveness over time.</td>
+        <td>PHQ-9, GAD-7, sleep and stress scales, baseline assessment, reassessment schedule, score trends, and outcome dashboards.</td>
+      </tr>
+      <tr>
+        <td>Compliance and consent</td>
+        <td class="priority-high">Must have</td>
+        <td>Defend privacy, consent, and user rights in a health-sensitive environment.</td>
+        <td>Final legal documents, consent capture, communication preferences, data retention rules, stronger server-side access controls, and audit evidence.</td>
+      </tr>
+      <tr>
+        <td>Therapist productivity</td>
+        <td class="priority-medium">Should have</td>
+        <td>Reduce therapist admin effort while improving quality of care.</td>
+        <td>Templates for notes, caseload overview, client progress view, reminders, reusable interventions, and alerts for overdue follow-up.</td>
+      </tr>
+      <tr>
+        <td>Self-guided wellness</td>
+        <td class="priority-medium">Should have</td>
+        <td>Extend support outside live sessions.</td>
+        <td>Guided exercises, breathing tools, sleep routines, CBT worksheets, habit check-ins, and curated educational content.</td>
+      </tr>
+      <tr>
+        <td>Outcome and retention analytics</td>
+        <td class="priority-medium">Should have</td>
+        <td>Let the business understand platform effectiveness and drop-off points.</td>
+        <td>Activation funnel, retention, no-show reasons, cancellation behavior, symptom improvement, therapist response times, and risk-event reporting.</td>
+      </tr>
+    </table>
+
+    <h2>Recommended Product Roadmap</h2>
+    <p class="section-note">A phased way to close the most important gaps without destabilizing the core platform</p>
+
+    <h3>Phase 1: Trust, Security, and Operational Integrity</h3>
+    <ol>
+      <li>Harden authentication and role-based authorization for all sensitive routes and data flows.</li>
+      <li>Fix payment, webhook, and appointment-status consistency so session and revenue state stay reliable.</li>
+      <li>Replace sample legal documents with reviewed production policies and capture explicit user consents.</li>
+      <li>Define governance for guest participation in couples and family sessions.</li>
+    </ol>
+
+    <h3>Phase 2: Clinical Intake and Safety Foundations</h3>
+    <ol>
+      <li>Launch a structured intake journey for clients.</li>
+      <li>Add emergency contacts, therapy goals, and safeguarding questions.</li>
+      <li>Introduce crisis and incident pathways for therapists and admins.</li>
+      <li>Add clinical screening instruments and baseline scoring.</li>
+    </ol>
+
+    <h3>Phase 3: Continuity of Care and Engagement</h3>
+    <ol>
+      <li>Release secure therapist-client messaging.</li>
+      <li>Expand session notes into structured clinical documentation.</li>
+      <li>Introduce care plans, homework, and journaling review loops.</li>
+      <li>Link wellness check-ins to measurable client progress.</li>
+    </ol>
+
+    <h3>Phase 4: Outcomes, Scale, and Differentiation</h3>
+    <ol>
+      <li>Add client and therapist outcome dashboards.</li>
+      <li>Measure activation, retention, no-show, and symptom-improvement trends.</li>
+      <li>Introduce guided self-help content and between-session wellness modules.</li>
+      <li>Use reporting to shape future matching, therapist tooling, and service-line expansion.</li>
+    </ol>
+
+    <h2>Suggested Data Model Additions</h2>
+    <table class="matrix">
+      <tr>
+        <th style="width: 24%;">Suggested Entity</th>
+        <th>Purpose</th>
+      </tr>
+      <tr>
+        <td>ClientIntakeProfile</td>
+        <td>Presenting concerns, history, support preferences, emergency contact, risk and safeguarding data, consent flags, and matching inputs.</td>
+      </tr>
+      <tr>
+        <td>AssessmentResponse</td>
+        <td>Stores screening scores such as PHQ-9, GAD-7, sleep, stress, and follow-up reassessments over time.</td>
+      </tr>
+      <tr>
+        <td>CarePlan</td>
+        <td>Tracks therapist-defined treatment goals, shared actions, milestones, interventions, and review cadence.</td>
+      </tr>
+      <tr>
+        <td>SessionNote</td>
+        <td>Structured post-session documentation with clinical summary, client-visible guidance, homework, risk notes, and next-step planning.</td>
+      </tr>
+      <tr>
+        <td>MessageThread / Message</td>
+        <td>Supports secure between-session communication, boundaries, attachments, and visibility rules.</td>
+      </tr>
+      <tr>
+        <td>SafetyIncident</td>
+        <td>Captures crisis flags, incidents, therapist escalations, actions taken, and admin review history.</td>
+      </tr>
+      <tr>
+        <td>ConsentRecord</td>
+        <td>Tracks policy acceptance, clinical consent, communication consent, parental or guardian approval where relevant, and version history.</td>
+      </tr>
+      <tr>
+        <td>ProgressMetric</td>
+        <td>Stores symptom trends, adherence markers, check-in streaks, and improvement snapshots for dashboards.</td>
+      </tr>
+    </table>
+
+    <h2>Business Implications</h2>
+    <table class="two-col">
+      <tr>
+        <td>
+          <h3>Risks if gaps remain open</h3>
+          <ul>
+            <li>Difficulty positioning Mindgood credibly as a complete mental wellness platform.</li>
+            <li>Lower therapist efficiency and weaker continuity between sessions.</li>
+            <li>Higher trust risk around privacy, safety, and guest participation.</li>
+            <li>Weaker client retention because the product becomes session-only rather than journey-based.</li>
+          </ul>
+        </td>
+        <td>
+          <h3>Benefits if gaps are addressed</h3>
+          <ul>
+            <li>Stronger clinical credibility and safer care operations.</li>
+            <li>Higher retention through ongoing engagement beyond appointments.</li>
+            <li>Better therapist productivity and richer client outcomes.</li>
+            <li>Clearer differentiation from appointment-only therapy marketplaces.</li>
+          </ul>
+        </td>
+      </tr>
+    </table>
+
+    <h2>Final Recommendation</h2>
+    <p>Mindgood should continue to build on its existing strengths in therapist discovery, booking, video sessions, and admin operations, while deliberately investing next in trust, safety, clinical workflow depth, and continuity-of-care tooling. Those areas will create the biggest jump in platform maturity and are the most important for positioning Mindgood as a proper mental wellness platform rather than only a digital appointment and session system.</p>
+    <p>The recommended next artifact after this analysis is a prioritized BA backlog with epics, user stories, data entities, acceptance criteria, and release phasing for the high-priority gaps identified above.</p>
+  </div>
+</body>
+</html>
