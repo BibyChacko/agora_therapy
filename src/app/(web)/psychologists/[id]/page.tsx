@@ -7,71 +7,101 @@ import { getLanguageName } from '@/lib/constants/languages';
 import { getServiceById } from '@/types/models/service';
 import { getPublicTherapistById } from '@/lib/services/public-therapist-service';
 import { BookConsultationButton } from '@/components/psychologists/BookConsultationButton';
-import { gccAreas, siteUrl } from '@/lib/seo';
+import { gccAreas, siteName, siteUrl } from '@/lib/seo';
 
 interface Props {
   params: Promise<{ id: string }>;
 }
 
+function toAbsoluteUrl(url: string) {
+  return url.startsWith('http') ? url : `${siteUrl}${url}`;
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const therapist = await getPublicTherapistById(id);
+  const canonicalUrl = `${siteUrl}/psychologists/${id}`;
 
   if (!therapist) {
     return {
-      title: 'Therapist Not Found | MindGood',
+      title: 'Therapist Not Found',
+      description: 'The psychologist profile you are looking for is not available on MindGood.',
+      alternates: {
+        canonical: canonicalUrl,
+      },
     };
   }
 
-  const specializations = therapist.specializations
+  const specializationsList = therapist.specializations
     .map(spec => getServiceById(spec)?.name || spec)
-    .join(', ');
+    .filter(Boolean);
+  const specializations = specializationsList.join(', ');
+  const primarySpecialization = specializationsList[0] || 'Therapy';
 
   const languagesStr = therapist.languages.map(getLanguageName).join(', ');
-  
-  // Make the title punchy for WhatsApp/Social Media
-  const title = `${therapist.name} - ${therapist.title} (${languagesStr})`;
-  
-  // The description will show right below the title on social media
-  const description = `${therapist.name} is a verified psychologist specializing in ${specializations}. Book a consultation today. Languages: ${languagesStr}.`;
+  const therapistLocation = therapist.location || 'Dubai, UAE';
+  const ogImage = toAbsoluteUrl(therapist.image);
+  const title = `${therapist.name} | ${primarySpecialization} Psychologist in ${therapistLocation}`;
+  const description = [
+    `Book online therapy with ${therapist.name}, a verified psychologist on MindGood.`,
+    specializations ? `Specializes in ${specializations}.` : null,
+    therapist.experience ? `${therapist.experience}+ years of experience.` : null,
+    languagesStr ? `Sessions available in ${languagesStr}.` : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   const keywords = [
     therapist.name,
     'psychologist',
     'therapist',
+    'online psychologist Dubai',
+    'online therapy UAE',
+    `${primarySpecialization} therapist Dubai`,
+    `${therapist.name} psychologist`,
+    `${therapist.name} therapist`,
+    therapistLocation,
     'counseling',
-    ...therapist.specializations.map(spec => getServiceById(spec)?.name || spec),
-    ...therapist.languages.map(getLanguageName),
+    ...specializationsList,
+    ...therapist.languages.map(getLanguageName).filter(Boolean),
     'online therapy',
     'mental health',
-  ];
+    'MindGood',
+  ].filter(Boolean);
 
   return {
-    title: `${title} | MindGood`,
+    title,
     description,
     keywords,
+    category: 'healthcare',
     alternates: {
-      canonical: `${siteUrl}/psychologists/${id}`,
+      canonical: canonicalUrl,
+    },
+    robots: {
+      index: true,
+      follow: true,
     },
     openGraph: {
       title,
       description,
+      url: canonicalUrl,
       images: [
         {
-          url: therapist.image,
+          url: ogImage,
           width: 800,
           height: 600,
           alt: `Photo of ${therapist.name}`,
         }
       ],
+      locale: 'en_AE',
       type: 'profile',
-      siteName: 'MindGood',
+      siteName,
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      images: [therapist.image],
+      images: [ogImage],
     },
   };
 }
@@ -84,31 +114,113 @@ export default async function PsychologistDetail({ params }: Props) {
     notFound();
   }
 
-  // JSON-LD structured data for AEO
+  const specializations = psychologist.specializations
+    .map(spec => getServiceById(spec)?.name || spec)
+    .filter(Boolean);
+  const languages = psychologist.languages.map(getLanguageName).filter(Boolean);
+  const canonicalUrl = `${siteUrl}/psychologists/${id}`;
+  const imageUrl = toAbsoluteUrl(psychologist.image);
+  const therapistLocation = psychologist.location || 'Dubai, UAE';
+  const description = [
+    `${psychologist.name} is a verified psychologist on MindGood.`,
+    specializations.length ? `Specializations include ${specializations.join(', ')}.` : null,
+    psychologist.experience ? `${psychologist.experience}+ years of experience.` : null,
+    languages.length ? `Available in ${languages.join(', ')}.` : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "Physician",
-    "name": psychologist.name,
-    "image": psychologist.image,
-    "description": psychologist.bio,
-    "medicalSpecialty": psychologist.specializations.map(spec => getServiceById(spec)?.name || spec),
-    "occupationalExperience": {
-      "@type": "OccupationalExperience",
-      "experienceInYears": psychologist.experience
-    },
-    "knowsLanguage": psychologist.languages.map(getLanguageName),
-    "availableLanguage": psychologist.languages.map(getLanguageName), // AEO: helps AI answer "which languages does this doctor speak?"
-    "priceRange": `$$`,
-    "address": {
-      "@type": "PostalAddress",
-      "addressCountry": "AE"
-    },
-    "areaServed": gccAreas,
-    "aggregateRating": psychologist.rating ? {
-      "@type": "AggregateRating",
-      "ratingValue": psychologist.rating,
-      "reviewCount": psychologist.reviewCount || 1
-    } : undefined
+    "@graph": [
+      {
+        "@type": "ProfilePage",
+        "@id": `${canonicalUrl}#webpage`,
+        "url": canonicalUrl,
+        "name": `${psychologist.name} | MindGood`,
+        "description": description,
+        "isPartOf": {
+          "@type": "WebSite",
+          "@id": `${siteUrl}#website`,
+          "url": siteUrl,
+          "name": siteName
+        },
+        "about": {
+          "@id": `${canonicalUrl}#person`
+        },
+        "primaryImageOfPage": {
+          "@type": "ImageObject",
+          "url": imageUrl
+        },
+        "breadcrumb": {
+          "@id": `${canonicalUrl}#breadcrumb`
+        }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": `${canonicalUrl}#breadcrumb`,
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": siteUrl
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Psychologists",
+            "item": `${siteUrl}/psychologists`
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": psychologist.name,
+            "item": canonicalUrl
+          }
+        ]
+      },
+      {
+        "@type": "Person",
+        "@id": `${canonicalUrl}#person`,
+        "name": psychologist.name,
+        "url": canonicalUrl,
+        "image": imageUrl,
+        "description": psychologist.bio || description,
+        "jobTitle": psychologist.title,
+        "worksFor": {
+          "@type": "Organization",
+          "name": siteName
+        },
+        "knowsLanguage": languages,
+        "availableLanguage": languages,
+        "hasOccupation": {
+          "@type": "Occupation",
+          "name": "Psychologist"
+        },
+        "areaServed": gccAreas,
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": therapistLocation,
+          "addressCountry": "AE"
+        },
+        "makesOffer": {
+          "@type": "Offer",
+          "price": (psychologist.hourlyRate / 100).toFixed(2),
+          "priceCurrency": "USD",
+          "availability": "https://schema.org/InStock",
+          "url": canonicalUrl
+        },
+        "medicalSpecialty": specializations,
+        "aggregateRating": psychologist.rating && psychologist.reviewCount
+          ? {
+              "@type": "AggregateRating",
+              "ratingValue": psychologist.rating,
+              "reviewCount": psychologist.reviewCount
+            }
+          : undefined
+      }
+    ]
   };
 
   return (
