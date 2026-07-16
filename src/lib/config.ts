@@ -46,6 +46,12 @@ export const config = {
     isProduction: process.env.NODE_ENV === "production",
   },
 
+  // Analytics Configuration
+  analytics: {
+    googleMeasurementId: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID,
+    isGoogleAnalyticsEnabled: !!process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID,
+  },
+
   // Optional Email Configuration
   email: {
     host: process.env.SMTP_HOST,
@@ -134,3 +140,4 @@ export const agoraConfig = config.agora;
 export const stripeConfig = config.stripe;
 export const appConfig = config.app;
 export const businessConfig = config.business;
+export const analyticsConfig = config.analytics;
