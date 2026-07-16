@@ -8,9 +8,14 @@
 const fs = require('fs');
 const path = require('path');
 
-// Load environment variables from .env
-const envPath = path.resolve(process.cwd(), '.env');
-require('dotenv').config({ path: envPath });
+// Prefer local dev env, then fall back to the default env file.
+const envPaths = ['.env.local', '.env']
+  .map((file) => path.resolve(process.cwd(), file))
+  .filter((file) => fs.existsSync(file));
+
+for (const envPath of envPaths) {
+  require('dotenv').config({ path: envPath, override: false });
+}
 
 const admin = require('firebase-admin');
 const { Timestamp } = require('firebase-admin/firestore');

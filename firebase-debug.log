@@ -1,0 +1,249 @@
+[debug] [2026-07-15T06:29:31.246Z] ----------------------------------------------------------------------
+[debug] [2026-07-15T06:29:31.260Z] Command:       /Users/bibychacko/.nvm/versions/node/v20.18.1/bin/firebase /Users/bibychacko/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/bin/firebase projects:list --json
+[debug] [2026-07-15T06:29:31.260Z] CLI Version:   15.23.0
+[debug] [2026-07-15T06:29:31.260Z] Platform:      darwin
+[debug] [2026-07-15T06:29:31.260Z] Node Version:  v20.18.2
+[debug] [2026-07-15T06:29:31.261Z] Detected Agent: codex_cli
+[debug] [2026-07-15T06:29:31.261Z] Time:          Wed Jul 15 2026 10:29:31 GMT+0400 (Gulf Standard Time)
+[debug] [2026-07-15T06:29:31.262Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-07-15T06:29:31.277Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2026-07-15T06:29:31.662Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-15T06:29:31.663Z] > authorizing via signed-in user (bibychackokply@gmail.com)
+[debug] [2026-07-15T06:29:31.667Z] Checked if tokens are valid: false, expires at: 1778152928933
+[debug] [2026-07-15T06:29:31.668Z] Checked if tokens are valid: false, expires at: 1778152928933
+[debug] [2026-07-15T06:29:31.669Z] > refreshing access token with scopes: []
+[debug] [2026-07-15T06:29:31.674Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-07-15T06:29:31.675Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-15T06:29:32.197Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-07-15T06:29:32.197Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-15T06:29:32.215Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=1000
+[debug] [2026-07-15T06:29:32.304Z] <<< [apiv2][status] GET https://firebase-public.firebaseio.com/cli.json 200
+[debug] [2026-07-15T06:29:32.305Z] <<< [apiv2][body] GET https://firebase-public.firebaseio.com/cli.json {"cloudBuildErrorAfter":1594252800000,"cloudBuildWarnAfter":1590019200000,"defaultNode10After":1594252800000,"minVersion":"3.0.5","node8DeploysDisabledAfter":1613390400000,"node8RuntimeDisabledAfter":1615809600000,"node8WarnAfter":1600128000000}
+[debug] [2026-07-15T06:29:32.950Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 200
+[debug] [2026-07-15T06:29:32.951Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects [omitted]
+[info] ┌──────────────────────┬────────────────────┬────────────────┬──────────────────────┐
+│ Project Display Name │ Project ID         │ Project Number │ Resource Location ID │
+├──────────────────────┼────────────────────┼────────────────┼──────────────────────┤
+│ CarBidding           │ carbidding-a1a62   │ 861051166712   │ [Not specified]      │
+├──────────────────────┼────────────────────┼────────────────┼──────────────────────┤
+│ CarePlus             │ careplus-c7e10     │ 420085909428   │ us-central           │
+├──────────────────────┼────────────────────┼────────────────┼──────────────────────┤
+│ CarePlus             │ careplus-e9dbb     │ 352654241997   │ [Not specified]      │
+├──────────────────────┼────────────────────┼────────────────┼──────────────────────┤
+│ CopdAlert            │ copdalert          │ 1028467206707  │ us-central           │
+├──────────────────────┼────────────────────┼────────────────┼──────────────────────┤
+│ DoctorWho            │ doctorwho-19b36    │ 224836430691   │ us-central           │
+├──────────────────────┼────────────────────┼────────────────┼──────────────────────┤
+│ Estateman            │ estateman-app      │ 654902809076   │ [Not specified]      │
+├──────────────────────┼────────────────────┼────────────────┼──────────────────────┤
+│ habllen-invoice      │ habllen-invoice    │ 561613192703   │ asia-east1           │
+├──────────────────────┼────────────────────┼────────────────┼──────────────────────┤
+│ WildWatch            │ hecmap-8990f       │ 605365467275   │ us-central           │
+├──────────────────────┼────────────────────┼────────────────┼──────────────────────┤
+│ kpms-ecom            │ kpms-ecom          │ 737425132211   │ [Not specified]      │
+├──────────────────────┼────────────────────┼────────────────┼──────────────────────┤
+│ mindgood-dev         │ mindgood-dev       │ 1039002220623  │ [Not specified]      │
+├──────────────────────┼────────────────────┼────────────────┼──────────────────────┤
+│ mindgood             │ mindgood-e5579     │ 850861764473   │ [Not specified]      │
+├──────────────────────┼────────────────────┼────────────────┼──────────────────────┤
+│ Popular Apps         │ popular-apps-c83ac │ 590707894908   │ asia-southeast1      │
+├──────────────────────┼────────────────────┼────────────────┼──────────────────────┤
+│ Reeloyal             │ reeloyal-922fa     │ 266496162455   │ [Not specified]      │
+└──────────────────────┴────────────────────┴────────────────┴──────────────────────┘
+[info] 
+[info] 13 project(s) total.
+[debug] [2026-07-15T06:35:02.103Z] ----------------------------------------------------------------------
+[debug] [2026-07-15T06:35:02.118Z] Command:       /Users/bibychacko/.nvm/versions/node/v20.18.1/bin/firebase /Users/bibychacko/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/bin/firebase apps:list WEB --project mindgood-dev --json
+[debug] [2026-07-15T06:35:02.118Z] CLI Version:   15.23.0
+[debug] [2026-07-15T06:35:02.118Z] Platform:      darwin
+[debug] [2026-07-15T06:35:02.118Z] Node Version:  v20.18.2
+[debug] [2026-07-15T06:35:02.119Z] Detected Agent: codex_cli
+[debug] [2026-07-15T06:35:02.119Z] Time:          Wed Jul 15 2026 10:35:02 GMT+0400 (Gulf Standard Time)
+[debug] [2026-07-15T06:35:02.120Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-07-15T06:35:02.513Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-15T06:35:02.515Z] > authorizing via signed-in user (bibychackokply@gmail.com)
+[debug] [2026-07-15T06:35:02.539Z] Checked if tokens are valid: true, expires at: 1784100571198
+[debug] [2026-07-15T06:35:02.540Z] Checked if tokens are valid: true, expires at: 1784100571198
+[debug] [2026-07-15T06:35:02.545Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/mindgood-dev/webApps pageSize=100
+[debug] [2026-07-15T06:35:03.489Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/mindgood-dev/webApps 200
+[debug] [2026-07-15T06:35:03.490Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/mindgood-dev/webApps {}
+[info] No apps found.
+[debug] [2026-07-15T06:35:44.901Z] ----------------------------------------------------------------------
+[debug] [2026-07-15T06:35:44.933Z] Command:       /Users/bibychacko/.nvm/versions/node/v20.18.1/bin/firebase /Users/bibychacko/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/bin/firebase apps:list WEB --project mindgood-e5579 --json
+[debug] [2026-07-15T06:35:44.934Z] CLI Version:   15.23.0
+[debug] [2026-07-15T06:35:44.934Z] Platform:      darwin
+[debug] [2026-07-15T06:35:44.934Z] Node Version:  v20.18.2
+[debug] [2026-07-15T06:35:44.934Z] Detected Agent: codex_cli
+[debug] [2026-07-15T06:35:44.935Z] Time:          Wed Jul 15 2026 10:35:44 GMT+0400 (Gulf Standard Time)
+[debug] [2026-07-15T06:35:44.936Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-07-15T06:35:45.427Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-15T06:35:45.428Z] > authorizing via signed-in user (bibychackokply@gmail.com)
+[debug] [2026-07-15T06:35:45.460Z] Checked if tokens are valid: true, expires at: 1784100571198
+[debug] [2026-07-15T06:35:45.461Z] Checked if tokens are valid: true, expires at: 1784100571198
+[debug] [2026-07-15T06:35:45.468Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/mindgood-e5579/webApps pageSize=100
+[debug] [2026-07-15T06:35:46.779Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/mindgood-e5579/webApps 200
+[debug] [2026-07-15T06:35:46.781Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/mindgood-e5579/webApps {"apps":[{"name":"projects/mindgood-e5579/webApps/1:850861764473:web:0e4fbc6d19269c278c49a8","appId":"1:850861764473:web:0e4fbc6d19269c278c49a8","displayName":" mindgood.life","projectId":"mindgood-e5579","webId":"ZjljYjQwYjctMjdiMy00MGU3LThlYTgtYjI0MDhmNWU3YjI4","apiKeyId":"f5fba4ef-3a58-46ac-9c6a-859b29a343cc","state":"ACTIVE","expireTime":"1970-01-01T00:00:00Z","etag":"1_c389dbe2-5a71-408c-85f4-5c89df11434d"}]}
+[info] ┌──────────────────┬───────────────────────────────────────────┬──────────┐
+│ App Display Name │ App ID                                    │ Platform │
+├──────────────────┼───────────────────────────────────────────┼──────────┤
+│  mindgood.life   │ 1:850861764473:web:0e4fbc6d19269c278c49a8 │ WEB      │
+└──────────────────┴───────────────────────────────────────────┴──────────┘
+[info] 
+[info] 1 app(s) total.
+[debug] [2026-07-15T06:36:55.245Z] ----------------------------------------------------------------------
+[debug] [2026-07-15T06:36:55.259Z] Command:       /Users/bibychacko/.nvm/versions/node/v20.18.1/bin/firebase /Users/bibychacko/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/bin/firebase apps:sdkconfig WEB 1:850861764473:web:0e4fbc6d19269c278c49a8 --project mindgood-e5579
+[debug] [2026-07-15T06:36:55.260Z] CLI Version:   15.23.0
+[debug] [2026-07-15T06:36:55.260Z] Platform:      darwin
+[debug] [2026-07-15T06:36:55.260Z] Node Version:  v20.18.2
+[debug] [2026-07-15T06:36:55.260Z] Detected Agent: codex_cli
+[debug] [2026-07-15T06:36:55.261Z] Time:          Wed Jul 15 2026 10:36:55 GMT+0400 (Gulf Standard Time)
+[debug] [2026-07-15T06:36:55.262Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-07-15T06:36:55.563Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-15T06:36:55.565Z] > authorizing via signed-in user (bibychackokply@gmail.com)
+[debug] [2026-07-15T06:36:55.581Z] Checked if tokens are valid: true, expires at: 1784100571198
+[debug] [2026-07-15T06:36:55.582Z] Checked if tokens are valid: true, expires at: 1784100571198
+[debug] [2026-07-15T06:36:55.586Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/-/webApps/1:850861764473:web:0e4fbc6d19269c278c49a8/config [none]
+[debug] [2026-07-15T06:36:57.639Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/-/webApps/1:850861764473:web:0e4fbc6d19269c278c49a8/config 200
+[debug] [2026-07-15T06:36:57.641Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/-/webApps/1:850861764473:web:0e4fbc6d19269c278c49a8/config {"projectId":"mindgood-e5579","appId":"1:850861764473:web:0e4fbc6d19269c278c49a8","storageBucket":"mindgood-e5579.firebasestorage.app","apiKey":"AIzaSyBCosC1N2V8DjiZemn9CZ2IBeVQZPiWn3w","authDomain":"mindgood-e5579.firebaseapp.com","messagingSenderId":"850861764473","measurementId":"G-9SPY2KNN8W","projectNumber":"850861764473","version":"2"}
+[info] {
+  "projectId": "mindgood-e5579",
+  "appId": "1:850861764473:web:0e4fbc6d19269c278c49a8",
+  "storageBucket": "mindgood-e5579.firebasestorage.app",
+  "apiKey": "AIzaSyBCosC1N2V8DjiZemn9CZ2IBeVQZPiWn3w",
+  "authDomain": "mindgood-e5579.firebaseapp.com",
+  "messagingSenderId": "850861764473",
+  "measurementId": "G-9SPY2KNN8W",
+  "projectNumber": "850861764473",
+  "version": "2"
+}
+[debug] [2026-07-15T07:18:54.330Z] ----------------------------------------------------------------------
+[debug] [2026-07-15T07:18:54.348Z] Command:       /Users/bibychacko/.nvm/versions/node/v20.18.1/bin/firebase /Users/bibychacko/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/bin/firebase apps:list WEB --project mindgood-dev --json
+[debug] [2026-07-15T07:18:54.348Z] CLI Version:   15.23.0
+[debug] [2026-07-15T07:18:54.348Z] Platform:      darwin
+[debug] [2026-07-15T07:18:54.348Z] Node Version:  v20.18.2
+[debug] [2026-07-15T07:18:54.349Z] Detected Agent: codex_cli
+[debug] [2026-07-15T07:18:54.350Z] Time:          Wed Jul 15 2026 11:18:54 GMT+0400 (Gulf Standard Time)
+[debug] [2026-07-15T07:18:54.351Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-07-15T07:18:54.631Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-15T07:18:54.632Z] > authorizing via signed-in user (bibychackokply@gmail.com)
+[debug] [2026-07-15T07:18:54.653Z] Checked if tokens are valid: false, expires at: 1784100571198
+[debug] [2026-07-15T07:18:54.654Z] Checked if tokens are valid: false, expires at: 1784100571198
+[debug] [2026-07-15T07:18:54.655Z] > refreshing access token with scopes: []
+[debug] [2026-07-15T07:18:54.662Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-07-15T07:18:54.663Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-15T07:18:55.302Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-07-15T07:18:55.303Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-15T07:18:55.323Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/mindgood-dev/webApps pageSize=100
+[debug] [2026-07-15T07:18:56.005Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/mindgood-dev/webApps 200
+[debug] [2026-07-15T07:18:56.006Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/mindgood-dev/webApps {}
+[info] No apps found.
+[debug] [2026-07-15T08:13:44.951Z] ----------------------------------------------------------------------
+[debug] [2026-07-15T08:13:44.966Z] Command:       /Users/bibychacko/.nvm/versions/node/v20.18.1/bin/firebase /Users/bibychacko/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/bin/firebase apps:create WEB mindgood-dev-web --project mindgood-dev --json
+[debug] [2026-07-15T08:13:44.966Z] CLI Version:   15.23.0
+[debug] [2026-07-15T08:13:44.966Z] Platform:      darwin
+[debug] [2026-07-15T08:13:44.966Z] Node Version:  v20.18.2
+[debug] [2026-07-15T08:13:44.966Z] Detected Agent: codex_cli
+[debug] [2026-07-15T08:13:44.967Z] Time:          Wed Jul 15 2026 12:13:44 GMT+0400 (Gulf Standard Time)
+[debug] [2026-07-15T08:13:44.968Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-07-15T08:13:45.244Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-15T08:13:45.246Z] > authorizing via signed-in user (bibychackokply@gmail.com)
+[info] Create your WEB app in project mindgood-dev:
+[debug] [2026-07-15T08:13:45.264Z] Checked if tokens are valid: false, expires at: 1784103534304
+[debug] [2026-07-15T08:13:45.265Z] Checked if tokens are valid: false, expires at: 1784103534304
+[debug] [2026-07-15T08:13:45.265Z] > refreshing access token with scopes: []
+[debug] [2026-07-15T08:13:45.270Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-07-15T08:13:45.270Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-15T08:13:45.972Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-07-15T08:13:45.973Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-15T08:13:45.988Z] >>> [apiv2][query] POST https://firebase.googleapis.com/v1beta1/projects/mindgood-dev/webApps [none]
+[debug] [2026-07-15T08:13:45.990Z] >>> [apiv2][body] POST https://firebase.googleapis.com/v1beta1/projects/mindgood-dev/webApps {"displayName":"mindgood-dev-web"}
+[debug] [2026-07-15T08:13:47.557Z] <<< [apiv2][status] POST https://firebase.googleapis.com/v1beta1/projects/mindgood-dev/webApps 200
+[debug] [2026-07-15T08:13:47.560Z] <<< [apiv2][body] POST https://firebase.googleapis.com/v1beta1/projects/mindgood-dev/webApps {"name":"operations/workflows/ZDk4MmVmZTgtMzc3ZC00MzYyLWJiZTMtYjIzODY3ZTI3ZjQ4"}
+[debug] [2026-07-15T08:13:47.563Z] Checked if tokens are valid: true, expires at: 1784106824974
+[debug] [2026-07-15T08:13:47.563Z] Checked if tokens are valid: true, expires at: 1784106824974
+[debug] [2026-07-15T08:13:47.565Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/operations/workflows/ZDk4MmVmZTgtMzc3ZC00MzYyLWJiZTMtYjIzODY3ZTI3ZjQ4 [none]
+[debug] [2026-07-15T08:13:48.001Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/operations/workflows/ZDk4MmVmZTgtMzc3ZC00MzYyLWJiZTMtYjIzODY3ZTI3ZjQ4 200
+[debug] [2026-07-15T08:13:48.001Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/operations/workflows/ZDk4MmVmZTgtMzc3ZC00MzYyLWJiZTMtYjIzODY3ZTI3ZjQ4 {"name":"operations/workflows/ZDk4MmVmZTgtMzc3ZC00MzYyLWJiZTMtYjIzODY3ZTI3ZjQ4"}
+[debug] [2026-07-15T08:13:48.503Z] [Create Web app Poller] Retrying task index 0
+[debug] [2026-07-15T08:13:48.504Z] Checked if tokens are valid: true, expires at: 1784106824974
+[debug] [2026-07-15T08:13:48.504Z] Checked if tokens are valid: true, expires at: 1784106824974
+[debug] [2026-07-15T08:13:48.504Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/operations/workflows/ZDk4MmVmZTgtMzc3ZC00MzYyLWJiZTMtYjIzODY3ZTI3ZjQ4 [none]
+[debug] [2026-07-15T08:13:48.925Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/operations/workflows/ZDk4MmVmZTgtMzc3ZC00MzYyLWJiZTMtYjIzODY3ZTI3ZjQ4 200
+[debug] [2026-07-15T08:13:48.925Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/operations/workflows/ZDk4MmVmZTgtMzc3ZC00MzYyLWJiZTMtYjIzODY3ZTI3ZjQ4 {"name":"operations/workflows/ZDk4MmVmZTgtMzc3ZC00MzYyLWJiZTMtYjIzODY3ZTI3ZjQ4"}
+[debug] [2026-07-15T08:13:49.926Z] [Create Web app Poller] Retrying task index 0
+[debug] [2026-07-15T08:13:49.927Z] Checked if tokens are valid: true, expires at: 1784106824974
+[debug] [2026-07-15T08:13:49.927Z] Checked if tokens are valid: true, expires at: 1784106824974
+[debug] [2026-07-15T08:13:49.928Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/operations/workflows/ZDk4MmVmZTgtMzc3ZC00MzYyLWJiZTMtYjIzODY3ZTI3ZjQ4 [none]
+[debug] [2026-07-15T08:13:50.310Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/operations/workflows/ZDk4MmVmZTgtMzc3ZC00MzYyLWJiZTMtYjIzODY3ZTI3ZjQ4 200
+[debug] [2026-07-15T08:13:50.310Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/operations/workflows/ZDk4MmVmZTgtMzc3ZC00MzYyLWJiZTMtYjIzODY3ZTI3ZjQ4 {"name":"operations/workflows/ZDk4MmVmZTgtMzc3ZC00MzYyLWJiZTMtYjIzODY3ZTI3ZjQ4"}
+[debug] [2026-07-15T08:13:52.314Z] [Create Web app Poller] Retrying task index 0
+[debug] [2026-07-15T08:13:52.317Z] Checked if tokens are valid: true, expires at: 1784106824974
+[debug] [2026-07-15T08:13:52.317Z] Checked if tokens are valid: true, expires at: 1784106824974
+[debug] [2026-07-15T08:13:52.318Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/operations/workflows/ZDk4MmVmZTgtMzc3ZC00MzYyLWJiZTMtYjIzODY3ZTI3ZjQ4 [none]
+[debug] [2026-07-15T08:13:52.776Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/operations/workflows/ZDk4MmVmZTgtMzc3ZC00MzYyLWJiZTMtYjIzODY3ZTI3ZjQ4 200
+[debug] [2026-07-15T08:13:52.776Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/operations/workflows/ZDk4MmVmZTgtMzc3ZC00MzYyLWJiZTMtYjIzODY3ZTI3ZjQ4 {"name":"operations/workflows/ZDk4MmVmZTgtMzc3ZC00MzYyLWJiZTMtYjIzODY3ZTI3ZjQ4","done":true,"response":{"@type":"type.googleapis.com/google.firebase.service.v1beta1.WebApp","name":"projects/mindgood-dev/webApps/1:1039002220623:web:97cd909f0a477afdef523a","appId":"1:1039002220623:web:97cd909f0a477afdef523a","displayName":"mindgood-dev-web","projectId":"mindgood-dev","webId":"MDZkNDY5ZjAtYzYxNi00MTM3LTlkZGQtYzg5NWI4NWI5OTJi","apiKeyId":"479b407c-3c33-47e6-a790-1c514d1b3e5d","state":"ACTIVE","expireTime":"1970-01-01T00:00:00Z","etag":"1_85f096b1-147d-4b20-b33f-81bd2382acdc"}}
+[info] 
+[info] 🎉🎉🎉 Your Firebase WEB App is ready! 🎉🎉🎉
+[info] 
+[info] App information:
+[info]   - App ID: 1:1039002220623:web:97cd909f0a477afdef523a
+[info]   - Display name: mindgood-dev-web
+[info] 
+[info] You can run this command to print out your new app's Google Services config:
+[info]   firebase apps:sdkconfig WEB 1:1039002220623:web:97cd909f0a477afdef523a
+[debug] [2026-07-15T08:14:04.591Z] ----------------------------------------------------------------------
+[debug] [2026-07-15T08:14:04.603Z] Command:       /Users/bibychacko/.nvm/versions/node/v20.18.1/bin/firebase /Users/bibychacko/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/bin/firebase apps:sdkconfig WEB 1:1039002220623:web:97cd909f0a477afdef523a --project mindgood-dev
+[debug] [2026-07-15T08:14:04.603Z] CLI Version:   15.23.0
+[debug] [2026-07-15T08:14:04.603Z] Platform:      darwin
+[debug] [2026-07-15T08:14:04.603Z] Node Version:  v20.18.2
+[debug] [2026-07-15T08:14:04.603Z] Detected Agent: codex_cli
+[debug] [2026-07-15T08:14:04.604Z] Time:          Wed Jul 15 2026 12:14:04 GMT+0400 (Gulf Standard Time)
+[debug] [2026-07-15T08:14:04.604Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-07-15T08:14:04.850Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-15T08:14:04.852Z] > authorizing via signed-in user (bibychackokply@gmail.com)
+[debug] [2026-07-15T08:14:04.866Z] Checked if tokens are valid: true, expires at: 1784106824974
+[debug] [2026-07-15T08:14:04.867Z] Checked if tokens are valid: true, expires at: 1784106824974
+[debug] [2026-07-15T08:14:04.870Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/-/webApps/1:1039002220623:web:97cd909f0a477afdef523a/config [none]
+[debug] [2026-07-15T08:14:06.645Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/-/webApps/1:1039002220623:web:97cd909f0a477afdef523a/config 200
+[debug] [2026-07-15T08:14:06.646Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/-/webApps/1:1039002220623:web:97cd909f0a477afdef523a/config {"projectId":"mindgood-dev","appId":"1:1039002220623:web:97cd909f0a477afdef523a","storageBucket":"mindgood-dev.firebasestorage.app","apiKey":"AIzaSyC6sD6r6-5tUSW5beWcY2g-pfCzHpeGh1c","authDomain":"mindgood-dev.firebaseapp.com","messagingSenderId":"1039002220623","measurementId":"G-6JMVYKPK4J","projectNumber":"1039002220623","version":"2"}
+[info] {
+  "projectId": "mindgood-dev",
+  "appId": "1:1039002220623:web:97cd909f0a477afdef523a",
+  "storageBucket": "mindgood-dev.firebasestorage.app",
+  "apiKey": "AIzaSyC6sD6r6-5tUSW5beWcY2g-pfCzHpeGh1c",
+  "authDomain": "mindgood-dev.firebaseapp.com",
+  "messagingSenderId": "1039002220623",
+  "measurementId": "G-6JMVYKPK4J",
+  "projectNumber": "1039002220623",
+  "version": "2"
+}
+[debug] [2026-07-15T08:29:18.880Z] ----------------------------------------------------------------------
+[debug] [2026-07-15T08:29:18.901Z] Command:       /Users/bibychacko/.nvm/versions/node/v20.18.1/bin/firebase /Users/bibychacko/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/bin/firebase apps:list WEB --project mindgood-dev --json
+[debug] [2026-07-15T08:29:18.902Z] CLI Version:   15.23.0
+[debug] [2026-07-15T08:29:18.902Z] Platform:      darwin
+[debug] [2026-07-15T08:29:18.902Z] Node Version:  v20.18.2
+[debug] [2026-07-15T08:29:18.902Z] Detected Agent: codex_cli
+[debug] [2026-07-15T08:29:18.903Z] Time:          Wed Jul 15 2026 12:29:18 GMT+0400 (Gulf Standard Time)
+[debug] [2026-07-15T08:29:18.904Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-07-15T08:29:19.176Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-15T08:29:19.178Z] > authorizing via signed-in user (bibychackokply@gmail.com)
+[debug] [2026-07-15T08:29:19.202Z] Checked if tokens are valid: true, expires at: 1784106824974
+[debug] [2026-07-15T08:29:19.203Z] Checked if tokens are valid: true, expires at: 1784106824974
+[debug] [2026-07-15T08:29:19.207Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/mindgood-dev/webApps pageSize=100
+[debug] [2026-07-15T08:29:20.306Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/mindgood-dev/webApps 200
+[debug] [2026-07-15T08:29:20.309Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/mindgood-dev/webApps {"apps":[{"name":"projects/mindgood-dev/webApps/1:1039002220623:web:97cd909f0a477afdef523a","appId":"1:1039002220623:web:97cd909f0a477afdef523a","displayName":"mindgood-dev-web","projectId":"mindgood-dev","webId":"MDZkNDY5ZjAtYzYxNi00MTM3LTlkZGQtYzg5NWI4NWI5OTJi","apiKeyId":"479b407c-3c33-47e6-a790-1c514d1b3e5d","state":"ACTIVE","expireTime":"1970-01-01T00:00:00Z","etag":"1_85f096b1-147d-4b20-b33f-81bd2382acdc"}]}
+[info] ┌──────────────────┬────────────────────────────────────────────┬──────────┐
+│ App Display Name │ App ID                                     │ Platform │
+├──────────────────┼────────────────────────────────────────────┼──────────┤
+│ mindgood-dev-web │ 1:1039002220623:web:97cd909f0a477afdef523a │ WEB      │
+└──────────────────┴────────────────────────────────────────────┴──────────┘
+[info] 
+[info] 1 app(s) total.
