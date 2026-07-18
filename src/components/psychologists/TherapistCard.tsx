@@ -14,10 +14,11 @@ export function TherapistCard({ therapist }: TherapistCardProps) {
   // Limit specializations to show only the first 2 for extreme compactness
   const displaySpecializations = therapist.specializations?.slice(0, 2) || [];
   const remainingCount = (therapist.specializations?.length || 0) - 2;
+  const profilePath = therapist.slug || therapist.id;
 
   return (
     <Link 
-      href={`/psychologists/${therapist.id}`}
+      href={`/psychologists/${profilePath}`}
       className="group flex flex-col h-full bg-white dark:bg-gray-900 rounded-3xl shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 dark:border-gray-800"
     >
       {/* Visual Header Section */}

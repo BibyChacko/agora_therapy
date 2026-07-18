@@ -34,7 +34,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const therapists = await getPublicTherapists();
     therapistRoutes = therapists.map((therapist) => ({
-      url: `${baseUrl}/psychologists/${therapist.id}`,
+      url: `${baseUrl}/psychologists/${therapist.slug}`,
       lastModified: new Date(),
       changeFrequency: 'daily' as const,
       priority: 0.8,

@@ -1,11 +1,14 @@
 import { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { FiArrowLeft, FiStar, FiClock, FiBookOpen } from 'react-icons/fi';
 import { getLanguageName } from '@/lib/constants/languages';
 import { getServiceById } from '@/types/models/service';
-import { getPublicTherapistById } from '@/lib/services/public-therapist-service';
+import {
+  getPublicTherapistById,
+  getPublicTherapistBySlug,
+} from '@/lib/services/public-therapist-service';
 import { BookConsultationButton } from '@/components/psychologists/BookConsultationButton';
 import { gccAreas, siteName, siteUrl } from '@/lib/seo';
 
@@ -19,8 +22,10 @@ function toAbsoluteUrl(url: string) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
-  const therapist = await getPublicTherapistById(id);
-  const canonicalUrl = `${siteUrl}/psychologists/${id}`;
+  const therapist =
+    (await getPublicTherapistBySlug(id)) || (await getPublicTherapistById(id));
+  const canonicalSlug = therapist?.slug || id;
+  const canonicalUrl = `${siteUrl}/psychologists/${canonicalSlug}`;
 
   if (!therapist) {
     return {
@@ -108,17 +113,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PsychologistDetail({ params }: Props) {
   const { id } = await params;
-  const psychologist = await getPublicTherapistById(id);
+  const psychologist =
+    (await getPublicTherapistBySlug(id)) || (await getPublicTherapistById(id));
 
   if (!psychologist) {
     notFound();
+  }
+
+  if (id !== psychologist.slug) {
+    permanentRedirect(`/psychologists/${psychologist.slug}`);
   }
 
   const specializations = psychologist.specializations
     .map(spec => getServiceById(spec)?.name || spec)
     .filter(Boolean);
   const languages = psychologist.languages.map(getLanguageName).filter(Boolean);
-  const canonicalUrl = `${siteUrl}/psychologists/${id}`;
+  const canonicalUrl = `${siteUrl}/psychologists/${psychologist.slug}`;
   const imageUrl = toAbsoluteUrl(psychologist.image);
   const therapistLocation = psychologist.location || 'Dubai, UAE';
   const description = [

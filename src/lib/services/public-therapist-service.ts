@@ -71,6 +71,7 @@ async function getPublicTherapistsFromDb(
 
       return {
         id: therapistId,
+        slug: profileData?.slug || therapistId,
         name: userData?.profile?.displayName || `${userData?.profile?.firstName} ${userData?.profile?.lastName}`.trim(),
         title: `${profileData.practice?.yearsExperience || 0}+ Years Exp • ${profileData.credentials?.licenseState || ''}`,
         image: profileData?.photoURL || userData?.profile?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData?.profile?.displayName || 'T')}&background=random`,
@@ -140,6 +141,7 @@ async function getPublicTherapistByIdFromDb(
 
   return {
     id: therapistProfileDoc.id,
+    slug: profileData.slug || therapistProfileDoc.id,
     name: userData.profile?.displayName || `${userData.profile?.firstName} ${userData.profile?.lastName}`.trim(),
     title: `${profileData.practice?.yearsExperience || 0}+ Years Exp • ${profileData.credentials?.licenseState || ''}`,
     image: profileData.photoURL || userData.profile?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.profile?.displayName || 'T')}&background=random`,
@@ -155,6 +157,24 @@ async function getPublicTherapistByIdFromDb(
     isFeatured: profileData.isFeatured || false,
     timezone: profileData.availability?.timezone || userData.profile?.timezone || 'UTC',
   };
+}
+
+async function getPublicTherapistBySlugFromDb(
+  slug: string
+): Promise<TherapistPublicView | null> {
+  const db = getAdminFirestore();
+
+  const snapshot = await db
+    .collection("therapistProfiles")
+    .where("slug", "==", slug)
+    .limit(1)
+    .get();
+
+  if (snapshot.empty) {
+    return null;
+  }
+
+  return getPublicTherapistByIdFromDb(snapshot.docs[0].id);
 }
 
 function normalizeFilters(filters: TherapistFilters = {}) {
@@ -190,6 +210,20 @@ export async function getPublicTherapistById(
   const cachedLoader = unstable_cache(
     async () => getPublicTherapistByIdFromDb(id),
     ["public-therapist", id],
+    {
+      revalidate: 300,
+    }
+  );
+
+  return cachedLoader();
+}
+
+export async function getPublicTherapistBySlug(
+  slug: string
+): Promise<TherapistPublicView | null> {
+  const cachedLoader = unstable_cache(
+    async () => getPublicTherapistBySlugFromDb(slug),
+    ["public-therapist-slug", slug],
     {
       revalidate: 300,
     }

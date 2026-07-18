@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "create-admin": "ts-node -P scripts/tsconfig.json scripts/create-admin.ts",
+    "backfill:therapist-slugs": "ts-node scripts/backfill-therapist-slugs.ts",
     "impeccable": "impeccable",
     "impeccable:detect": "impeccable detect"
   },
