@@ -119,6 +119,10 @@ export default function SessionsPage() {
     };
   };
 
+  const getTherapistDisplayName = (appointment: Appointment) => {
+    return appointment.therapist?.name || appointment.therapistId || "Therapist";
+  };
+
   if (loading) {
     return (
       <ClientLayout>
@@ -240,7 +244,7 @@ export default function SessionsPage() {
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <CardTitle className="text-lg">
-                          Session with Dr. {appointment.therapistId}
+                          Session with {getTherapistDisplayName(appointment)}
                         </CardTitle>
                         <Badge className={status.color}>
                           <StatusIcon className="h-3 w-3 mr-1" />

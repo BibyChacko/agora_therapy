@@ -19,9 +19,14 @@ import { useAuth } from "@/lib/hooks/useAuth";
 import { AppointmentService } from "@/lib/services/appointment-service";
 import { Appointment } from "@/types/database";
 import { useToast } from "@/lib/hooks/useToast";
+import { generateInvoicePdf } from "@/lib/utils/invoice-pdf";
+import {
+  amountFromMinorUnits,
+  formatAmountFromMinorUnits,
+} from "@/lib/utils/currency";
 
 export default function InvoicesPage() {
-  const { user } = useAuth();
+  const { user, userData } = useAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -65,48 +70,32 @@ export default function InvoicesPage() {
 
   const handleDownloadInvoice = async (appointment: Appointment) => {
     try {
-      const invoiceData = `
-INVOICE
-========================================
-Invoice #: INV-${appointment.id.substring(0, 8).toUpperCase()}
-Date: ${formatDate(appointment.scheduledFor)}
+      await generateInvoicePdf({
+        appointment,
+        clientName:
+          userData?.profile?.displayName ||
+          `${userData?.profile?.firstName || ""} ${userData?.profile?.lastName || ""}`.trim() ||
+          user?.displayName ||
+          "Client",
+        clientEmail: userData?.email || user?.email || undefined,
+      });
 
-APPOINTMENT DETAILS
-----------------------------------------
-Appointment ID: ${appointment.id}
-Date: ${formatDate(appointment.scheduledFor)}
-Time: ${formatTime(appointment.scheduledFor)}
-Duration: ${appointment.duration} minutes
-Therapist: ${appointment.therapistId}
-Session Type: ${appointment.session?.type || "Individual Therapy"}
-
-PAYMENT DETAILS
-----------------------------------------
-Session Rate: $${appointment.payment?.amount || "100.00"}
-Tax: $${((appointment.payment?.amount || 100) * 0.1).toFixed(2)}
-Total: $${((appointment.payment?.amount || 100) * 1.1).toFixed(2)}
-Payment Status: ${appointment.payment?.status || "Pending"}
-Payment Method: ${appointment.payment?.method || "Not specified"}
-
-========================================
-Thank you for choosing our services!
-      `;
-      
-      const blob = new Blob([invoiceData], { type: "text/plain" });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `invoice-${appointment.id}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-      
       toast.success("Invoice Downloaded", "Your invoice has been downloaded successfully");
     } catch (error) {
       console.error("Error downloading invoice:", error);
       toast.error("Download Failed", "Failed to download invoice. Please try again.");
     }
+  };
+
+  const getTherapistDisplayName = (appointment: Appointment) => {
+    return appointment.therapist?.name || appointment.therapistId || "Therapist";
+  };
+
+  const formatInvoiceAmount = (appointment: Appointment) => {
+    return formatAmountFromMinorUnits(
+      appointment.payment?.amount,
+      appointment.payment?.currency
+    );
   };
 
   const getPaymentStatus = (status?: string) => {
@@ -140,11 +129,11 @@ Thank you for choosing our services!
 
   const totalPaid = appointments
     .filter((apt) => apt.payment?.status === "paid")
-    .reduce((sum, apt) => sum + (apt.payment?.amount || 0), 0);
+    .reduce((sum, apt) => sum + amountFromMinorUnits(apt.payment?.amount), 0);
 
   const totalPending = appointments
     .filter((apt) => apt.payment?.status === "pending")
-    .reduce((sum, apt) => sum + (apt.payment?.amount || 0), 0);
+    .reduce((sum, apt) => sum + amountFromMinorUnits(apt.payment?.amount), 0);
 
   if (loading) {
     return (
@@ -277,7 +266,7 @@ Thank you for choosing our services!
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pl-13">
                           <div>
                             <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Therapist</p>
-                            <p className="font-medium text-gray-900">Dr. {appointment.therapistId}</p>
+                            <p className="font-medium text-gray-900">{getTherapistDisplayName(appointment)}</p>
                           </div>
                           <div>
                             <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Session Type</p>
@@ -293,7 +282,7 @@ Thank you for choosing our services!
                             <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Amount</p>
                             <div className="flex items-center gap-2">
                               <span className="text-lg font-bold text-gray-900">
-                                ${appointment.payment?.amount || "100.00"}
+                                {formatInvoiceAmount(appointment)}
                               </span>
                               <Badge className={paymentStatus.color}>
                                 <StatusIcon className="h-3 w-3 mr-1" />

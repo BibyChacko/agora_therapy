@@ -17,9 +17,9 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Calendar, Clock, User, Video, AlertCircle, Download, FileText } from "lucide-react";
 import { Appointment, AppointmentStatus } from "@/types/database";
-import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
 import { useToast } from "@/lib/hooks/useToast";
+import { generateInvoicePdf } from "@/lib/utils/invoice-pdf";
 
 export default function MySessionsPage() {
   const { user, userData, loading: authLoading } = useAuth();
@@ -121,34 +121,22 @@ export default function MySessionsPage() {
     }
   };
 
+  const getTherapistDisplayName = (appointment: Appointment) => {
+    return appointment.therapist?.name || appointment.therapistId || "Therapist";
+  };
+
   const handleDownloadInvoice = async (appointment: Appointment) => {
     try {
-      // TODO: Implement actual invoice generation/download
-      // For now, create a simple text invoice
-      const invoiceData = `
-INVOICE
-========================================
-Appointment ID: ${appointment.id}
-Date: ${formatDate(appointment.scheduledFor)}
-Time: ${formatTime(appointment.scheduledFor)}
-Duration: ${appointment.duration} minutes
-Therapist: ${appointment.therapistId}
-Session Type: ${appointment.session?.type || "Individual Therapy"}
-Amount: $${appointment.payment?.amount || "0.00"}
-Status: ${appointment.payment?.status || "Pending"}
-========================================
-      `;
-      
-      const blob = new Blob([invoiceData], { type: "text/plain" });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `invoice-${appointment.id}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-      
+      await generateInvoicePdf({
+        appointment,
+        clientName:
+          userData?.profile?.displayName ||
+          `${userData?.profile?.firstName || ""} ${userData?.profile?.lastName || ""}`.trim() ||
+          user?.displayName ||
+          "Client",
+        clientEmail: userData?.email || user?.email || undefined,
+      });
+
       toast.success("Invoice Downloaded", "Your invoice has been downloaded successfully");
     } catch (error) {
       console.error("Error downloading invoice:", error);
@@ -206,7 +194,7 @@ Status: ${appointment.payment?.status || "Pending"}
           <div className="flex items-center gap-2">
             <User className="h-4 w-4 text-gray-600" />
             <span className="font-medium">
-              Therapist {appointment.therapistId}
+              {getTherapistDisplayName(appointment)}
             </span>
           </div>
 

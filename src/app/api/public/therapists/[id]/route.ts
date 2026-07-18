@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getPublicTherapistById } from "@/lib/services/public-therapist-service";
+import {
+  getPublicTherapistById,
+  getPublicTherapistBySlug,
+} from "@/lib/services/public-therapist-service";
 import { createRateLimitResponse } from "@/lib/server/rate-limit";
 import { applyCacheHeaders } from "@/lib/server/http-cache";
 
@@ -19,7 +22,8 @@ export async function GET(
     }
 
     const { id } = await context.params;
-    const therapist = await getPublicTherapistById(id);
+    const therapist =
+      (await getPublicTherapistBySlug(id)) || (await getPublicTherapistById(id));
 
     if (!therapist) {
       return NextResponse.json(

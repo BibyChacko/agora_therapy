@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useAuth } from "@/lib/hooks/useAuth";
-import { AuthDialog } from "@/components/auth/AuthDialog";
 
 interface BookConsultationButtonProps {
   psychologistId: string;
@@ -10,8 +9,11 @@ interface BookConsultationButtonProps {
 
 export function BookConsultationButton({ psychologistId }: BookConsultationButtonProps) {
   const { user, loading } = useAuth();
+  const bookingPath = `/booking/${psychologistId}`;
+  const signInPath = `/login?redirect=${encodeURIComponent(bookingPath)}`;
 
-  const buttonClasses = "block w-full py-3 px-4 text-center bg-gradient-to-r from-teal-500 to-blue-600 text-white rounded-md hover:opacity-90 transition-opacity font-bold cursor-pointer";
+  const buttonClasses =
+    "flex min-h-12 w-full items-center justify-center rounded-xl bg-gradient-to-r from-teal-500 to-blue-600 px-4 py-3 text-center text-base font-bold text-white shadow-md transition-opacity hover:opacity-90";
 
   if (loading) {
     return (
@@ -26,17 +28,15 @@ export function BookConsultationButton({ psychologistId }: BookConsultationButto
 
   if (user) {
     return (
-      <Link href={`/booking/${psychologistId}`} className={buttonClasses}>
+      <Link href={bookingPath} className={buttonClasses}>
         Book Consultation
       </Link>
     );
   }
 
   return (
-    <AuthDialog redirectUrl={`/booking/${psychologistId}`}>
-      <button className={buttonClasses}>
-        Book Consultation
-      </button>
-    </AuthDialog>
+    <Link href={signInPath} className={buttonClasses}>
+      Book Consultation
+    </Link>
   );
 }

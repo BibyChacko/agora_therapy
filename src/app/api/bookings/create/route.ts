@@ -110,6 +110,8 @@ export async function POST(request: NextRequest) {
                         `${clientData.profile?.firstName || ''} ${clientData.profile?.lastName || ''}`.trim() || 
                         'Customer';
     
+    const appointmentRef = db.collection("appointments").doc();
+
     // Create Stripe PaymentIntent with customer details
     const paymentIntent = await stripe.paymentIntents.create({
       amount: totalAmount,
@@ -129,6 +131,7 @@ export async function POST(request: NextRequest) {
         },
       },
       metadata: {
+        appointmentId: appointmentRef.id,
         therapistId,
         clientId,
         clientName: customerName,
@@ -146,7 +149,6 @@ export async function POST(request: NextRequest) {
     });
 
     // Create appointment document (pending payment)
-    const appointmentRef = db.collection("appointments").doc();
     const appointmentData = {
       id: appointmentRef.id,
       therapistId,

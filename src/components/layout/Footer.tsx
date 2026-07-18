@@ -91,6 +91,23 @@ const Footer = () => {
             </ul>
           </div>
 
+          {/* Partnership Programs */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Partnership Programs</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link href="/corporate" className="text-gray-600 dark:text-gray-400 hover:text-teal-500 dark:hover:text-teal-500 transition-colors text-sm">
+                  Corporate Wellbeing
+                </Link>
+              </li>
+              <li>
+                <Link href="/campus" className="text-gray-600 dark:text-gray-400 hover:text-teal-500 dark:hover:text-teal-500 transition-colors text-sm">
+                  Campus Association
+                </Link>
+              </li>
+            </ul>
+          </div>
+
           {/* Services */}
           <div>
             <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Our Services</h3>

@@ -76,6 +76,12 @@ export interface Appointment {
     cancellationReason?: string;
     rescheduledFrom?: string; // previous appointment ID
   };
+
+  therapist?: {
+    id: string;
+    name: string;
+    image?: string;
+  };
 }
 
 export interface BookingRequest {

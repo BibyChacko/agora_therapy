@@ -18,6 +18,7 @@ import {
   FieldValue,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
+import { auth } from "@/lib/firebase/client";
 import { collections, documents } from "@/lib/firebase/collections";
 import {
   Appointment,
@@ -56,6 +57,24 @@ export class AppointmentService {
     status?: AppointmentStatus
   ): Promise<Appointment[]> {
     try {
+      if (typeof window !== "undefined" && auth.currentUser) {
+        const token = await auth.currentUser.getIdToken();
+        const response = await fetch("/api/client/appointments", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          const appointments = (result.appointments || []) as Appointment[];
+
+          return status
+            ? appointments.filter((appointment) => appointment.status === status)
+            : appointments;
+        }
+      }
+
       let q = query(
         collections.appointments(),
         where("clientId", "==", clientId),

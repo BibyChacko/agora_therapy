@@ -17,7 +17,13 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-07-30.basil",
 });
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+const webhookSecrets = [
+  process.env.STRIPE_WEBHOOK_SECRET,
+  ...(process.env.STRIPE_WEBHOOK_SECRETS || "")
+    .split(",")
+    .map((secret) => secret.trim())
+    .filter(Boolean),
+].filter((secret): secret is string => Boolean(secret));
 
 // Agora configuration
 const AGORA_APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
@@ -26,13 +32,14 @@ const AGORA_APP_CERTIFICATE = process.env.AGORA_APP_CERTIFICATE!;
 export async function POST(request: NextRequest) {
   try {
     console.log("🔔 Stripe webhook received");
-    const body = await request.text();
+    const payload = Buffer.from(await request.arrayBuffer());
     const signature = request.headers.get("stripe-signature");
 
     console.log("📝 Request details:");
-    console.log("- Body length:", body.length);
+    console.log("- Request path:", request.nextUrl.pathname);
+    console.log("- Body length:", payload.length);
     console.log("- Has signature:", !!signature);
-    console.log("- Webhook secret configured:", !!webhookSecret);
+    console.log("- Webhook secrets configured:", webhookSecrets.length);
 
     if (!signature) {
       console.error("❌ Missing stripe-signature header");
@@ -42,10 +49,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify webhook signature
+    if (webhookSecrets.length === 0) {
+      console.error("❌ No Stripe webhook secret configured");
+      return NextResponse.json(
+        { error: "Webhook secret is not configured" },
+        { status: 500 }
+      );
+    }
+
+    // Verify webhook signature against each configured secret
     let event: Stripe.Event;
     try {
-      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+      let verifiedEvent: Stripe.Event | null = null;
+
+      for (const webhookSecret of webhookSecrets) {
+        try {
+          verifiedEvent = stripe.webhooks.constructEvent(
+            payload,
+            signature,
+            webhookSecret
+          );
+          break;
+        } catch {
+          // Keep trying configured secrets until one matches.
+        }
+      }
+
+      if (!verifiedEvent) {
+        throw new Error(
+          "No configured Stripe webhook secret matched the request signature."
+        );
+      }
+
+      event = verifiedEvent;
       console.log("✅ Webhook signature verified");
       console.log("📦 Event type:", event.type);
     } catch (err) {

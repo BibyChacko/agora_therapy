@@ -11,9 +11,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   // Pages that should NOT show Header/Footer (dashboard pages)
   const isDashboardPage = pathname?.startsWith('/admin') || 
                           pathname?.startsWith('/therapist') || 
-                          pathname?.startsWith('/client') ||
-                          pathname?.startsWith('/login') ||
-                          pathname?.startsWith('/register');
+                          pathname?.startsWith('/client');
   
   // Public pages show Header/Footer
   if (!isDashboardPage) {

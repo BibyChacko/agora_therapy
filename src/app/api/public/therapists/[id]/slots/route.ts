@@ -2,6 +2,10 @@ import { endOfDay, startOfDay } from "date-fns";
 import { NextRequest, NextResponse } from "next/server";
 
 import { AvailableSlotsService } from "@/lib/services/available-slots-service";
+import {
+  getPublicTherapistById,
+  getPublicTherapistBySlug,
+} from "@/lib/services/public-therapist-service";
 import { applyCacheHeaders } from "@/lib/server/http-cache";
 import { createRateLimitResponse } from "@/lib/server/rate-limit";
 
@@ -39,7 +43,17 @@ export async function GET(
       return NextResponse.json({ error: "Invalid date" }, { status: 400 });
     }
 
-    const result = await AvailableSlotsService.calculateAvailableSlots(id, {
+    const therapist =
+      (await getPublicTherapistBySlug(id)) || (await getPublicTherapistById(id));
+
+    if (!therapist) {
+      return NextResponse.json(
+        { error: "Therapist not found" },
+        { status: 404 }
+      );
+    }
+
+    const result = await AvailableSlotsService.calculateAvailableSlots(therapist.id, {
       startDate: startOfDay(targetDate),
       endDate: endOfDay(targetDate),
       clientTimezone,
@@ -62,7 +76,7 @@ export async function GET(
       }));
 
     const response = NextResponse.json({
-      therapistId: id,
+      therapistId: therapist.id,
       timezone: result.timezone,
       date: targetDate.toISOString(),
       slots,

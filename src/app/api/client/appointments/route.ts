@@ -24,7 +24,6 @@ export async function GET(request: NextRequest) {
     const appointmentsSnapshot = await db
       .collection("appointments")
       .where("clientId", "==", clientId)
-      .orderBy("scheduledFor", "desc")
       .get();
 
     const appointments = await Promise.all(
@@ -58,6 +57,12 @@ export async function GET(request: NextRequest) {
         };
       })
     );
+
+    appointments.sort((a, b) => {
+      const aTime = new Date(a.scheduledFor).getTime();
+      const bTime = new Date(b.scheduledFor).getTime();
+      return bTime - aTime;
+    });
 
     return NextResponse.json({ appointments });
   } catch (error) {

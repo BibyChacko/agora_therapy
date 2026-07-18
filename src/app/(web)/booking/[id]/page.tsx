@@ -70,25 +70,27 @@ export default function BookingPage() {
   const fetchTherapist = async () => {
     try {
       const response = await fetch(`/api/public/therapists/${therapistId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setTherapist(data);
-        const hourlyRate = data.hourlyRate / 100;
-        trackViewItem({
-          currency: 'AED',
-          value: hourlyRate,
-          items: [
-            {
-              item_id: data.id,
-              item_name: data.name,
-              item_category: 'therapy',
-              item_category2: data.sessionTypes?.[0],
-              price: hourlyRate,
-              quantity: 1,
-            },
-          ],
-        });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch therapist (${response.status})`);
       }
+
+      const data = await response.json();
+      setTherapist(data);
+      const hourlyRate = data.hourlyRate / 100;
+      trackViewItem({
+        currency: 'AED',
+        value: hourlyRate,
+        items: [
+          {
+            item_id: data.id,
+            item_name: data.name,
+            item_category: 'therapy',
+            item_category2: data.sessionTypes?.[0],
+            price: hourlyRate,
+            quantity: 1,
+          },
+        ],
+      });
     } catch (error) {
       console.error('Error fetching therapist:', error);
       trackException((error as Error).message || 'fetch_therapist_failed');
@@ -127,7 +129,7 @@ export default function BookingPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          therapistId,
+          therapistId: therapist.id,
           scheduledFor: scheduledFor.toISOString(),
           duration: selectedSessionConfig.duration,
           sessionType: selectedSessionType,
@@ -227,34 +229,34 @@ export default function BookingPage() {
   const sessionFee = ((therapist.hourlyRate / 100) * selectedSessionConfig.duration) / 60 + 15;
 
   return (
-    <div className="container mx-auto px-4 py-12">
+    <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
       {/* Back Button */}
       <Link 
-        href={`/psychologists/${therapist.id}`}
-        className="inline-flex items-center text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 mb-8"
+        href={`/psychologists/${therapist.slug || therapist.id}`}
+        className="mb-6 inline-flex min-h-11 items-center gap-2 text-base text-teal-600 transition-colors hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 sm:mb-8"
       >
-        <FiArrowLeft className="mr-2" /> Back to Profile
+        <FiArrowLeft className="shrink-0" /> Back to Profile
       </Link>
 
       {/* Progress Steps */}
-      <div className="max-w-4xl mx-auto mb-8">
-        <div className="flex items-center justify-center">
+      <div className="mx-auto mb-8 w-full max-w-5xl">
+        <div className="flex flex-wrap items-center justify-center gap-y-3">
           <div className={`flex items-center ${step === 'datetime' ? 'text-teal-600' : step === 'payment' || step === 'confirmation' ? 'text-teal-600' : 'text-gray-400'}`}>
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${step === 'datetime' || step === 'payment' || step === 'confirmation' ? 'bg-teal-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
+            <div className={`flex h-10 w-10 items-center justify-center rounded-full ${step === 'datetime' || step === 'payment' || step === 'confirmation' ? 'bg-teal-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
               <FiCalendar />
             </div>
             <span className="ml-2 font-medium hidden sm:inline">Date & Time</span>
           </div>
-          <div className={`w-16 h-1 mx-2 ${step === 'payment' || step === 'confirmation' ? 'bg-teal-600' : 'bg-gray-200'}`}></div>
+          <div className={`mx-2 h-1 w-10 sm:w-16 ${step === 'payment' || step === 'confirmation' ? 'bg-teal-600' : 'bg-gray-200'}`}></div>
           <div className={`flex items-center ${step === 'payment' ? 'text-teal-600' : step === 'confirmation' ? 'text-teal-600' : 'text-gray-400'}`}>
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${step === 'payment' || step === 'confirmation' ? 'bg-teal-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
+            <div className={`flex h-10 w-10 items-center justify-center rounded-full ${step === 'payment' || step === 'confirmation' ? 'bg-teal-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
               <FiCreditCard />
             </div>
             <span className="ml-2 font-medium hidden sm:inline">Payment</span>
           </div>
-          <div className={`w-16 h-1 mx-2 ${step === 'confirmation' ? 'bg-teal-600' : 'bg-gray-200'}`}></div>
+          <div className={`mx-2 h-1 w-10 sm:w-16 ${step === 'confirmation' ? 'bg-teal-600' : 'bg-gray-200'}`}></div>
           <div className={`flex items-center ${step === 'confirmation' ? 'text-teal-600' : 'text-gray-400'}`}>
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${step === 'confirmation' ? 'bg-teal-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
+            <div className={`flex h-10 w-10 items-center justify-center rounded-full ${step === 'confirmation' ? 'bg-teal-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
               <FiCheckCircle />
             </div>
             <span className="ml-2 font-medium hidden sm:inline">Confirmed</span>
