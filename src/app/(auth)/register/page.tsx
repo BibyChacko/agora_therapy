@@ -10,6 +10,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { signUpWithEmail, signInWithGoogle } from "@/lib/firebase/auth";
+import { trackException, trackSignUp } from "@/lib/analytics/gtag";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -125,6 +126,7 @@ function RegisterForm() {
         role: formData.role as UserRole,
         phoneNumber: formData.phoneNumber || undefined,
       });
+      trackSignUp("email", formData.role);
 
       // Redirect to appropriate onboarding or dashboard
       if (formData.role === "therapist") {
@@ -134,6 +136,9 @@ function RegisterForm() {
       }
     } catch (error: unknown) {
       console.error("Registration error:", error);
+      if (error instanceof Error) {
+        trackException(error.message || "sign_up_failed");
+      }
       if (error instanceof Error) {
         if (error.message.includes("email-already-in-use")) {
           setGeneralError("An account with this email already exists");
@@ -158,9 +163,13 @@ function RegisterForm() {
 
     try {
       await signInWithGoogle();
+      trackSignUp("google", roleFromUrl || undefined);
       router.push("/");
     } catch (error: unknown) {
       console.error("Google sign in error:", error);
+      if (error instanceof Error) {
+        trackException(error.message || "google_sign_up_failed");
+      }
       if (error instanceof Error) {
         if (error.message.includes("popup-closed-by-user")) {
           setGeneralError("Sign in was cancelled");

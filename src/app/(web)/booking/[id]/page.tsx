@@ -16,6 +16,12 @@ import {
   THERAPY_SESSION_CONFIGS,
   type SupportedTherapySessionType,
 } from '@/lib/session/therapy-session';
+import {
+  trackBeginCheckout,
+  trackException,
+  trackPurchase,
+  trackViewItem,
+} from '@/lib/analytics/gtag';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -67,9 +73,25 @@ export default function BookingPage() {
       if (response.ok) {
         const data = await response.json();
         setTherapist(data);
+        const hourlyRate = data.hourlyRate / 100;
+        trackViewItem({
+          currency: 'AED',
+          value: hourlyRate,
+          items: [
+            {
+              item_id: data.id,
+              item_name: data.name,
+              item_category: 'therapy',
+              item_category2: data.sessionTypes?.[0],
+              price: hourlyRate,
+              quantity: 1,
+            },
+          ],
+        });
       }
     } catch (error) {
       console.error('Error fetching therapist:', error);
+      trackException((error as Error).message || 'fetch_therapist_failed');
     } finally {
       setLoading(false);
     }
@@ -123,9 +145,24 @@ export default function BookingPage() {
       setAmount(data.amount);
       setTherapistFee(data.therapistFee);
       setPlatformFee(data.platformFee);
+      trackBeginCheckout({
+        currency: 'AED',
+        value: data.amount / 100,
+        items: [
+          {
+            item_id: therapist.id,
+            item_name: therapist.name,
+            item_category: 'therapy',
+            item_category2: selectedSessionType,
+            price: data.amount / 100,
+            quantity: 1,
+          },
+        ],
+      });
       setStep('payment');
     } catch (error) {
       console.error('Error creating booking:', (error as Error).message);
+      trackException((error as Error).message || 'create_booking_failed');
       alert('Failed to create booking. Please try again.');
     } finally {
       setLoading(false);
@@ -133,6 +170,23 @@ export default function BookingPage() {
   };
 
   const handlePaymentSuccess = () => {
+    if (therapist && appointmentId) {
+      trackPurchase({
+        transaction_id: appointmentId,
+        currency: 'AED',
+        value: amount / 100,
+        items: [
+          {
+            item_id: therapist.id,
+            item_name: therapist.name,
+            item_category: 'therapy',
+            item_category2: selectedSessionType,
+            price: amount / 100,
+            quantity: 1,
+          },
+        ],
+      });
+    }
     setStep('confirmation');
   };
 
@@ -405,11 +459,17 @@ export default function BookingPage() {
 
                 {/* Stripe Payment Form */}
                 <Elements stripe={stripePromise} options={{ clientSecret }}>
-                  <CheckoutForm 
-                    clientSecret={clientSecret}
-                    onSuccess={handlePaymentSuccess}
-                  />
-                </Elements>
+                      <CheckoutForm
+                        clientSecret={clientSecret}
+                        appointmentId={appointmentId}
+                        amount={amount}
+                        currency="aed"
+                        therapistId={therapist.id}
+                        therapistName={therapist.name}
+                        sessionType={selectedSessionType}
+                        onSuccess={handlePaymentSuccess}
+                      />
+                    </Elements>
               </div>
             )}
 

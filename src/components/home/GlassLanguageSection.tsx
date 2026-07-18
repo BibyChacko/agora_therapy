@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { trackLanguageDiscovery } from "@/lib/analytics/gtag";
 
 interface Language {
   code: string;
@@ -85,7 +86,15 @@ export function GlassLanguageSection({ languages }: GlassLanguageSectionProps) {
               <button
                 key={region}
                 type="button"
-                onClick={() => setActiveRegion(region)}
+                onClick={() => {
+                  setActiveRegion(region);
+                  trackLanguageDiscovery({
+                    click_target: "region_tab",
+                    region,
+                    visible_language_count: regionLanguages.length,
+                    total_language_count: languages.length,
+                  });
+                }}
                 className={`rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 ${
                   activeRegion === region
                     ? "bg-blue-600 text-white shadow-lg"
@@ -111,6 +120,16 @@ export function GlassLanguageSection({ languages }: GlassLanguageSectionProps) {
               <Link
                 key={language.code}
                 href={`/psychologists?language=${language.code}`}
+                onClick={() =>
+                  trackLanguageDiscovery({
+                    click_target: "language_card",
+                    region: activeRegion,
+                    language_code: language.code,
+                    language_name: language.name,
+                    visible_language_count: visibleLanguages.length,
+                    total_language_count: languages.length,
+                  })
+                }
                 className="group rounded-2xl border border-white/60 bg-white/50 p-5 backdrop-blur-md transition-all duration-300 hover:scale-105 hover:bg-white/70 hover:shadow-xl dark:border-gray-700/60 dark:bg-gray-800/50 dark:hover:bg-gray-800/70"
               >
                 <div className="text-center">
@@ -147,6 +166,14 @@ export function GlassLanguageSection({ languages }: GlassLanguageSectionProps) {
         <div className="text-center mt-12">
           <Link
             href="/languages"
+            onClick={() =>
+              trackLanguageDiscovery({
+                click_target: "view_all_languages",
+                region: activeRegion,
+                visible_language_count: visibleLanguages.length,
+                total_language_count: languages.length,
+              })
+            }
             className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 px-8 py-4 font-semibold text-white shadow-xl transition-all duration-300 hover:scale-105 hover:from-blue-700 hover:to-purple-700"
           >
             View All Languages
@@ -158,6 +185,14 @@ export function GlassLanguageSection({ languages }: GlassLanguageSectionProps) {
             Don&apos;t see your language here?{" "}
             <Link
               href="/languages"
+              onClick={() =>
+                trackLanguageDiscovery({
+                  click_target: "browse_all_languages",
+                  region: activeRegion,
+                  visible_language_count: visibleLanguages.length,
+                  total_language_count: languages.length,
+                })
+              }
               className="font-semibold text-blue-700 underline-offset-4 hover:underline dark:text-blue-300"
             >
               Browse every language and therapist match

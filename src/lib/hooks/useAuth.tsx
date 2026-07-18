@@ -7,6 +7,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { User } from "firebase/auth";
+import { auth } from "@/lib/firebase/client";
 import {
   onAuthStateChange,
   getCurrentUserData,
@@ -30,10 +31,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   // Refresh user data from Firestore
-  const refreshUserData = async () => {
-    console.log("🔄 refreshUserData - Called with user:", user?.uid);
-    
-    if (user) {
+  const refreshUserData = async (authUser?: User | null) => {
+    const targetUser = authUser ?? auth.currentUser ?? user;
+    console.log("🔄 refreshUserData - Called with user:", targetUser?.uid);
+
+    if (targetUser) {
       try {
         console.log("🔄 refreshUserData - Fetching user data...");
         const data = await getCurrentUserData();
@@ -81,7 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           // Get user data from Firestore
           console.log("📥 Fetching user data from Firestore...");
-          await refreshUserData();
+          await refreshUserData(authUser);
         } catch (error) {
           console.error("❌ Error setting auth token:", error);
         }

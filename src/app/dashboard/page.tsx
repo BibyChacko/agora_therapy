@@ -15,13 +15,12 @@ export default function DashboardPage() {
   const userRole = useUserRole();
 
   useEffect(() => {
-    
     if (!loading) {
-      
       if (!user) {
         router.push("/login");
+      } else if (!userData) {
+        console.log("⏳ Dashboard - Waiting for user profile data...");
       } else if (userRole) {
-        
         // Redirect based on role using helper hook
         switch (userRole) {
           case "admin":
@@ -34,18 +33,14 @@ export default function DashboardPage() {
             router.push("/client");
             break;
         }
-      } else if (user && !userRole) {
+      } else {
         console.warn("⚠️ Dashboard - User exists but no role defined");
-        setTimeout(() => {
-          if (!userRole) {
-            router.push("/onboarding");
-          }
-        }, 500);
+        router.push("/onboarding");
       }
     } else {
       console.log("⏳ Dashboard - Still loading auth state...");
     }
-  }, [user, userRole, loading, router]);
+  }, [user, userData, userRole, loading, router]);
 
   // Show loading state while redirecting
   return (

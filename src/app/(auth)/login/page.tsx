@@ -10,6 +10,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { signInWithEmail, signInWithGoogle, getCurrentUserData } from "@/lib/firebase/auth";
+import { trackException, trackLogin } from "@/lib/analytics/gtag";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -92,6 +93,7 @@ function LoginForm() {
       // Wait a moment for userData to be fetched, then redirect based on role
       setTimeout(async () => {
         const userData = await getCurrentUserData();
+        trackLogin("email", userData?.role);
         if (userData?.role === "client") {
           window.location.href = "/client";
         } else if (userData?.role === "therapist") {
@@ -104,6 +106,9 @@ function LoginForm() {
       }, 500);
     } catch (error: unknown) {
       console.error("Login error:", error);
+      if (error instanceof Error) {
+        trackException(error.message || "login_failed");
+      }
       if (error instanceof Error) {
         if (error.message.includes("user-not-found")) {
           setGeneralError("No account found with this email address");
@@ -130,6 +135,7 @@ function LoginForm() {
       // Wait a moment for userData to be fetched, then redirect based on role
       setTimeout(async () => {
         const userData = await getCurrentUserData();
+        trackLogin("google", userData?.role);
         if (userData?.role === "client") {
           window.location.href = "/client";
         } else if (userData?.role === "therapist") {
@@ -142,6 +148,9 @@ function LoginForm() {
       }, 500);
     } catch (error: unknown) {
       console.error("Google sign in error:", error);
+      if (error instanceof Error) {
+        trackException(error.message || "google_login_failed");
+      }
       if (error instanceof Error) {
         if (error.message.includes("popup-closed-by-user")) {
           setGeneralError("Sign in was cancelled");

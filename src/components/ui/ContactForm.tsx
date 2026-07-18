@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { FiSend } from 'react-icons/fi';
+import { trackException, trackGenerateLead } from '@/lib/analytics/gtag';
 
 const ContactForm: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -37,6 +38,12 @@ const ContactForm: React.FC = () => {
         success: true,
         message: 'Thank you for your message! We will get back to you soon.'
       });
+
+      trackGenerateLead({
+        form_name: 'contact_form',
+        subject: formData.subject,
+        preferred_language: formData.language,
+      });
       
       // Reset form
       setFormData({
@@ -49,6 +56,7 @@ const ContactForm: React.FC = () => {
       });
     } catch (error) {
       console.error('Error submitting form:', error);
+      trackException((error as Error).message || 'contact_form_submit_failed');
       setSubmitStatus({
         success: false,
         message:  (error as Error).message || 'Something went wrong. Please try again later.'

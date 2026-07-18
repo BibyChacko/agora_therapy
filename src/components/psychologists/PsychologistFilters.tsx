@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { FiFilter, FiMapPin, FiGlobe, FiBriefcase } from 'react-icons/fi';
 import SearchableSelect from '../ui/SearchableSelect';
-import { LANGUAGES } from '@/lib/constants/languages';
-import { AVAILABLE_SERVICES } from '@/types/models/service';
+import { getLanguageName, LANGUAGES } from '@/lib/constants/languages';
+import { AVAILABLE_SERVICES, getServiceById } from '@/types/models/service';
+import { trackTherapistFilters } from '@/lib/analytics/gtag';
 
 interface PsychologistFiltersProps {
   initialFilters?: { specialization?: string; language?: string; minExperience?: string; location?: string };
@@ -30,6 +31,36 @@ const PsychologistFilters: React.FC<PsychologistFiltersProps> = ({ initialFilter
   const [minExperience, setMinExperience] = useState(initialFilters?.minExperience || '');
   const [location, setLocation] = useState(initialFilters?.location || '');
 
+  const trackFilters = (
+    eventSource: 'page_load' | 'filter_change' | 'reset',
+    filters: { specialization: string; language: string; minExperience: string; location: string }
+  ) => {
+    trackTherapistFilters({
+      event_source: eventSource,
+      language_code: filters.language || undefined,
+      language_name: filters.language ? getLanguageName(filters.language) : undefined,
+      specialization_id: filters.specialization || undefined,
+      specialization_name: filters.specialization
+        ? getServiceById(filters.specialization)?.name
+        : undefined,
+      min_experience: filters.minExperience || undefined,
+      location: filters.location || undefined,
+    });
+  };
+
+  useEffect(() => {
+    if (!language && !specialization && !minExperience && !location) {
+      return;
+    }
+
+    trackFilters('page_load', {
+      specialization,
+      language,
+      minExperience,
+      location,
+    });
+  }, []);
+
   const updateParams = (filters: { specialization: string; language: string; minExperience: string; location: string }) => {
     const params = new URLSearchParams(searchParams.toString());
     
@@ -50,22 +81,30 @@ const PsychologistFilters: React.FC<PsychologistFiltersProps> = ({ initialFilter
 
   const handleSpecializationChange = (value: string) => {
     setSpecialization(value);
-    updateParams({ specialization: value, language, minExperience, location });
+    const nextFilters = { specialization: value, language, minExperience, location };
+    trackFilters('filter_change', nextFilters);
+    updateParams(nextFilters);
   };
 
   const handleLanguageChange = (value: string) => {
     setLanguage(value);
-    updateParams({ specialization, language: value, minExperience, location });
+    const nextFilters = { specialization, language: value, minExperience, location };
+    trackFilters('filter_change', nextFilters);
+    updateParams(nextFilters);
   };
 
   const handleExperienceChange = (value: string) => {
     setMinExperience(value);
-    updateParams({ specialization, language, minExperience: value, location });
+    const nextFilters = { specialization, language, minExperience: value, location };
+    trackFilters('filter_change', nextFilters);
+    updateParams(nextFilters);
   };
 
   const handleLocationChange = (value: string) => {
     setLocation(value);
-    updateParams({ specialization, language, minExperience, location: value });
+    const nextFilters = { specialization, language, minExperience, location: value };
+    trackFilters('filter_change', nextFilters);
+    updateParams(nextFilters);
   };
 
   const resetFilters = () => {
@@ -73,6 +112,12 @@ const PsychologistFilters: React.FC<PsychologistFiltersProps> = ({ initialFilter
     setSpecialization('');
     setMinExperience('');
     setLocation('');
+    trackFilters('reset', {
+      specialization: '',
+      language: '',
+      minExperience: '',
+      location: '',
+    });
     router.push(pathname);
   };
 

@@ -34,8 +34,12 @@ export default function OnboardingPage() {
     return <PageLoadingSpinner text="Setting up your account..." />;
   }
 
-  if (!user || !userData) {
+  if (!user) {
     return null; // This will be handled by middleware
+  }
+
+  if (!userData) {
+    return <PageLoadingSpinner text="Loading your profile..." />;
   }
 
   // If onboarding is already completed, redirect

@@ -50,6 +50,7 @@
     "next": "15.3.7",
     "next-i18next": "^15.4.2",
     "nodemailer": "^7.0.11",
+    "posthog-js": "^1.404.0",
     "react": "^19.0.0",
     "react-calendly": "^4.4.0",
     "react-datepicker": "^8.10.0",

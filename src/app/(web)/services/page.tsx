@@ -5,6 +5,8 @@ import { AVAILABLE_SERVICES } from '@/types/models/service';
 import { getPublicTherapists } from '@/lib/services/public-therapist-service';
 import { getLanguageName } from '@/lib/constants/languages';
 import { gccAreas, siteUrl } from '@/lib/seo';
+import { ServicesSearchForm } from '@/components/services/ServicesSearchForm';
+import { TrackedServicesLink } from '@/components/services/TrackedServicesLink';
 
 // Comprehensive Metadata for SEO
 export const metadata = {
@@ -131,43 +133,37 @@ export default async function ServicesPage({ searchParams }: { searchParams: Pro
             </p>
           </header>
           
-          <form action="/services" method="GET" className="max-w-2xl mx-auto">
-            <div className="relative">
-              <FiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                name="q"
-                type="text"
-                defaultValue={query}
-                placeholder="Search services (e.g., anxiety, couples therapy...)"
-                className="w-full pl-12 pr-4 py-4 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all shadow-sm"
-              />
-            </div>
-            {query && (
-              <p className="mt-4 text-sm text-gray-500 font-medium">
-                Showing {filteredServices.length} results for "{query}"
-              </p>
-            )}
-          </form>
+          <ServicesSearchForm query={query} resultCount={filteredServices.length} />
 
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link
+            <TrackedServicesLink
               href="/online-counselling-dubai"
+              clickTarget="featured_topic"
+              serviceName="Online Counselling Dubai"
+              query={query || undefined}
               className="rounded-full bg-teal-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-teal-700"
             >
               Online Counselling Dubai
-            </Link>
-            <Link
+            </TrackedServicesLink>
+            <TrackedServicesLink
               href="/anxiety-therapy-dubai"
+              clickTarget="featured_topic"
+              serviceId="anxiety"
+              serviceName="Anxiety Therapy Dubai"
+              query={query || undefined}
               className="rounded-full bg-gray-900 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-black dark:bg-white dark:text-black"
             >
               Anxiety Therapy Dubai
-            </Link>
-            <Link
+            </TrackedServicesLink>
+            <TrackedServicesLink
               href="/couples-therapy-dubai"
+              clickTarget="featured_topic"
+              serviceName="Couples Therapy Dubai"
+              query={query || undefined}
               className="rounded-full border border-gray-300 px-5 py-2.5 text-sm font-bold text-gray-900 transition hover:border-teal-500 dark:border-gray-700 dark:text-white"
             >
               Couples Therapy Dubai
-            </Link>
+            </TrackedServicesLink>
           </div>
         </div>
 
@@ -177,12 +173,14 @@ export default async function ServicesPage({ searchParams }: { searchParams: Pro
               <p className="text-gray-600 dark:text-gray-400 text-lg mb-6">
                 No services found matching your search.
               </p>
-              <Link
+              <TrackedServicesLink
                 href="/services"
+                clickTarget="empty_state"
+                query={query || undefined}
                 className="px-8 py-3 bg-teal-600 text-white rounded-full font-bold hover:bg-teal-700 transition-colors"
               >
                 View All Services
-              </Link>
+              </TrackedServicesLink>
             </div>
           </div>
         ) : (
@@ -225,13 +223,17 @@ export default async function ServicesPage({ searchParams }: { searchParams: Pro
                       )}
                       
                       <div className="pt-6">
-                        <Link 
+                        <TrackedServicesLink 
                           href={`/psychologists?specialization=${service.id}`}
+                          clickTarget="service_specialists_cta"
+                          serviceId={service.id}
+                          serviceName={service.name}
+                          query={query || undefined}
                           className="inline-flex items-center gap-3 px-8 py-4 bg-gray-900 dark:bg-white text-white dark:text-black rounded-full font-black hover:scale-105 transition-all shadow-xl"
                         >
                           Find {service.name} Specialists
                           <FiArrowRight className="w-5 h-5" />
-                        </Link>
+                        </TrackedServicesLink>
                       </div>
                     </div>
                     
@@ -240,9 +242,15 @@ export default async function ServicesPage({ searchParams }: { searchParams: Pro
                       {relatedTherapists.length > 0 ? (
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                           {relatedTherapists.map((therapist) => (
-                            <Link 
+                            <TrackedServicesLink 
                               key={therapist.id}
                               href={`/psychologists/${therapist.id}`}
+                              clickTarget="related_therapist"
+                              serviceId={service.id}
+                              serviceName={service.name}
+                              therapistId={therapist.id}
+                              therapistName={therapist.name}
+                              query={query || undefined}
                               className="group relative aspect-square rounded-3xl overflow-hidden shadow-lg"
                             >
                               <Image 
@@ -260,7 +268,7 @@ export default async function ServicesPage({ searchParams }: { searchParams: Pro
                                   {therapist.languages.map(getLanguageName).slice(0, 2).join(', ')}
                                 </p>
                               </div>
-                            </Link>
+                            </TrackedServicesLink>
                           ))}
                         </div>
                       ) : (
@@ -291,13 +299,15 @@ export default async function ServicesPage({ searchParams }: { searchParams: Pro
               Connect with a therapist who truly understands you. 
               No waiting lists, just professional care in your own language.
             </p>
-            <Link 
+            <TrackedServicesLink 
               href="/psychologists"
+              clickTarget="bottom_cta"
+              query={query || undefined}
               className="inline-flex items-center gap-3 px-10 py-5 bg-white text-teal-600 rounded-full font-black text-lg hover:scale-105 transition-all shadow-xl"
             >
               Start Your Journey
               <FiArrowRight className="w-6 h-6" />
-            </Link>
+            </TrackedServicesLink>
           </div>
         </div>
       </div>

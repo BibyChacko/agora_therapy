@@ -6,13 +6,32 @@ import {
   useStripe,
   useElements
 } from '@stripe/react-stripe-js';
+import {
+  trackAddPaymentInfo,
+  trackException,
+} from '@/lib/analytics/gtag';
 
 interface CheckoutFormProps {
   clientSecret: string;
+  appointmentId: string;
+  amount: number;
+  currency: string;
+  therapistId: string;
+  therapistName: string;
+  sessionType: string;
   onSuccess: () => void;
 }
 
-export default function CheckoutForm({ clientSecret, onSuccess }: CheckoutFormProps) {
+export default function CheckoutForm({
+  clientSecret,
+  appointmentId,
+  amount,
+  currency,
+  therapistId,
+  therapistName,
+  sessionType,
+  onSuccess,
+}: CheckoutFormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const [message, setMessage] = useState<string | null>(null);
@@ -27,6 +46,22 @@ export default function CheckoutForm({ clientSecret, onSuccess }: CheckoutFormPr
 
     setIsLoading(true);
 
+    trackAddPaymentInfo({
+      currency: currency.toUpperCase(),
+      value: amount / 100,
+      payment_type: 'card',
+      items: [
+        {
+          item_id: therapistId,
+          item_name: therapistName,
+          item_category: 'therapy',
+          item_category2: sessionType,
+          price: amount / 100,
+          quantity: 1,
+        },
+      ],
+    });
+
     const { error } = await stripe.confirmPayment({
       elements,
       confirmParams: {
@@ -37,6 +72,7 @@ export default function CheckoutForm({ clientSecret, onSuccess }: CheckoutFormPr
 
     if (error) {
       setMessage(error.message || 'An unexpected error occurred.');
+      trackException(error.message || 'stripe_confirm_payment_failed');
       setIsLoading(false);
     } else {
       // Payment succeeded

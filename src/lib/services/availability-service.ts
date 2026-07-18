@@ -24,6 +24,50 @@ import {
 import { TimeSlotService } from "./timeslot-service";
 
 export class AvailabilityService {
+  private static sanitizeScheduleOverride(
+    overrideData: Partial<Omit<ScheduleOverride, "id">>
+  ) {
+    const sanitizedData: Record<string, unknown> = {};
+
+    if (overrideData.therapistId !== undefined) {
+      sanitizedData.therapistId = overrideData.therapistId;
+    }
+
+    if (overrideData.date !== undefined) {
+      sanitizedData.date = overrideData.date;
+    }
+
+    if (overrideData.type !== undefined) {
+      sanitizedData.type = overrideData.type;
+    }
+
+    if (overrideData.reason !== undefined) {
+      sanitizedData.reason = overrideData.reason;
+    }
+
+    if (overrideData.isRecurring !== undefined) {
+      sanitizedData.isRecurring = overrideData.isRecurring;
+    }
+
+    if (overrideData.affectedSlots) {
+      sanitizedData.affectedSlots = overrideData.affectedSlots;
+    }
+
+    if (overrideData.recurringUntil) {
+      sanitizedData.recurringUntil = overrideData.recurringUntil;
+    }
+
+    if (overrideData.metadata) {
+      sanitizedData.metadata = {
+        createdAt: overrideData.metadata.createdAt ?? serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        notes: overrideData.metadata.notes || "",
+      };
+    }
+
+    return sanitizedData;
+  }
+
   /**
    * Get all availability records for a therapist
    */
@@ -239,26 +283,32 @@ export class AvailabilityService {
     toDate?: Date
   ): Promise<ScheduleOverride[]> {
     try {
-      let q = query(
+      const q = query(
         collections.scheduleOverrides(),
-        where("therapistId", "==", therapistId),
-        orderBy("date", "asc")
+        where("therapistId", "==", therapistId)
       );
-
-      // Add date filtering if provided
-      if (fromDate) {
-        q = query(q, where("date", ">=", Timestamp.fromDate(fromDate)));
-      }
-      if (toDate) {
-        q = query(q, where("date", "<=", Timestamp.fromDate(toDate)));
-      }
-
       const snapshot = await getDocs(q);
 
-      return snapshot.docs.map((doc) => ({
+      const overrides = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       })) as ScheduleOverride[];
+
+      return overrides
+        .filter((override) => {
+          const overrideTime = override.date.toDate().getTime();
+
+          if (fromDate && overrideTime < fromDate.getTime()) {
+            return false;
+          }
+
+          if (toDate && overrideTime > toDate.getTime()) {
+            return false;
+          }
+
+          return true;
+        })
+        .sort((a, b) => a.date.toDate().getTime() - b.date.toDate().getTime());
     } catch (error) {
       console.error("Error fetching schedule overrides:", error);
       throw new Error("Failed to fetch schedule overrides");
@@ -272,14 +322,17 @@ export class AvailabilityService {
     overrideData: Omit<ScheduleOverride, "id">
   ): Promise<string> {
     try {
-      const docRef = await addDoc(collections.scheduleOverrides(), {
-        ...overrideData,
-        metadata: {
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-          notes: overrideData.metadata?.notes || "",
-        },
-      });
+      const docRef = await addDoc(
+        collections.scheduleOverrides(),
+        this.sanitizeScheduleOverride({
+          ...overrideData,
+          metadata: {
+            createdAt: overrideData.metadata?.createdAt,
+            updatedAt: overrideData.metadata?.updatedAt,
+            notes: overrideData.metadata?.notes || "",
+          },
+        })
+      );
 
       return docRef.id;
     } catch (error) {
@@ -297,9 +350,15 @@ export class AvailabilityService {
   ): Promise<void> {
     try {
       const docRef = documents.scheduleOverride(id);
+      const sanitizedUpdates = this.sanitizeScheduleOverride(updates);
+      delete sanitizedUpdates.metadata;
+
       await updateDoc(docRef, {
-        ...updates,
+        ...sanitizedUpdates,
         "metadata.updatedAt": serverTimestamp(),
+        ...(updates.metadata?.notes !== undefined
+          ? { "metadata.notes": updates.metadata.notes || "" }
+          : {}),
       });
     } catch (error) {
       console.error("Error updating schedule override:", error);

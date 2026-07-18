@@ -2,15 +2,32 @@ import { NextRequest, NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
 import { createRateLimitResponse } from "@/lib/server/rate-limit";
 
-// Configure cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+function getCloudinaryConfig() {
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const apiKey = process.env.CLOUDINARY_API_KEY;
+  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+  const missing = [
+    !cloudName ? "CLOUDINARY_CLOUD_NAME" : null,
+    !apiKey ? "CLOUDINARY_API_KEY" : null,
+    !apiSecret ? "CLOUDINARY_API_SECRET" : null,
+  ].filter(Boolean) as string[];
+
+  if (missing.length > 0) {
+    throw new Error(`Missing Cloudinary environment variables: ${missing.join(", ")}`);
+  }
+
+  cloudinary.config({
+    cloud_name: cloudName,
+    api_key: apiKey,
+    api_secret: apiSecret,
+  });
+}
 
 export async function POST(request: NextRequest) {
   try {
+    getCloudinaryConfig();
+
     const rateLimit = createRateLimitResponse(request, {
       keyPrefix: "upload-post",
       windowMs: 10 * 60 * 1000,
@@ -67,6 +84,8 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    getCloudinaryConfig();
+
     const rateLimit = createRateLimitResponse(request, {
       keyPrefix: "upload-delete",
       windowMs: 10 * 60 * 1000,

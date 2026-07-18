@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TherapistProfile } from "@/types/database";
 import { formatInTimezone, getUserTimezone } from "@/lib/utils/timezone-utils";
+import { trackSelectItem } from "@/lib/analytics/gtag";
 
 interface TherapistCardProps {
   therapist: TherapistProfile;
@@ -111,6 +112,15 @@ export default function TherapistCard({
       style: "currency",
       currency: therapist.practice.currency,
     }).format(therapist.practice.hourlyRate);
+  };
+
+  const analyticsItem = {
+    item_id: therapist.id,
+    item_name: getTherapistName(),
+    item_category: "therapy",
+    item_category2: therapist.practice.sessionTypes[0],
+    price: therapist.practice.hourlyRate,
+    quantity: 1,
   };
 
   return (
@@ -218,13 +228,25 @@ export default function TherapistCard({
           <Button
             variant="outline"
             className="flex-1"
-            onClick={() => onViewProfile?.(therapist.id)}
+            onClick={() => {
+              trackSelectItem({
+                item_list_name: "therapist_directory",
+                items: [analyticsItem],
+              });
+              onViewProfile?.(therapist.id);
+            }}
           >
             View Profile
           </Button>
           <Button
             className="flex-1"
-            onClick={() => onBookNow?.(therapist.id)}
+            onClick={() => {
+              trackSelectItem({
+                item_list_name: "therapist_directory",
+                items: [analyticsItem],
+              });
+              onBookNow?.(therapist.id);
+            }}
             disabled={!nextAvailableSlot}
           >
             {nextAvailableSlot ? "Book Now" : "No Availability"}

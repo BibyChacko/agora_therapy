@@ -29,6 +29,7 @@ import { format } from "date-fns";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -112,13 +113,18 @@ export function ScheduleOverrides({
       date: Timestamp.fromDate(new Date(formData.date)),
       type: formData.type,
       reason: formData.reason,
-      affectedSlots:
-        formData.type === "day_off" ? undefined : formData.affectedSlots,
       isRecurring: formData.isRecurring,
-      recurringUntil: formData.recurringUntil
-        ? Timestamp.fromDate(new Date(formData.recurringUntil))
-        : undefined,
     };
+
+    if (formData.type !== "day_off" && formData.affectedSlots?.length) {
+      overrideData.affectedSlots = formData.affectedSlots;
+    }
+
+    if (formData.recurringUntil) {
+      overrideData.recurringUntil = Timestamp.fromDate(
+        new Date(formData.recurringUntil)
+      );
+    }
 
     // Add notes to metadata if provided
     if (formData.notes) {
@@ -360,6 +366,10 @@ export function ScheduleOverrides({
                 ? "Edit Schedule Override"
                 : "Create Schedule Override"}
             </DialogTitle>
+            <DialogDescription>
+              Choose a date and specify whether you are unavailable all day,
+              unavailable for selected slots, or using custom hours.
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">

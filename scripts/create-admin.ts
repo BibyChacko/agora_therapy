@@ -90,51 +90,53 @@ async function createAdminUser(data: AdminUserData) {
     await auth.setCustomUserClaims(userRecord.uid, { role: 'admin' });
     console.log('✅ Set admin role custom claims');
 
-    // Create user document in Firestore
+    // Create or repair the user document in Firestore
     const userDoc = db.collection('users').doc(userRecord.uid);
     const userSnapshot = await userDoc.get();
+    const existingData = userSnapshot.exists ? userSnapshot.data() : null;
+
+    const userPayload = {
+      id: userRecord.uid,
+      email: data.email,
+      profile: {
+        displayName:
+          existingData?.profile?.displayName || `${data.firstName} ${data.lastName}`,
+        firstName: existingData?.profile?.firstName || data.firstName,
+        lastName: existingData?.profile?.lastName || data.lastName,
+        phoneNumber: existingData?.profile?.phoneNumber || null,
+        avatarUrl: existingData?.profile?.avatarUrl || null,
+        timezone: existingData?.profile?.timezone || 'UTC',
+        locale: existingData?.profile?.locale || 'en-US',
+        languages: existingData?.profile?.languages || ['en'],
+      },
+      role: 'admin',
+      status: existingData?.status || 'active',
+      preferences: {
+        notifications: {
+          email: existingData?.preferences?.notifications?.email ?? true,
+          sms: existingData?.preferences?.notifications?.sms ?? false,
+          push: existingData?.preferences?.notifications?.push ?? true,
+        },
+        privacy: {
+          shareProfile: existingData?.preferences?.privacy?.shareProfile ?? false,
+          allowDirectMessages:
+            existingData?.preferences?.privacy?.allowDirectMessages ?? true,
+        },
+      },
+      metadata: {
+        createdAt: existingData?.metadata?.createdAt || Timestamp.now(),
+        updatedAt: Timestamp.now(),
+        lastLoginAt: existingData?.metadata?.lastLoginAt || Timestamp.now(),
+        onboardingCompleted: true,
+      },
+    };
+
+    await userDoc.set(userPayload, { merge: true });
 
     if (!userSnapshot.exists) {
-      await userDoc.set({
-        id: userRecord.uid,
-        email: data.email,
-        profile: {
-          displayName: `${data.firstName} ${data.lastName}`,
-          firstName: data.firstName,
-          lastName: data.lastName,
-          phoneNumber: null,
-          avatarUrl: null,
-          timezone: 'UTC',
-          locale: 'en',
-        },
-        role: 'admin',
-        status: 'active',
-        preferences: {
-          notifications: {
-            email: true,
-            sms: false,
-            push: true,
-          },
-          privacy: {
-            shareProfile: false,
-            allowDirectMessages: true,
-          },
-        },
-        metadata: {
-          createdAt: Timestamp.now(),
-          updatedAt: Timestamp.now(),
-          lastLoginAt: Timestamp.now(),
-          onboardingCompleted: true,
-        },
-      });
       console.log('✅ Created user document in Firestore');
     } else {
-      // Update existing user to admin
-      await userDoc.update({
-        role: 'admin',
-        'metadata.updatedAt': Timestamp.now(),
-      });
-      console.log('✅ Updated existing user to admin role');
+      console.log('✅ Repaired and updated existing Firestore user document');
     }
 
     // Create audit log

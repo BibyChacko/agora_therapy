@@ -4,6 +4,7 @@ import { Providers } from "@/lib/providers";
 import { LayoutWrapper } from "@/components/layout/LayoutWrapper";
 import { CookieConsentBanner } from "@/components/analytics/CookieConsentBanner";
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
+import { PostHogAnalytics } from "@/components/analytics/PostHogAnalytics";
 import { defaultKeywords, siteName, siteUrl } from "@/lib/seo";
 import "./globals.css";
 
@@ -80,6 +81,10 @@ export default function RootLayout({
         <Providers>
           <GoogleAnalytics
             measurementId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}
+          />
+          <PostHogAnalytics
+            apiKey={process.env.NEXT_PUBLIC_POSTHOG_KEY}
+            apiHost={process.env.NEXT_PUBLIC_POSTHOG_HOST}
           />
           <LayoutWrapper>{children}</LayoutWrapper>
           <CookieConsentBanner />

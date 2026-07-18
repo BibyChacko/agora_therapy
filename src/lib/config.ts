@@ -50,6 +50,10 @@ export const config = {
   analytics: {
     googleMeasurementId: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID,
     isGoogleAnalyticsEnabled: !!process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID,
+    posthogKey: process.env.NEXT_PUBLIC_POSTHOG_KEY,
+    posthogHost:
+      process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com",
+    isPostHogEnabled: !!process.env.NEXT_PUBLIC_POSTHOG_KEY,
   },
 
   // Optional Email Configuration
