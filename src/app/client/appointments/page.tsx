@@ -20,6 +20,7 @@ import { Appointment, AppointmentStatus } from "@/types/database";
 import Link from "next/link";
 import { useToast } from "@/lib/hooks/useToast";
 import { generateInvoicePdf } from "@/lib/utils/invoice-pdf";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function MySessionsPage() {
   const { user, userData, loading: authLoading } = useAuth();
@@ -322,85 +323,115 @@ export default function MySessionsPage() {
           </Alert>
         )}
 
-        {/* Upcoming Appointments */}
-        <div className="w-full space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-              <Calendar className="h-5 w-5 text-green-600" />
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">Upcoming Appointments</h2>
-              <p className="text-sm text-gray-600">{upcomingAppointments.length} scheduled sessions</p>
-            </div>
-          </div>
+        <Tabs defaultValue="upcoming" className="w-full space-y-6">
+          <TabsList className="inline-flex h-auto w-auto gap-2 bg-transparent p-0 shadow-none">
+            <TabsTrigger
+              value="upcoming"
+              className="rounded-full border border-blue-200 bg-white px-4 py-1.5 text-sm text-gray-600 shadow-none data-[state=active]:border-teal-500 data-[state=active]:bg-white data-[state=active]:text-teal-600"
+            >
+              Upcoming ({upcomingAppointments.length})
+            </TabsTrigger>
+            <TabsTrigger
+              value="past"
+              className="rounded-full border border-blue-200 bg-white px-4 py-1.5 text-sm text-gray-600 shadow-none data-[state=active]:border-teal-500 data-[state=active]:bg-white data-[state=active]:text-teal-600"
+            >
+              Past ({pastAppointments.length + cancelledAppointments.length})
+            </TabsTrigger>
+          </TabsList>
 
-          {upcomingAppointments.length === 0 ? (
-            <Card className="w-full border border-blue-200/60 bg-white shadow-sm">
-              <CardContent className="text-center py-12">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Calendar className="h-8 w-8 text-blue-600" />
+          <TabsContent value="upcoming" className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <Calendar className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Upcoming Appointments</h2>
+                <p className="text-sm text-gray-600">{upcomingAppointments.length} scheduled sessions</p>
+              </div>
+            </div>
+
+            {upcomingAppointments.length === 0 ? (
+              <Card className="w-full border border-blue-200/60 bg-white shadow-sm">
+                <CardContent className="text-center py-12">
+                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Calendar className="h-8 w-8 text-blue-600" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    No upcoming appointments
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    Ready to book your next therapy session?
+                  </p>
+                  <Button asChild className="bg-teal-500 hover:bg-teal-600">
+                    <Link href="/client/therapists">Find a Therapist</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {upcomingAppointments.map((appointment) => (
+                  <AppointmentCard key={appointment.id} appointment={appointment} />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="past" className="space-y-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <Clock className="h-5 w-5 text-blue-600" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  No upcoming appointments
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  Ready to book your next therapy session?
-                </p>
-                <Button asChild className="bg-teal-500 hover:bg-teal-600">
-                  <Link href="/client/therapists">Find a Therapist</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {upcomingAppointments.map((appointment) => (
-                <AppointmentCard key={appointment.id} appointment={appointment} />
-              ))}
-            </div>
-          )}
-        </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900">Past Appointments</h2>
+                  <p className="text-sm text-gray-600">{pastAppointments.length} completed sessions</p>
+                </div>
+              </div>
 
-        {/* Past Appointments */}
-        {pastAppointments.length > 0 && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Clock className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900">Past Appointments</h2>
-                <p className="text-sm text-gray-600">{pastAppointments.length} completed sessions</p>
-              </div>
+              {pastAppointments.length === 0 ? (
+                <Card className="w-full border border-blue-200/60 bg-white shadow-sm">
+                  <CardContent className="text-center py-12">
+                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Clock className="h-8 w-8 text-blue-600" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      No past appointments
+                    </h3>
+                    <p className="text-gray-600">
+                      Your completed sessions will appear here.
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-4">
+                  {pastAppointments.map((appointment) => (
+                    <AppointmentCard key={appointment.id} appointment={appointment} />
+                  ))}
+                </div>
+              )}
             </div>
 
-            <div className="space-y-4">
-              {pastAppointments.map((appointment) => (
-                <AppointmentCard key={appointment.id} appointment={appointment} />
-              ))}
-            </div>
-          </div>
-        )}
+            {cancelledAppointments.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                    <AlertCircle className="h-5 w-5 text-red-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900">Cancelled Appointments</h2>
+                    <p className="text-sm text-gray-600">{cancelledAppointments.length} cancelled sessions</p>
+                  </div>
+                </div>
 
-        {/* Cancelled Appointments */}
-        {cancelledAppointments.length > 0 && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                <AlertCircle className="h-5 w-5 text-red-600" />
+                <div className="space-y-4">
+                  {cancelledAppointments.map((appointment) => (
+                    <AppointmentCard key={appointment.id} appointment={appointment} />
+                  ))}
+                </div>
               </div>
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900">Cancelled Appointments</h2>
-                <p className="text-sm text-gray-600">{cancelledAppointments.length} cancelled sessions</p>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              {cancelledAppointments.map((appointment) => (
-                <AppointmentCard key={appointment.id} appointment={appointment} />
-              ))}
-            </div>
-          </div>
-        )}
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </ClientLayout>
   );

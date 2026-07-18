@@ -4,12 +4,14 @@
  * Usage:
  * npx ts-node scripts/backfill-therapist-slugs.ts
  */
-const fs = require("fs");
-const path = require("path");
+export {};
+
+const nodeFs = require("fs");
+const nodePath = require("path");
 
 const envPaths = [".env.local", ".env"]
-  .map((file) => path.resolve(process.cwd(), file))
-  .filter((file) => fs.existsSync(file));
+  .map((file) => nodePath.resolve(process.cwd(), file))
+  .filter((file) => nodeFs.existsSync(file));
 
 for (const envPath of envPaths) {
   require("dotenv").config({ path: envPath, override: false });
@@ -32,12 +34,12 @@ if (admin.apps.length === 0) {
       }),
     });
   } else {
-    const serviceAccountPath = path.join(
+    const serviceAccountPath = nodePath.join(
       __dirname,
       "..",
       "google_services.json"
     );
-    if (fs.existsSync(serviceAccountPath)) {
+    if (nodeFs.existsSync(serviceAccountPath)) {
       const serviceAccount = require(serviceAccountPath);
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
