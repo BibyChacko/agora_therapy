@@ -573,7 +573,7 @@ export default function BookingPage() {
                           Choose the day that works best for you.
                         </p>
                       </div>
-                      <div className="rounded-[24px] border border-slate-200 bg-slate-50/80 p-5 sm:p-6">
+                      <div className="rounded-[24px] border border-slate-200 bg-slate-50/80 p-5 sm:p-2">
                         <div className="mb-5 flex flex-col gap-3 border-b border-slate-100 pb-5 sm:flex-row sm:items-center sm:justify-between">
                           <div>
                             <label className="block text-sm font-medium text-slate-700">
@@ -592,7 +592,7 @@ export default function BookingPage() {
                             </p>
                           </div>
                         </div>
-                        <div className="mx-auto max-w-3xl rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+                        <div className="mx-auto max-w-3xl rounded-[28px] border border-slate-200 bg-white p-2 shadow-sm sm:p-6">
                           <Calendar
                             mode="single"
                             selected={selectedDate || undefined}
@@ -616,31 +616,31 @@ export default function BookingPage() {
                               { before: minSelectableDate },
                               (date: Date) => isOverrideDate(date),
                             ]}
-                            className="mx-auto w-full [--cell-size:3.5rem] sm:[--cell-size:4.25rem] xl:[--cell-size:4.75rem]"
+                            className="mx-auto w-full [--cell-size:2.75rem] sm:[--cell-size:4.25rem] xl:[--cell-size:4.75rem]"
                             classNames={{
                               root: 'mx-auto w-full',
                               months: 'relative flex justify-center',
-                              month: 'w-full min-w-0 max-w-3xl gap-5',
+                              month: 'w-full min-w-0 max-w-3xl gap-3 sm:gap-5',
                               month_caption:
-                                'mb-6 flex h-auto items-center justify-center px-14',
-                              caption_label: 'text-2xl font-semibold text-slate-900',
-                              nav: 'absolute inset-x-0 top-0 h-11',
+                                'mb-3 flex h-auto items-center justify-center px-10 sm:mb-6 sm:px-14',
+                              caption_label: 'text-xl font-semibold leading-none text-slate-900 sm:text-2xl',
+                              nav: 'absolute inset-x-0 top-0 h-10 sm:h-11',
                               button_previous:
-                                'absolute left-0 top-0 flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50',
+                                'absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 sm:h-11 sm:w-11 sm:rounded-2xl',
                               button_next:
-                                'absolute right-0 top-0 flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50',
+                                'absolute right-0 top-0 flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 sm:h-11 sm:w-11 sm:rounded-2xl',
                               table: 'w-full border-collapse',
-                              weekdays: 'mb-4 grid grid-cols-7 gap-3',
+                              weekdays: 'mb-3 grid grid-cols-7 gap-2 sm:mb-4 sm:gap-3',
                               weekday:
-                                'flex items-center justify-center text-sm font-semibold uppercase tracking-[0.16em] text-slate-500',
-                              week: 'grid grid-cols-7 gap-3 mt-0',
+                                'flex items-center justify-center text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 sm:text-sm sm:tracking-[0.16em]',
+                              week: 'grid grid-cols-7 gap-2 mt-0 sm:gap-3',
                               day: 'aspect-auto w-full',
                               day_button:
-                                'h-14 w-full rounded-2xl text-base font-semibold sm:h-16 xl:h-[4.75rem]',
+                                'h-11 w-full rounded-xl text-sm font-semibold data-[today=true]:border data-[today=true]:border-slate-200 data-[today=true]:bg-slate-100 data-[today=true]:text-slate-900 sm:h-16 sm:rounded-2xl sm:text-base xl:h-[4.75rem]',
                               today:
-                                'bg-slate-100 text-slate-900 rounded-2xl border border-slate-200',
+                                'text-slate-900',
                               selected:
-                                'bg-teal-600 text-white hover:bg-teal-600 focus:bg-teal-600 rounded-2xl',
+                                'bg-teal-600 text-white hover:bg-teal-600 focus:bg-teal-600 rounded-xl sm:rounded-2xl',
                               disabled: 'text-slate-300 opacity-100',
                               outside: 'text-slate-300 opacity-70',
                             }}
