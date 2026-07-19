@@ -150,7 +150,7 @@ class EmailService {
           .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e5e7eb; }
           .detail-label { font-weight: bold; color: #6b7280; }
           .detail-value { color: #111827; }
-          .button { display: inline-block; background: linear-gradient(135deg, #14b8a6 0%, #2563eb 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 10px 5px; }
+          .button { display: inline-block; background: linear-gradient(135deg, #14b8a6 0%, #2563eb 100%); color: #ffffff !important; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 10px 5px; font-weight: 600; }
           .footer { text-align: center; color: #6b7280; font-size: 12px; margin-top: 30px; }
         </style>
       </head>
@@ -194,14 +194,18 @@ class EmailService {
                 <span class="detail-value">${data.meetingPasscode}</span>
               </div>
               <div class="detail-row">
+                <span class="detail-label">Session URL:</span>
+                <span class="detail-value"><a href="${data.meetingLink}" style="color: #2563eb; word-break: break-all;">${data.meetingLink}</a></span>
+              </div>
+              <div class="detail-row">
                 <span class="detail-label">Amount Paid:</span>
                 <span class="detail-value">${data.currency.toUpperCase()} ${(data.amount / 100).toFixed(2)}</span>
               </div>
             </div>
 
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${data.meetingLink}" class="button">Join Video Session</a>
-              <a href="${googleCalendarLink}" class="button" style="background: #4285f4;">Add to Google Calendar</a>
+              <a href="${data.meetingLink}" class="button" style="color: #ffffff !important;">Join Video Session</a>
+              <a href="${googleCalendarLink}" class="button" style="background: #4285f4; color: #ffffff !important;">Add to Google Calendar</a>
             </div>
 
             <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; border-radius: 4px; margin: 20px 0;">
@@ -254,7 +258,7 @@ class EmailService {
           .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e5e7eb; }
           .detail-label { font-weight: bold; color: #6b7280; }
           .detail-value { color: #111827; }
-          .button { display: inline-block; background: linear-gradient(135deg, #14b8a6 0%, #2563eb 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 10px 5px; }
+          .button { display: inline-block; background: linear-gradient(135deg, #14b8a6 0%, #2563eb 100%); color: #ffffff !important; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 10px 5px; font-weight: 600; }
           .footer { text-align: center; color: #6b7280; font-size: 12px; margin-top: 30px; }
         </style>
       </head>
@@ -298,14 +302,18 @@ class EmailService {
                 <span class="detail-value">${data.meetingPasscode}</span>
               </div>
               <div class="detail-row">
+                <span class="detail-label">Session URL:</span>
+                <span class="detail-value"><a href="${data.meetingLink}" style="color: #2563eb; word-break: break-all;">${data.meetingLink}</a></span>
+              </div>
+              <div class="detail-row">
                 <span class="detail-label">Session Fee:</span>
                 <span class="detail-value">${data.currency.toUpperCase()} ${(data.amount / 100).toFixed(2)}</span>
               </div>
             </div>
 
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${data.meetingLink}" class="button">Join Video Session</a>
-              <a href="${googleCalendarLink}" class="button" style="background: #4285f4;">Add to Google Calendar</a>
+              <a href="${data.meetingLink}" class="button" style="color: #ffffff !important;">Join Video Session</a>
+              <a href="${googleCalendarLink}" class="button" style="background: #4285f4; color: #ffffff !important;">Add to Google Calendar</a>
             </div>
 
             <div style="background: #dbeafe; border-left: 4px solid #3b82f6; padding: 15px; border-radius: 4px; margin: 20px 0;">
