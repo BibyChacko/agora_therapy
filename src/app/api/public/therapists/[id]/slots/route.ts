@@ -1,6 +1,7 @@
 import { endOfDay, startOfDay } from "date-fns";
 import { NextRequest, NextResponse } from "next/server";
 
+import { businessConfig } from "@/lib/config";
 import { AvailableSlotsService } from "@/lib/services/available-slots-service";
 import {
   getPublicTherapistById,
@@ -75,11 +76,26 @@ export async function GET(
         isOverride: Boolean(slot.isOverride),
       }));
 
+    const firstBookableAt = new Date(
+      Date.now() + businessConfig.minAdvanceBookingHours * 60 * 60 * 1000
+    );
+    const firstBookableDate = startOfDay(firstBookableAt);
+    const isBeforeBookingWindow = targetDate < firstBookableDate;
+
     const response = NextResponse.json({
       therapistId: therapist.id,
       timezone: result.timezone,
       date: targetDate.toISOString(),
       slots,
+      bookingWindow: {
+        minAdvanceHours: businessConfig.minAdvanceBookingHours,
+        earliestBookableAt: firstBookableAt.toISOString(),
+      },
+      ...(slots.length === 0 && isBeforeBookingWindow && businessConfig.minAdvanceBookingHours > 0
+        ? {
+            message: `Bookings must be scheduled at least ${businessConfig.minAdvanceBookingHours} hours in advance.`,
+          }
+        : {}),
     });
 
     applyCacheHeaders(response, {

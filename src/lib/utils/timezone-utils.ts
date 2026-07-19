@@ -4,6 +4,7 @@
  */
 
 import { format, parseISO, isValid } from "date-fns";
+import { fromZonedTime, toZonedTime } from "date-fns-tz";
 
 /**
  * Common timezone mappings
@@ -47,12 +48,30 @@ export function getUserTimezone(): string {
  * Get timezone offset in minutes
  */
 export function getTimezoneOffset(timezone: string): number {
-  const now = new Date();
-  const utc = new Date(now.getTime() + now.getTimezoneOffset() * 60000);
-  const targetTime = new Date(
-    utc.toLocaleString("en-US", { timeZone: timezone })
-  );
-  return (targetTime.getTime() - utc.getTime()) / 60000;
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    timeZoneName: "longOffset",
+  });
+
+  try {
+    const parts = formatter.formatToParts(new Date());
+    const offsetPart = parts.find((part) => part.type === "timeZoneName")?.value;
+
+    if (!offsetPart) {
+      return 0;
+    }
+
+    const match = offsetPart.match(/GMT([+-])(\d{1,2})(?::(\d{2}))?/);
+    if (!match) {
+      return 0;
+    }
+
+    const [, sign, hours, minutes = "00"] = match;
+    const totalMinutes = Number(hours) * 60 + Number(minutes);
+    return sign === "-" ? -totalMinutes : totalMinutes;
+  } catch {
+    return 0;
+  }
 }
 
 /**
@@ -69,12 +88,12 @@ export function convertTimezone(
     throw new Error("Invalid date provided");
   }
 
-  // Convert to string in from timezone, then parse in to timezone
-  const utcTime = inputDate.getTime();
-  const fromOffset = getTimezoneOffset(fromTimezone) * 60000;
-  const toOffset = getTimezoneOffset(toTimezone) * 60000;
+  if (fromTimezone === toTimezone) {
+    return new Date(inputDate);
+  }
 
-  return new Date(utcTime - fromOffset + toOffset);
+  const utcDate = fromZonedTime(inputDate, fromTimezone);
+  return toZonedTime(utcDate, toTimezone);
 }
 
 /**

@@ -1,17 +1,24 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { FiArrowLeft, FiCalendar, FiClock, FiCreditCard, FiCheckCircle, FiInfo } from 'react-icons/fi';
+import { FiArrowLeft, FiCalendar, FiClock, FiCreditCard, FiCheckCircle, FiGlobe, FiInfo, FiShield, FiVideo } from 'react-icons/fi';
 import { TherapistPublicView } from '@/types/models/therapist';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
 import { useAuth } from '@/lib/hooks/useAuth';
 import CheckoutForm from '@/components/booking/CheckoutForm';
+import { Textarea } from '@/components/ui/textarea';
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   THERAPY_SESSION_CONFIGS,
   type SupportedTherapySessionType,
@@ -22,14 +29,31 @@ import {
   trackPurchase,
   trackViewItem,
 } from '@/lib/analytics/gtag';
+import {
+  COMMON_TIMEZONES,
+  getTimezoneAbbreviation,
+  getTimezoneDisplayName,
+  getUserTimezone,
+} from '@/lib/utils/timezone-utils';
+import { businessConfig } from '@/lib/config';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 type BookingStep = 'datetime' | 'payment' | 'confirmation';
 
 interface TimeSlot {
-  time: string;
-  available: boolean;
+  timeSlotId: string;
+  localDate: string;
+  localStartTime: string;
+  localEndTime: string;
+  displayTime: string;
+  therapistTimezone: string;
+  isOverride?: boolean;
+}
+
+interface AvailabilitySummary {
+  timezone: string;
+  overrideDates: string[];
 }
 
 export default function BookingPage() {
@@ -41,9 +65,16 @@ export default function BookingPage() {
   const [therapist, setTherapist] = useState<TherapistPublicView | null>(null);
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState<BookingStep>('datetime');
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [slotsError, setSlotsError] = useState('');
+  const [availabilitySummary, setAvailabilitySummary] =
+    useState<AvailabilitySummary | null>(null);
+  const [userTimezone, setUserTimezone] = useState('UTC');
   
   // Booking state
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [visibleMonth, setVisibleMonth] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [selectedSessionType, setSelectedSessionType] =
     useState<SupportedTherapySessionType>('single');
@@ -55,19 +86,25 @@ export default function BookingPage() {
   const [amount, setAmount] = useState(0);
   const [therapistFee, setTherapistFee] = useState(0);
   const [platformFee, setPlatformFee] = useState(0);
+  const selectedSessionConfig =
+    THERAPY_SESSION_CONFIGS.find((config) => config.value === selectedSessionType) ||
+    THERAPY_SESSION_CONFIGS[0];
 
-  useEffect(() => {
-    fetchTherapist();
-  }, [therapistId]);
+  const buildDateParam = useCallback((date: Date) => {
+    const normalizedDate = new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+      12,
+      0,
+      0,
+      0
+    );
 
-  useEffect(() => {
-    // Redirect to login if not authenticated
-    if (!authLoading && !user) {
-      router.push(`/login?redirect=/booking/${therapistId}`);
-    }
-  }, [authLoading, user, router, therapistId]);
+    return normalizedDate.toISOString();
+  }, []);
 
-  const fetchTherapist = async () => {
+  const fetchTherapist = useCallback(async () => {
     try {
       const response = await fetch(`/api/public/therapists/${therapistId}`);
       if (!response.ok) {
@@ -97,17 +134,100 @@ export default function BookingPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [therapistId]);
 
-  const generateTimeSlots = (): TimeSlot[] => {
-    const slots: TimeSlot[] = [];
-    for (let hour = 9; hour <= 17; hour++) {
-      for (let minute of [0, 30]) {
-        const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        slots.push({ time, available: true });
+  const fetchAvailabilitySummary = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/public/therapists/${therapistId}/availability`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch availability summary (${response.status})`);
       }
+
+      const data = await response.json();
+      setAvailabilitySummary({
+        timezone: data.timezone || 'UTC',
+        overrideDates: data.overrideDates || [],
+      });
+    } catch (error) {
+      console.error('Error fetching availability summary:', error);
     }
-    return slots;
+  }, [therapistId]);
+
+  const fetchTimeSlots = useCallback(
+    async (date: Date, duration: number) => {
+      try {
+        setSlotsLoading(true);
+        setSlotsError('');
+
+        const query = new URLSearchParams({
+          date: buildDateParam(date),
+          timezone: userTimezone,
+          duration: String(duration),
+        });
+
+        const response = await fetch(
+          `/api/public/therapists/${therapistId}/slots?${query.toString()}`
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch time slots (${response.status})`);
+        }
+
+        const data = await response.json();
+        setTimeSlots(data.slots || []);
+      } catch (error) {
+        console.error('Error fetching time slots:', error);
+        setTimeSlots([]);
+        setSlotsError('Unable to load time slots for the selected date.');
+      } finally {
+        setSlotsLoading(false);
+      }
+    },
+    [buildDateParam, therapistId, userTimezone]
+  );
+
+  useEffect(() => {
+    setUserTimezone(getUserTimezone());
+    fetchTherapist();
+  }, [fetchTherapist]);
+
+  useEffect(() => {
+    if (therapistId) {
+      fetchAvailabilitySummary();
+    }
+  }, [fetchAvailabilitySummary, therapistId]);
+
+  useEffect(() => {
+    // Redirect to login if not authenticated
+    if (!authLoading && !user) {
+      router.push(`/login?redirect=/booking/${therapistId}`);
+    }
+  }, [authLoading, user, router, therapistId]);
+
+  useEffect(() => {
+    setSelectedTime('');
+
+    if (!selectedDate || !therapist) {
+      setTimeSlots([]);
+      setSlotsError('');
+      return;
+    }
+
+    fetchTimeSlots(selectedDate, selectedSessionConfig.duration);
+  }, [fetchTimeSlots, selectedDate, selectedSessionConfig.duration, therapist]);
+
+  useEffect(() => {
+    setVisibleMonth((currentMonth) => currentMonth || selectedDate || null);
+  }, [selectedDate]);
+
+  const isOverrideDate = (date: Date) => {
+    const dateKey = [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, '0'),
+      String(date.getDate()).padStart(2, '0'),
+    ].join('-');
+
+    return availabilitySummary?.overrideDates.includes(dateKey) || false;
   };
 
   const handleContinueToPayment = async () => {
@@ -120,9 +240,17 @@ export default function BookingPage() {
       setLoading(true);
       
       // Combine date and time
-      const [hours, minutes] = selectedTime.split(':').map(Number);
-      const scheduledFor = new Date(selectedDate);
-      scheduledFor.setHours(hours, minutes, 0, 0);
+      const selectedSlot = timeSlots.find(
+        (slot) => slot.timeSlotId === selectedTime
+      );
+
+      if (!selectedSlot) {
+        throw new Error('Selected time slot is invalid');
+      }
+
+      const scheduledFor = new Date(
+        `${selectedSlot.localDate}T${selectedSlot.localStartTime}:00`
+      );
 
       // Create booking
       const response = await fetch('/api/bookings/create', {
@@ -222,245 +350,459 @@ export default function BookingPage() {
     );
   }
 
-  const timeSlots = generateTimeSlots();
-  const selectedSessionConfig =
-    THERAPY_SESSION_CONFIGS.find((config) => config.value === selectedSessionType) ||
-    THERAPY_SESSION_CONFIGS[0];
   const sessionFee = ((therapist.hourlyRate / 100) * selectedSessionConfig.duration) / 60 + 15;
+  const therapistTimezone = therapist.timezone || availabilitySummary?.timezone || 'UTC';
+  const selectedSlot = timeSlots.find((slot) => slot.timeSlotId === selectedTime) || null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const firstBookableAt = new Date(
+    Date.now() + businessConfig.minAdvanceBookingHours * 60 * 60 * 1000
+  );
+  const minSelectableDate = new Date(firstBookableAt);
+  minSelectableDate.setHours(0, 0, 0, 0);
+  const bookingNotice =
+    businessConfig.minAdvanceBookingHours > 0
+      ? `Bookings must be scheduled at least ${businessConfig.minAdvanceBookingHours} hours in advance.`
+      : 'Available future time slots can be booked as soon as they open.';
+  const emptySlotsNotice =
+    businessConfig.minAdvanceBookingHours > 0
+      ? `No available time slots for this date. Try a later date if this day falls inside the ${businessConfig.minAdvanceBookingHours}-hour booking window.`
+      : 'No available time slots for this date.';
+  const selectedDateLabel = selectedDate?.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+  const canContinueToPayment = Boolean(selectedDate && selectedTime && !loading);
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
-      {/* Back Button */}
-      <Link 
-        href={`/psychologists/${therapist.slug || therapist.id}`}
-        className="mb-6 inline-flex min-h-11 items-center gap-2 text-base text-teal-600 transition-colors hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 sm:mb-8"
-      >
-        <FiArrowLeft className="shrink-0" /> Back to Profile
-      </Link>
+    <div className="relative overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(20,184,166,0.14),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(59,130,246,0.12),_transparent_26%),linear-gradient(180deg,_#f5fbff_0%,_#ffffff_55%,_#f8fcff_100%)]">
+      <div className="mx-auto w-full max-w-7xl px-3 py-6 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
+        <Link
+          href={`/psychologists/${therapist.slug || therapist.id}`}
+          className="mb-6 inline-flex min-h-11 items-center gap-2 text-base text-teal-600 transition-colors hover:text-teal-700 sm:mb-8"
+        >
+          <FiArrowLeft className="shrink-0" /> Back to Profile
+        </Link>
 
-      {/* Progress Steps */}
-      <div className="mx-auto mb-8 w-full max-w-5xl">
-        <div className="flex flex-wrap items-center justify-center gap-y-3">
-          <div className={`flex items-center ${step === 'datetime' ? 'text-teal-600' : step === 'payment' || step === 'confirmation' ? 'text-teal-600' : 'text-gray-400'}`}>
-            <div className={`flex h-10 w-10 items-center justify-center rounded-full ${step === 'datetime' || step === 'payment' || step === 'confirmation' ? 'bg-teal-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
-              <FiCalendar />
-            </div>
-            <span className="ml-2 font-medium hidden sm:inline">Date & Time</span>
-          </div>
-          <div className={`mx-2 h-1 w-10 sm:w-16 ${step === 'payment' || step === 'confirmation' ? 'bg-teal-600' : 'bg-gray-200'}`}></div>
-          <div className={`flex items-center ${step === 'payment' ? 'text-teal-600' : step === 'confirmation' ? 'text-teal-600' : 'text-gray-400'}`}>
-            <div className={`flex h-10 w-10 items-center justify-center rounded-full ${step === 'payment' || step === 'confirmation' ? 'bg-teal-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
-              <FiCreditCard />
-            </div>
-            <span className="ml-2 font-medium hidden sm:inline">Payment</span>
-          </div>
-          <div className={`mx-2 h-1 w-10 sm:w-16 ${step === 'confirmation' ? 'bg-teal-600' : 'bg-gray-200'}`}></div>
-          <div className={`flex items-center ${step === 'confirmation' ? 'text-teal-600' : 'text-gray-400'}`}>
-            <div className={`flex h-10 w-10 items-center justify-center rounded-full ${step === 'confirmation' ? 'bg-teal-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
-              <FiCheckCircle />
-            </div>
-            <span className="ml-2 font-medium hidden sm:inline">Confirmed</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md overflow-hidden">
-          {/* Therapist Header */}
-          <div className="p-6 border-b border-gray-200 dark:border-gray-800">
-            <div className="flex items-center">
-              <div className="relative w-16 h-16 rounded-full overflow-hidden mr-4">
-                <Image 
-                  src={therapist.image}
-                  alt={therapist.name}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{therapist.name}</h1>
-                <p className="text-teal-600 dark:text-teal-400">{therapist.title}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Step Content */}
-          <div className="p-6">
-            {step === 'datetime' && (
-              <div>
-                <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Select Date & Time</h2>
-                
-                <div className="grid md:grid-cols-2 gap-8">
-                  {/* Date Picker */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Select Date
-                    </label>
-                    <DatePicker
-                      selected={selectedDate}
-                      onChange={(date) => setSelectedDate(date)}
-                      minDate={new Date()}
-                      inline
-                      className="w-full"
-                      calendarClassName="!bg-white dark:!bg-gray-800 !border-gray-300 dark:!border-gray-700"
-                    />
+        <div className="mx-auto max-w-5xl">
+          <div className="space-y-8">
+            <div className="rounded-[28px] border border-white/70 bg-white/90 p-4 shadow-[0_24px_70px_rgba(15,23,42,0.08)] backdrop-blur sm:p-8">
+              <div className="mb-6 flex flex-col gap-5 border-b border-slate-100 pb-6 sm:mb-8 sm:gap-6 sm:pb-8">
+                <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="relative h-20 w-20 overflow-hidden rounded-2xl ring-4 ring-teal-50">
+                      <Image
+                        src={therapist.image}
+                        alt={therapist.name}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium uppercase tracking-[0.22em] text-teal-600">
+                        Secure Booking
+                      </p>
+                      <h1 className="mt-1 text-3xl font-bold text-slate-900 sm:text-4xl">
+                        Book with {therapist.name}
+                      </h1>
+                      <p className="mt-2 text-base text-slate-600">
+                        {therapist.title}
+                      </p>
+                    </div>
                   </div>
 
-                  {/* Time Slots */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Therapy Format
-                    </label>
-                    <div className="grid gap-3 mb-6">
+                  <div className="grid grid-cols-1 gap-2 sm:min-w-[280px]">
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                      <span className="font-medium text-slate-900">Therapist timezone:</span>{' '}
+                      {getTimezoneDisplayName(therapistTimezone)} ({getTimezoneAbbreviation(therapistTimezone)})
+                    </div>
+                  </div>
+                </div>
+
+                <div className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:overflow-visible sm:px-0 sm:pb-0">
+                  <div className="flex min-w-max items-center gap-3 sm:min-w-0 sm:flex-wrap">
+                    <div className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-teal-200 bg-teal-50 px-3 py-2 text-sm font-medium text-teal-700 sm:px-4">
+                    <FiVideo className="h-4 w-4" />
+                    Secure video session
+                    </div>
+                    <div className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 sm:px-4">
+                    <FiShield className="h-4 w-4" />
+                    Confirmation after payment
+                    </div>
+                    <div className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 sm:px-4">
+                    <FiGlobe className="h-4 w-4" />
+                    Localized to your timezone
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mb-8">
+                <div className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:overflow-visible sm:px-0 sm:pb-0">
+                  <div className="flex min-w-max items-start gap-4 sm:min-w-0 sm:flex-wrap sm:items-center sm:justify-between">
+                  <div className={`flex min-w-[188px] items-center gap-3 sm:min-w-0 ${step === 'datetime' ? 'text-teal-700' : step === 'payment' || step === 'confirmation' ? 'text-teal-700' : 'text-slate-400'}`}>
+                    <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${step === 'datetime' || step === 'payment' || step === 'confirmation' ? 'bg-teal-600 text-white shadow-lg shadow-teal-200' : 'bg-slate-100 text-slate-500'}`}>
+                      <FiCalendar />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Step 1</p>
+                      <p className="text-sm font-semibold">Date & Time</p>
+                    </div>
+                  </div>
+                  <div className={`hidden h-px flex-1 md:block ${step === 'payment' || step === 'confirmation' ? 'bg-teal-500' : 'bg-slate-200'}`}></div>
+                  <div className={`flex min-w-[188px] items-center gap-3 sm:min-w-0 ${step === 'payment' ? 'text-teal-700' : step === 'confirmation' ? 'text-teal-700' : 'text-slate-400'}`}>
+                    <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${step === 'payment' || step === 'confirmation' ? 'bg-teal-600 text-white shadow-lg shadow-teal-200' : 'bg-slate-100 text-slate-500'}`}>
+                      <FiCreditCard />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Step 2</p>
+                      <p className="text-sm font-semibold">Review & Pay</p>
+                    </div>
+                  </div>
+                  <div className={`hidden h-px flex-1 md:block ${step === 'confirmation' ? 'bg-teal-500' : 'bg-slate-200'}`}></div>
+                  <div className={`flex min-w-[172px] items-center gap-3 sm:min-w-0 ${step === 'confirmation' ? 'text-teal-700' : 'text-slate-400'}`}>
+                    <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${step === 'confirmation' ? 'bg-teal-600 text-white shadow-lg shadow-teal-200' : 'bg-slate-100 text-slate-500'}`}>
+                      <FiCheckCircle />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Step 3</p>
+                      <p className="text-sm font-semibold">Confirmed</p>
+                    </div>
+                  </div>
+                </div>
+                </div>
+              </div>
+
+              <div>
+                {step === 'datetime' && (
+                  <div className="space-y-8">
+                    <div className="space-y-2">
+                      <h2 className="text-2xl font-bold text-slate-900">Choose your session</h2>
+                      <p className="text-slate-600">
+                        Pick a format, then choose a date and time that works in your local timezone.
+                      </p>
+                    </div>
+
+                    <div className="rounded-[24px] border border-slate-200 bg-slate-50/70 p-5">
+                      <div className="mb-4 flex items-start gap-3 rounded-2xl border border-blue-200 bg-blue-50 p-4">
+                        <FiInfo className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-600" />
+                        <div className="text-sm text-blue-900">
+                          <p className="font-semibold">Timezone matched booking</p>
+                          <p className="mt-1 text-blue-800">
+                            You see slots in your selected timezone while the therapist works in {getTimezoneDisplayName(therapistTimezone)} ({getTimezoneAbbreviation(therapistTimezone)}).
+                          </p>
+                        </div>
+                      </div>
+
+                      <label className="mb-3 block text-sm font-medium text-slate-700">
+                        Your timezone
+                      </label>
+                      <Select value={userTimezone} onValueChange={setUserTimezone}>
+                        <SelectTrigger className="h-12 rounded-2xl border-slate-200 bg-white">
+                          <SelectValue placeholder="Select your timezone" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {COMMON_TIMEZONES.map((timezone) => (
+                            <SelectItem key={timezone.value} value={timezone.value}>
+                              {timezone.label} ({timezone.offset})
+                            </SelectItem>
+                          ))}
+                          {!COMMON_TIMEZONES.some((timezone) => timezone.value === userTimezone) && (
+                            <SelectItem value={userTimezone}>
+                              {getTimezoneDisplayName(userTimezone)} ({getTimezoneAbbreviation(userTimezone)})
+                            </SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <p className="mt-3 text-xs text-slate-500">
+                        Selected timezone: {getTimezoneDisplayName(userTimezone)} ({getTimezoneAbbreviation(userTimezone)})
+                      </p>
+                    </div>
+
+                    <div className="border-t border-dashed border-slate-200"></div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-lg font-semibold text-slate-900">Therapy format</h3>
+                        <p className="mt-1 text-sm text-slate-600">
+                          Choose the format that best matches the kind of support you need.
+                        </p>
+                      </div>
+                    <div className="grid grid-cols-2 gap-3 xl:grid-cols-2">
                       {THERAPY_SESSION_CONFIGS.map((sessionConfig) => (
                         <button
                           key={sessionConfig.value}
                           type="button"
                           onClick={() => setSelectedSessionType(sessionConfig.value)}
-                          className={`rounded-lg border p-4 text-left transition-colors ${
+                          className={`group rounded-[24px] border p-4 text-left transition-all sm:p-5 ${
                             selectedSessionType === sessionConfig.value
-                              ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/20'
-                              : 'border-gray-200 bg-white hover:border-teal-300 dark:border-gray-700 dark:bg-gray-800'
+                              ? 'border-teal-500 bg-gradient-to-br from-teal-50 to-cyan-50 shadow-lg shadow-teal-100'
+                              : 'border-slate-200 bg-white hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-md'
                           }`}
                         >
-                          <div className="font-medium text-gray-900 dark:text-white">
-                            {sessionConfig.label}
-                          </div>
-                          <div className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                            {sessionConfig.description}
-                          </div>
-                          <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                            {sessionConfig.duration} minutes
+                          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                            <div className="min-w-0">
+                              <div className="text-base font-semibold text-slate-900 sm:text-lg">
+                                {sessionConfig.label}
+                              </div>
+                              <div className="mt-2 text-sm leading-5 text-slate-600 sm:leading-6">
+                                {sessionConfig.description}
+                              </div>
+                            </div>
+                            <div className={`w-fit rounded-full px-3 py-1 text-xs font-semibold ${
+                              selectedSessionType === sessionConfig.value
+                                ? 'bg-teal-600 text-white'
+                                : 'bg-slate-100 text-slate-600'
+                            }`}>
+                              {sessionConfig.duration} min
+                            </div>
                           </div>
                         </button>
                       ))}
                     </div>
+                    </div>
 
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Select Time
-                    </label>
-                    {selectedDate ? (
-                      <div className="grid grid-cols-3 gap-2 max-h-96 overflow-y-auto">
-                        {timeSlots.map((slot) => (
-                          <button
-                            key={slot.time}
-                            onClick={() => setSelectedTime(slot.time)}
-                            disabled={!slot.available}
-                            className={`p-3 rounded-md text-sm font-medium transition-colors ${
-                              selectedTime === slot.time
-                                ? 'bg-teal-600 text-white'
-                                : slot.available
-                                ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700'
-                                : 'bg-gray-50 dark:bg-gray-900 text-gray-400 cursor-not-allowed'
-                            }`}
-                          >
-                            {slot.time}
-                          </button>
-                        ))}
+                    <div className="border-t border-dashed border-slate-200"></div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-lg font-semibold text-slate-900">Date selection</h3>
+                        <p className="mt-1 text-sm text-slate-600">
+                          Choose the day that works best for you.
+                        </p>
                       </div>
-                    ) : (
-                      <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-                        Please select a date first
+                      <div className="rounded-[24px] border border-slate-200 bg-slate-50/80 p-5 sm:p-6">
+                        <div className="mb-5 flex flex-col gap-3 border-b border-slate-100 pb-5 sm:flex-row sm:items-center sm:justify-between">
+                          <div>
+                            <label className="block text-sm font-medium text-slate-700">
+                              Select Date
+                            </label>
+                            <p className="mt-1 text-sm text-slate-500">
+                              Pick one available day to continue to time selection.
+                            </p>
+                          </div>
+                          <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm">
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                              Next step
+                            </p>
+                            <p className="mt-1 font-medium text-slate-900">
+                              {selectedDateLabel || 'Choose a date to unlock time slots'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="mx-auto max-w-3xl rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+                          <Calendar
+                            mode="single"
+                            selected={selectedDate || undefined}
+                            onSelect={(date) => {
+                              setSlotsLoading(Boolean(date));
+                              setSlotsError('');
+                              setTimeSlots([]);
+                              setSelectedTime('');
+                              setSelectedDate(date || null);
+                              if (date) {
+                                setVisibleMonth(date);
+                              }
+                            }}
+                            numberOfMonths={1}
+                            pagedNavigation
+                            fixedWeeks
+                            showOutsideDays
+                            month={visibleMonth || minSelectableDate}
+                            onMonthChange={setVisibleMonth}
+                            disabled={[
+                              { before: minSelectableDate },
+                              (date: Date) => isOverrideDate(date),
+                            ]}
+                            className="mx-auto w-full [--cell-size:3.5rem] sm:[--cell-size:4.25rem] xl:[--cell-size:4.75rem]"
+                            classNames={{
+                              root: 'mx-auto w-full',
+                              months: 'relative flex justify-center',
+                              month: 'w-full min-w-0 max-w-3xl gap-5',
+                              month_caption:
+                                'mb-6 flex h-auto items-center justify-center px-14',
+                              caption_label: 'text-2xl font-semibold text-slate-900',
+                              nav: 'absolute inset-x-0 top-0 h-11',
+                              button_previous:
+                                'absolute left-0 top-0 flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50',
+                              button_next:
+                                'absolute right-0 top-0 flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50',
+                              table: 'w-full border-collapse',
+                              weekdays: 'mb-4 grid grid-cols-7 gap-3',
+                              weekday:
+                                'flex items-center justify-center text-sm font-semibold uppercase tracking-[0.16em] text-slate-500',
+                              week: 'grid grid-cols-7 gap-3 mt-0',
+                              day: 'aspect-auto w-full',
+                              day_button:
+                                'h-14 w-full rounded-2xl text-base font-semibold sm:h-16 xl:h-[4.75rem]',
+                              today:
+                                'bg-slate-100 text-slate-900 rounded-2xl border border-slate-200',
+                              selected:
+                                'bg-teal-600 text-white hover:bg-teal-600 focus:bg-teal-600 rounded-2xl',
+                              disabled: 'text-slate-300 opacity-100',
+                              outside: 'text-slate-300 opacity-70',
+                            }}
+                          />
+                        </div>
+                        <p className="mt-4 text-sm text-slate-500">
+                          {bookingNotice}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="border-t border-dashed border-slate-200"></div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-lg font-semibold text-slate-900">Time selection</h3>
+                        <p className="mt-1 text-sm text-slate-600">
+                          {selectedDateLabel || 'Choose a date to unlock available times in your timezone.'}
+                        </p>
+                      </div>
+                      <div className="rounded-[24px] border border-slate-200 bg-white p-5">
+                        <div className="mb-4 flex items-center justify-between gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-slate-700">
+                              Select Time
+                            </label>
+                            <p className="mt-1 text-sm text-slate-500">
+                              All times below are shown in {getTimezoneAbbreviation(userTimezone)}
+                            </p>
+                          </div>
+                          {selectedSlot && (
+                            <div className="rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-700">
+                              Selected
+                            </div>
+                          )}
+                        </div>
+
+                        {selectedDate ? (
+                          <>
+                            {slotsLoading ? (
+                              <div className="flex min-h-[220px] items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 text-sm text-slate-500">
+                                Loading available time slots...
+                              </div>
+                            ) : slotsError ? (
+                              <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                                {slotsError}
+                              </div>
+                            ) : timeSlots.length === 0 ? (
+                              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-12 text-center text-sm text-slate-500">
+                                {emptySlotsNotice}
+                              </div>
+                            ) : (
+                              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                                {timeSlots.map((slot) => (
+                                  <button
+                                    key={slot.timeSlotId}
+                                    onClick={() => setSelectedTime(slot.timeSlotId)}
+                                    className={`rounded-2xl border px-3 py-3 text-sm font-medium transition-all ${
+                                      selectedTime === slot.timeSlotId
+                                        ? 'border-teal-600 bg-teal-600 text-white shadow-lg shadow-teal-200'
+                                        : 'border-slate-200 bg-slate-50 text-slate-800 hover:border-teal-300 hover:bg-teal-50'
+                                    }`}
+                                  >
+                                    {slot.displayTime}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-12 text-center text-sm text-slate-500">
+                            Please select a date first
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="border-t border-dashed border-slate-200"></div>
+
+                    <div className="space-y-5">
+                      <div className="rounded-[24px] border border-slate-200 bg-slate-50/70 p-5">
+                        <label className="mb-3 block text-sm font-medium text-slate-700">
+                          Notes for Therapist (Optional)
+                        </label>
+                        <Textarea
+                          value={clientNotes}
+                          onChange={(e) => setClientNotes(e.target.value)}
+                          rows={4}
+                          className="min-h-[120px] rounded-2xl border-slate-200 bg-white"
+                          placeholder="Share any concerns, goals, or context you'd like the therapist to know before the session..."
+                        />
+                      </div>
+
+                      <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-5">
+                        <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+                          Cancellation Policy
+                        </h3>
+                        <p className="mt-3 text-sm leading-6 text-slate-600">
+                          Free cancellation up to 24 hours before the appointment. Cancellations within 24 hours incur a 50% charge.
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={handleContinueToPayment}
+                        disabled={!canContinueToPayment}
+                        className="w-full rounded-2xl bg-gradient-to-r from-teal-500 to-blue-600 px-5 py-4 text-base font-semibold text-white shadow-lg shadow-cyan-100 transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {loading ? 'Processing...' : 'Continue to Payment'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {step === 'payment' && clientSecret && (
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <h2 className="text-2xl font-bold text-slate-900">Review & Pay</h2>
+                      <p className="text-slate-600">
+                        Check your session details, then complete payment to confirm your booking.
                       </p>
-                    )}
-                  </div>
-                </div>
+                    </div>
 
-                {/* Session Details */}
-                <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <div className="flex items-start">
-                    <FiInfo className="text-blue-600 dark:text-blue-400 mt-1 mr-3 flex-shrink-0" />
-                    <div className="text-sm text-blue-900 dark:text-blue-100">
-                      <p className="font-medium mb-2">Session Information</p>
-                      <ul className="space-y-1 text-blue-800 dark:text-blue-200">
-                        <li>• Session Type: {selectedSessionConfig.label}</li>
-                        <li>• Duration: {selectedSessionConfig.duration} minutes</li>
-                        <li>• Session Fee: ${(sessionFee).toFixed(2)}</li>
-                        <li>• Video session via secure platform</li>
-                        <li>• You&apos;ll receive a meeting link, meeting ID, and passcode after payment</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
+                    <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-5">
+                      <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Booking Summary</h3>
+                      <div className="grid gap-3 text-sm sm:grid-cols-2">
+                        <div className="rounded-2xl bg-white px-4 py-3">
+                          <span className="text-slate-500">Date</span>
+                          <p className="mt-1 font-medium text-slate-900">{selectedDateLabel}</p>
+                        </div>
+                        <div className="rounded-2xl bg-white px-4 py-3">
+                          <span className="text-slate-500">Time</span>
+                          <p className="mt-1 font-medium text-slate-900">{selectedSlot?.displayTime || ''}</p>
+                        </div>
+                        <div className="rounded-2xl bg-white px-4 py-3">
+                          <span className="text-slate-500">Timezone</span>
+                          <p className="mt-1 font-medium text-slate-900">
+                            {getTimezoneDisplayName(userTimezone)} ({getTimezoneAbbreviation(userTimezone)})
+                          </p>
+                        </div>
+                        <div className="rounded-2xl bg-white px-4 py-3">
+                          <span className="text-slate-500">Format</span>
+                          <p className="mt-1 font-medium text-slate-900">{selectedSessionConfig.label}</p>
+                        </div>
+                      </div>
 
-                {/* Notes */}
-                <div className="mt-6">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Notes for Therapist (Optional)
-                  </label>
-                  <textarea
-                    value={clientNotes}
-                    onChange={(e) => setClientNotes(e.target.value)}
-                    rows={3}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                    placeholder="Any specific concerns or topics you'd like to discuss..."
-                  />
-                </div>
+                      <div className="mt-5 space-y-3 rounded-2xl bg-white p-4 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Therapist Fee</span>
+                          <span className="font-medium text-slate-900">${(therapistFee / 100).toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Platform Fee</span>
+                          <span className="font-medium text-slate-900">${(platformFee / 100).toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between border-t border-slate-100 pt-3 text-base font-semibold text-slate-900">
+                          <span>Total</span>
+                          <span>${(amount / 100).toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
 
-                {/* Cancellation Policy */}
-                <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <h3 className="font-medium text-gray-900 dark:text-white mb-2">Cancellation Policy</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Free cancellation up to 24 hours before the appointment. Cancellations within 24 hours will incur a 50% charge.
-                  </p>
-                </div>
-
-                {/* Continue Button */}
-                <button
-                  onClick={handleContinueToPayment}
-                  disabled={!selectedDate || !selectedTime || loading}
-                  className="w-full mt-6 py-3 bg-gradient-to-r from-teal-500 to-blue-600 text-white font-medium rounded-md hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? 'Processing...' : 'Continue to Payment'}
-                </button>
-              </div>
-            )}
-
-            {step === 'payment' && clientSecret && (
-              <div>
-                <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Complete Payment</h2>
-                
-                {/* Booking Summary */}
-                <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <h3 className="font-medium text-gray-900 dark:text-white mb-3">Booking Summary</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Date:</span>
-                      <span className="text-gray-900 dark:text-white font-medium">
-                        {selectedDate?.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Time:</span>
-                      <span className="text-gray-900 dark:text-white font-medium">{selectedTime}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Duration:</span>
-                      <span className="text-gray-900 dark:text-white font-medium">{selectedSessionConfig.duration} minutes</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Session type:</span>
-                      <span className="text-gray-900 dark:text-white font-medium">{selectedSessionConfig.label}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Therapist Fee:</span>
-                      <span className="text-gray-900 dark:text-white font-medium">${(therapistFee / 100).toFixed(2)}</span>
-                    </div>
-                     <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Platform Fee:</span>
-                      <span className="text-gray-900 dark:text-white font-medium">${(platformFee / 100).toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
-                      <span className="text-gray-900 dark:text-white font-medium">Total:</span>
-                      <span className="text-gray-900 dark:text-white font-bold text-lg">
-                        ${(amount / 100).toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Stripe Payment Form */}
-                <Elements stripe={stripePromise} options={{ clientSecret }}>
+                    <Elements stripe={stripePromise} options={{ clientSecret }}>
                       <CheckoutForm
                         clientSecret={clientSecret}
                         appointmentId={appointmentId}
@@ -472,46 +814,65 @@ export default function BookingPage() {
                         onSuccess={handlePaymentSuccess}
                       />
                     </Elements>
-              </div>
-            )}
-
-            {step === 'confirmation' && (
-              <div className="text-center py-8">
-                <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-green-600 dark:text-green-400 mx-auto mb-6">
-                  <FiCheckCircle size={40} />
-                </div>
-                <h2 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">Booking Confirmed!</h2>
-                <p className="text-gray-700 dark:text-gray-300 mb-6 max-w-md mx-auto">
-                  Your appointment with {therapist.name} has been successfully booked. We&apos;ll email the meeting link, meeting ID, and passcode after payment confirmation.
-                </p>
-
-                <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg max-w-md mx-auto mb-8">
-                  <h3 className="font-medium text-gray-900 dark:text-white mb-4">Appointment Details</h3>
-                  <div className="text-left space-y-2 text-gray-700 dark:text-gray-300">
-                    <p><strong>Therapist:</strong> {therapist.name}</p>
-                    <p><strong>Date:</strong> {selectedDate?.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                    <p><strong>Time:</strong> {selectedTime}</p>
-                    <p><strong>Session Type:</strong> {selectedSessionConfig.label}</p>
-                    <p><strong>Duration:</strong> {selectedSessionConfig.duration} minutes</p>
                   </div>
-                </div>
+                )}
 
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Link 
-                    href="/client/appointments"
-                    className="px-6 py-3 bg-gradient-to-r from-teal-500 to-blue-600 text-white font-medium rounded-md hover:opacity-90 transition-opacity"
-                  >
-                    View My Appointments
-                  </Link>
-                  <Link 
-                    href="/"
-                    className="px-6 py-3 bg-transparent border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    Return to Homepage
-                  </Link>
-                </div>
+                {step === 'confirmation' && (
+                  <div className="py-4 text-center">
+                    <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-[28px] bg-green-100 text-green-600 shadow-[0_18px_45px_rgba(34,197,94,0.18)]">
+                      <FiCheckCircle size={44} />
+                    </div>
+                    <h2 className="text-3xl font-bold text-slate-900">Booking Confirmed!</h2>
+                    <p className="mx-auto mt-4 max-w-xl text-slate-600">
+                      Your appointment with {therapist.name} has been booked successfully. We&apos;ll email the meeting link, meeting ID, and passcode after payment confirmation.
+                    </p>
+
+                    <div className="mx-auto mt-8 max-w-xl rounded-[28px] border border-slate-200 bg-slate-50 p-6 text-left">
+                      <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Appointment Details</h3>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="rounded-2xl bg-white px-4 py-3">
+                          <span className="text-slate-500">Therapist</span>
+                          <p className="mt-1 font-medium text-slate-900">{therapist.name}</p>
+                        </div>
+                        <div className="rounded-2xl bg-white px-4 py-3">
+                          <span className="text-slate-500">Session Type</span>
+                          <p className="mt-1 font-medium text-slate-900">{selectedSessionConfig.label}</p>
+                        </div>
+                        <div className="rounded-2xl bg-white px-4 py-3">
+                          <span className="text-slate-500">Date</span>
+                          <p className="mt-1 font-medium text-slate-900">{selectedDateLabel}</p>
+                        </div>
+                        <div className="rounded-2xl bg-white px-4 py-3">
+                          <span className="text-slate-500">Time</span>
+                          <p className="mt-1 font-medium text-slate-900">{selectedSlot?.displayTime || ''}</p>
+                        </div>
+                        <div className="rounded-2xl bg-white px-4 py-3 sm:col-span-2">
+                          <span className="text-slate-500">Timezone</span>
+                          <p className="mt-1 font-medium text-slate-900">
+                            {getTimezoneDisplayName(userTimezone)} ({getTimezoneAbbreviation(userTimezone)})
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-8 flex flex-col justify-center gap-4 sm:flex-row">
+                      <Link
+                        href="/client/appointments"
+                        className="rounded-2xl bg-gradient-to-r from-teal-500 to-blue-600 px-6 py-3 font-medium text-white shadow-lg shadow-cyan-100 transition hover:opacity-95"
+                      >
+                        View My Appointments
+                      </Link>
+                      <Link
+                        href="/"
+                        className="rounded-2xl border border-slate-200 bg-white px-6 py-3 font-medium text-slate-700 transition hover:bg-slate-50"
+                      >
+                        Return to Homepage
+                      </Link>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
         </div>
       </div>

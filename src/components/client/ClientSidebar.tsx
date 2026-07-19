@@ -13,7 +13,6 @@ import {
   LogOut,
   Menu,
   X,
-  Video,
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/lib/hooks/useAuth";
@@ -41,11 +40,6 @@ const therapyItems = [
     name: "My Appointments",
     href: "/client/appointments",
     icon: Calendar,
-  },
-  {
-    name: "Sessions",
-    href: "/client/sessions",
-    icon: Video,
   },
   {
     name: "Find Therapists",

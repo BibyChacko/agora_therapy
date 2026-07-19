@@ -84,7 +84,7 @@ export const config = {
     // Maximum advance booking days
     maxAdvanceBookingDays: 90,
     // Minimum advance booking hours
-    minAdvanceBookingHours: 24,
+    minAdvanceBookingHours: 0,
     // Buffer time between appointments in minutes
     defaultBufferTime: 15,
     // Maximum daily working hours

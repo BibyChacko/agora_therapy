@@ -4,7 +4,7 @@
  */
 
 import { Timestamp } from "firebase/firestore";
-import { AvailableSlot, TherapistProfile } from "@/types/database";
+import { AvailableSlot, TherapistProfile, ScheduleOverride, TimeSlot } from "@/types/database";
 import { businessConfig } from "@/lib/config";
 import { AvailabilityService } from "./availability-service";
 import { AppointmentService } from "./appointment-service";
@@ -50,7 +50,146 @@ export interface TherapistSlotsResult {
   timezone: string;
 }
 
+interface TimeRange {
+  start: string;
+  end: string;
+}
+
+type WeeklyHours = Record<number, TimeRange[]>;
+
 export class AvailableSlotsService {
+  private static parseTimeToMinutes(time: string): number {
+    const [hours, minutes] = time.split(":").map(Number);
+    return hours * 60 + minutes;
+  }
+
+  private static formatMinutes(minutes: number): string {
+    const normalizedHours = Math.floor(minutes / 60)
+      .toString()
+      .padStart(2, "0");
+    const normalizedMinutes = (minutes % 60).toString().padStart(2, "0");
+    return `${normalizedHours}:${normalizedMinutes}`;
+  }
+
+  private static getWeeklyHours(
+    therapistProfile: TherapistProfile
+  ): WeeklyHours {
+    const availability = therapistProfile.availability as TherapistProfile["availability"] & {
+      weeklyHours?: WeeklyHours;
+    };
+
+    return availability.weeklyHours || {};
+  }
+
+  private static buildHourlySlotsFromRanges(
+    ranges: TimeRange[],
+    duration: number
+  ): Array<{ startTime: string; endTime: string }> {
+    const slots: Array<{ startTime: string; endTime: string }> = [];
+
+    for (const range of ranges) {
+      const rangeStart = this.parseTimeToMinutes(range.start);
+      const rangeEnd = this.parseTimeToMinutes(range.end);
+
+      for (
+        let currentStart = rangeStart;
+        currentStart + duration <= rangeEnd;
+        currentStart += duration
+      ) {
+        slots.push({
+          startTime: this.formatMinutes(currentStart),
+          endTime: this.formatMinutes(currentStart + duration),
+        });
+      }
+    }
+
+    return slots;
+  }
+
+  private static getOverrideRanges(
+    override: ScheduleOverride,
+    timeSlots: TimeSlot[]
+  ): TimeRange[] {
+    if (!override.affectedSlots?.length) {
+      return [];
+    }
+
+    return override.affectedSlots
+      .map((slotId) => timeSlots.find((slot) => slot.id === slotId))
+      .filter((slot): slot is TimeSlot => Boolean(slot))
+      .map((slot) => ({
+        start: slot.startTime,
+        end: slot.endTime,
+      }));
+  }
+
+  private static rangesOverlap(
+    startA: string,
+    endA: string,
+    startB: string,
+    endB: string
+  ): boolean {
+    const aStart = this.parseTimeToMinutes(startA);
+    const aEnd = this.parseTimeToMinutes(endA);
+    const bStart = this.parseTimeToMinutes(startB);
+    const bEnd = this.parseTimeToMinutes(endB);
+
+    return aStart < bEnd && bStart < aEnd;
+  }
+
+  private static applyOverridesToHourlySlots(
+    baseSlots: Array<{ startTime: string; endTime: string }>,
+    overrides: ScheduleOverride[],
+    requestedDuration: number,
+    timeSlots: TimeSlot[]
+  ): {
+    slots: Array<{ startTime: string; endTime: string }>;
+    overrideSlotKeys: Set<string>;
+  } {
+    let effectiveSlots = [...baseSlots];
+    const overrideSlotKeys = new Set<string>();
+
+    for (const override of overrides) {
+      if (override.type === "day_off") {
+        return { slots: [], overrideSlotKeys };
+      }
+
+      const overrideRanges = this.getOverrideRanges(override, timeSlots);
+
+      if (override.type === "time_off" && overrideRanges.length > 0) {
+        effectiveSlots = effectiveSlots.filter((slot) => {
+          const blocked = overrideRanges.some((range) =>
+            this.rangesOverlap(
+              slot.startTime,
+              slot.endTime,
+              range.start,
+              range.end
+            )
+          );
+
+          if (blocked) {
+            overrideSlotKeys.add(`${slot.startTime}-${slot.endTime}`);
+          }
+
+          return !blocked;
+        });
+      }
+
+      if (override.type === "custom_hours" && overrideRanges.length > 0) {
+        effectiveSlots = this.buildHourlySlotsFromRanges(
+          overrideRanges,
+          requestedDuration
+        );
+
+        effectiveSlots.forEach((slot) => {
+          overrideSlotKeys.add(`${slot.startTime}-${slot.endTime}`);
+        });
+      }
+    }
+
+    return { slots: effectiveSlots, overrideSlotKeys };
+  }
+
   /**
    * Calculate available slots for a therapist within a date range
    */
@@ -118,6 +257,7 @@ export class AvailableSlotsService {
       scheduledFor: Timestamp;
       timeSlotId: string;
       status: string;
+      duration?: number;
     }[],
     clientTimezone: string,
     requestedDuration?: number
@@ -125,25 +265,37 @@ export class AvailableSlotsService {
     const slots: EnhancedAvailableSlot[] = [];
 
     try {
-      // Check if date is too far in advance or too soon
+      // Calculate booking window boundaries once and apply them per slot.
       const now = new Date();
       const maxAdvanceDate = addDays(now, businessConfig.maxAdvanceBookingDays);
       const minAdvanceDate = new Date(
         now.getTime() + businessConfig.minAdvanceBookingHours * 60 * 60 * 1000
       );
+      const slotDuration = 60;
+      const weeklyHours = this.getWeeklyHours(therapistProfile);
+      const dayRanges =
+        weeklyHours[date.getDay()] || weeklyHours[Number(date.getDay())] || [];
 
-      if (date > maxAdvanceDate || date < minAdvanceDate) {
-        return slots; // Return empty array for dates outside booking window
+      if (dayRanges.length === 0) {
+        return slots;
       }
 
-      // Get therapist availability for this date
-      const availability = await AvailabilityService.getAvailabilityForDate(
+      const dateStart = startOfDay(date);
+      const dateEnd = endOfDay(date);
+      const overrides = await AvailabilityService.getScheduleOverrides(
         therapistId,
-        date
+        dateStart,
+        dateEnd
       );
-
-      // Get all time slots
       const allTimeSlots = await TimeSlotService.getTimeSlots();
+      const baseSlots = this.buildHourlySlotsFromRanges(dayRanges, slotDuration);
+      const { slots: effectiveSlots, overrideSlotKeys } =
+        this.applyOverridesToHourlySlots(
+          baseSlots,
+          overrides,
+          slotDuration,
+          allTimeSlots
+        );
 
       // Filter appointments for this specific date
       const dayAppointments = existingAppointments.filter((appointment) => {
@@ -153,36 +305,38 @@ export class AvailableSlotsService {
         );
       });
 
-      // Process each effective time slot
-      for (const timeSlotId of availability.effectiveSlots) {
-        const timeSlot = allTimeSlots.find((slot) => slot.id === timeSlotId);
-        if (!timeSlot) continue;
+      for (const slot of effectiveSlots) {
+        const therapistTimezone = therapistProfile.availability.timezone;
+        const slotDateTime = new Date(date);
+        const [hours, minutes] = slot.startTime.split(":").map(Number);
+        slotDateTime.setHours(hours, minutes, 0, 0);
 
-        // Skip if duration doesn't match requested duration
-        if (requestedDuration && timeSlot.duration !== requestedDuration) {
+        if (slotDateTime < minAdvanceDate || slotDateTime > maxAdvanceDate) {
           continue;
         }
 
-        // Check if this slot is booked
-        const isBooked = dayAppointments.some(
-          (appointment) => appointment.timeSlotId === timeSlotId
+        const slotEndDateTime = new Date(
+          slotDateTime.getTime() + slotDuration * 60 * 1000
         );
 
-        // Convert times to client timezone
-        const therapistTimezone = therapistProfile.availability.timezone;
-        const slotDateTime = new Date(date);
-        const [hours, minutes] = timeSlot.startTime.split(":").map(Number);
-        slotDateTime.setHours(hours, minutes, 0, 0);
+        const isBooked = dayAppointments.some((appointment) => {
+          const appointmentStart = appointment.scheduledFor.toDate();
+          const appointmentDuration = appointment.duration || slotDuration;
+          const appointmentEnd = new Date(
+            appointmentStart.getTime() + appointmentDuration * 60 * 1000
+          );
 
+          return appointmentStart < slotEndDateTime && appointmentEnd > slotDateTime;
+        });
+
+        // Convert times to client timezone
         const clientSlotDateTime = convertTimezone(
           slotDateTime,
           therapistTimezone,
           clientTimezone
         );
 
-        const endDateTime = new Date(
-          slotDateTime.getTime() + timeSlot.duration * 60 * 1000
-        );
+        const endDateTime = slotEndDateTime;
         const clientEndDateTime = convertTimezone(
           endDateTime,
           therapistTimezone,
@@ -191,11 +345,11 @@ export class AvailableSlotsService {
 
         // Create enhanced available slot
         const enhancedSlot: EnhancedAvailableSlot = {
-          timeSlotId,
+          timeSlotId: `${format(date, "yyyy-MM-dd")}:${slot.startTime}-${slot.endTime}`,
           date: clientSlotDateTime,
-          startTime: timeSlot.startTime,
-          endTime: timeSlot.endTime,
-          duration: timeSlot.duration,
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+          duration: slotDuration,
           price: therapistProfile.practice.hourlyRate,
           currency: therapistProfile.practice.currency,
           isBooked,
@@ -208,9 +362,7 @@ export class AvailableSlotsService {
             "h:mm a"
           )}`,
           bufferTime: therapistProfile.availability.bufferMinutes,
-          isOverride: availability.overrides.some((override) =>
-            override.affectedSlots?.includes(timeSlotId)
-          ),
+          isOverride: overrideSlotKeys.has(`${slot.startTime}-${slot.endTime}`),
         };
 
         slots.push(enhancedSlot);

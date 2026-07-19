@@ -49,6 +49,36 @@ export interface AppointmentBookingResult {
 }
 
 export class AppointmentService {
+  private static getScheduledForDate(
+    scheduledFor: Appointment["scheduledFor"]
+  ): Date | null {
+    if (!scheduledFor) {
+      return null;
+    }
+
+    const date =
+      scheduledFor instanceof Timestamp
+        ? scheduledFor.toDate()
+        : new Date(scheduledFor as unknown as string);
+
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  private static sortAppointmentsByScheduledFor(
+    appointments: Appointment[]
+  ): Appointment[] {
+    return [...appointments].sort((a, b) => {
+      const aDate = this.getScheduledForDate(a.scheduledFor);
+      const bDate = this.getScheduledForDate(b.scheduledFor);
+
+      if (!aDate && !bDate) return 0;
+      if (!aDate) return 1;
+      if (!bDate) return -1;
+
+      return aDate.getTime() - bDate.getTime();
+    });
+  }
+
   /**
    * Get appointments for a specific client
    */
@@ -75,21 +105,18 @@ export class AppointmentService {
         }
       }
 
-      let q = query(
-        collections.appointments(),
-        where("clientId", "==", clientId),
-        orderBy("scheduledFor", "asc")
-      );
-
-      if (status) {
-        q = query(q, where("status", "==", status));
-      }
-
+      const q = query(collections.appointments(), where("clientId", "==", clientId));
       const snapshot = await getDocs(q);
-      return snapshot.docs.map((doc) => ({
+      const appointments = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       })) as Appointment[];
+
+      const filteredAppointments = status
+        ? appointments.filter((appointment) => appointment.status === status)
+        : appointments;
+
+      return this.sortAppointmentsByScheduledFor(filteredAppointments);
     } catch (error) {
       console.error("Error fetching client appointments:", error);
       throw new Error("Failed to fetch client appointments");
@@ -104,21 +131,22 @@ export class AppointmentService {
     status?: AppointmentStatus
   ): Promise<Appointment[]> {
     try {
-      let q = query(
+      const q = query(
         collections.appointments(),
-        where("therapistId", "==", therapistId),
-        orderBy("scheduledFor", "asc")
+        where("therapistId", "==", therapistId)
       );
 
-      if (status) {
-        q = query(q, where("status", "==", status));
-      }
-
       const snapshot = await getDocs(q);
-      return snapshot.docs.map((doc) => ({
+      const appointments = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       })) as Appointment[];
+
+      const filteredAppointments = status
+        ? appointments.filter((appointment) => appointment.status === status)
+        : appointments;
+
+      return this.sortAppointmentsByScheduledFor(filteredAppointments);
     } catch (error) {
       console.error("Error fetching therapist appointments:", error);
       throw new Error("Failed to fetch therapist appointments");
@@ -134,19 +162,17 @@ export class AppointmentService {
     endDate: Date
   ): Promise<Appointment[]> {
     try {
-      const q = query(
-        collections.appointments(),
-        where("therapistId", "==", therapistId),
-        where("scheduledFor", ">=", Timestamp.fromDate(startDate)),
-        where("scheduledFor", "<=", Timestamp.fromDate(endDate)),
-        orderBy("scheduledFor", "asc")
-      );
+      const appointments = await this.getTherapistAppointments(therapistId);
 
-      const snapshot = await getDocs(q);
-      return snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Appointment[];
+      return appointments.filter((appointment) => {
+        const scheduledFor = this.getScheduledForDate(appointment.scheduledFor);
+
+        if (!scheduledFor) {
+          return false;
+        }
+
+        return scheduledFor >= startDate && scheduledFor <= endDate;
+      });
     } catch (error) {
       console.error("Error fetching appointments in range:", error);
       throw new Error("Failed to fetch appointments in range");
@@ -230,7 +256,7 @@ export class AppointmentService {
       const minAdvanceDate = new Date();
       minAdvanceDate.setHours(minAdvanceDate.getHours() + minAdvanceHours);
 
-      if (bookingRequest.date < minAdvanceDate) {
+      if (minAdvanceHours > 0 && bookingRequest.date < minAdvanceDate) {
         conflicts.push({
           type: "too_soon",
           message: `Bookings must be made at least ${minAdvanceHours} hours in advance`,

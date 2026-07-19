@@ -15,18 +15,34 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Calendar, Clock, User, Video, AlertCircle, Download, FileText } from "lucide-react";
+import { Calendar, Clock, User, Video, AlertCircle, Download, FileText, MessageSquare, Star } from "lucide-react";
 import { Appointment, AppointmentStatus } from "@/types/database";
 import Link from "next/link";
 import { useToast } from "@/lib/hooks/useToast";
 import { generateInvoicePdf } from "@/lib/utils/invoice-pdf";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function MySessionsPage() {
   const { user, userData, loading: authLoading } = useAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reviewedAppointmentIds, setReviewedAppointmentIds] = useState<string[]>([]);
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+  const [selectedReviewAppointment, setSelectedReviewAppointment] =
+    useState<Appointment | null>(null);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -39,8 +55,19 @@ export default function MySessionsPage() {
     try {
       setLoading(true);
       setError(null);
-      const data = await AppointmentService.getClientAppointments(user!.uid);
-      setAppointments(data);
+      const [appointmentsData, reviewsResponse] = await Promise.all([
+        AppointmentService.getClientAppointments(user!.uid),
+        fetch("/api/client/reviews"),
+      ]);
+
+      const reviewsData = reviewsResponse.ok ? await reviewsResponse.json() : { reviews: [] };
+
+      setReviewedAppointmentIds(
+        (reviewsData.reviews || [])
+          .map((review: { appointmentId?: string }) => review.appointmentId)
+          .filter(Boolean)
+      );
+      setAppointments(appointmentsData);
     } catch (err) {
       console.error("Error loading appointments:", err);
       setError("Failed to load your appointments. Please try again.");
@@ -106,6 +133,10 @@ export default function MySessionsPage() {
     return appointment.status === "cancelled";
   };
 
+  const isCompleted = (appointment: Appointment) => {
+    return appointment.status === "completed";
+  };
+
   const upcomingAppointments = appointments.filter(isUpcoming);
   const pastAppointments = appointments.filter(isPast);
   const cancelledAppointments = appointments.filter(isCancelled);
@@ -124,6 +155,66 @@ export default function MySessionsPage() {
 
   const getTherapistDisplayName = (appointment: Appointment) => {
     return appointment.therapist?.name || appointment.therapistId || "Therapist";
+  };
+
+  const hasSubmittedFeedback = (appointmentId: string) => {
+    return reviewedAppointmentIds.includes(appointmentId);
+  };
+
+  const openFeedbackDialog = (appointment: Appointment) => {
+    setSelectedReviewAppointment(appointment);
+    setReviewRating(0);
+    setReviewComment("");
+    setReviewDialogOpen(true);
+  };
+
+  const handleSubmitFeedback = async () => {
+    if (!selectedReviewAppointment) return;
+
+    if (reviewRating < 1) {
+      toast.error("Rating Required", "Please select a star rating before submitting.");
+      return;
+    }
+
+    try {
+      setSubmittingReview(true);
+
+      const response = await fetch("/api/client/reviews", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          appointmentId: selectedReviewAppointment.id,
+          rating: reviewRating,
+          comment: reviewComment,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to submit feedback");
+      }
+
+      setReviewedAppointmentIds((current) => [
+        ...current,
+        selectedReviewAppointment.id,
+      ]);
+      setReviewDialogOpen(false);
+      setSelectedReviewAppointment(null);
+      toast.success("Feedback Submitted", "Thank you for sharing your feedback.");
+    } catch (submitError) {
+      console.error("Error submitting feedback:", submitError);
+      toast.error(
+        "Submission Failed",
+        submitError instanceof Error
+          ? submitError.message
+          : "Failed to submit your feedback. Please try again."
+      );
+    } finally {
+      setSubmittingReview(false);
+    }
   };
 
   const handleDownloadInvoice = async (appointment: Appointment) => {
@@ -290,6 +381,24 @@ export default function MySessionsPage() {
                 </Button>
               </>
             )}
+
+            {isCompleted(appointment) && !hasSubmittedFeedback(appointment.id) && (
+              <Button
+                variant="outline"
+                onClick={() => openFeedbackDialog(appointment)}
+                className="flex items-center gap-2"
+              >
+                <MessageSquare className="h-4 w-4" />
+                Give Feedback
+              </Button>
+            )}
+
+            {isCompleted(appointment) && hasSubmittedFeedback(appointment.id) && (
+              <Button variant="outline" disabled className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                Feedback Submitted
+              </Button>
+            )}
           </div>
         </div>
       </CardContent>
@@ -433,6 +542,71 @@ export default function MySessionsPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Share Your Feedback</DialogTitle>
+            <DialogDescription>
+              Tell us how your session with{" "}
+              {selectedReviewAppointment
+                ? getTherapistDisplayName(selectedReviewAppointment)
+                : "your therapist"}{" "}
+              went.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-5">
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-gray-900">Your rating</p>
+              <div className="flex items-center gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setReviewRating(star)}
+                    className="rounded-md p-1 transition-transform hover:scale-105"
+                    aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
+                  >
+                    <Star
+                      className={`h-7 w-7 ${
+                        star <= reviewRating
+                          ? "fill-yellow-400 text-yellow-400"
+                          : "text-gray-300"
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-gray-900">
+                Comments
+              </p>
+              <Textarea
+                value={reviewComment}
+                onChange={(event) => setReviewComment(event.target.value)}
+                placeholder="Share anything that stood out about your session..."
+                rows={5}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setReviewDialogOpen(false)}
+              disabled={submittingReview}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleSubmitFeedback} disabled={submittingReview}>
+              {submittingReview ? "Submitting..." : "Submit Feedback"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </ClientLayout>
   );
 }

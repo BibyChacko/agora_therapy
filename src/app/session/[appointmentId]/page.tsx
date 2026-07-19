@@ -155,7 +155,7 @@ export default function SessionPage() {
     } else if (userRole === "guest") {
       router.push("/");
     } else {
-      router.push("/client/sessions");
+      router.push("/client/appointments");
     }
   };
 
@@ -165,7 +165,7 @@ export default function SessionPage() {
     } else if (userRole === "guest") {
       router.push("/");
     } else {
-      router.push("/client/sessions");
+      router.push("/client/appointments");
     }
   };
 

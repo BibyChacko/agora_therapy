@@ -53,7 +53,7 @@ export function Navigation() {
           { href: "/client", label: "Dashboard", icon: null },
           {
             href: "/client/appointments",
-            label: "My Sessions",
+            label: "My Appointments",
             icon: Calendar,
           },
           { href: "/client/therapists", label: "Find Therapists", icon: Users },

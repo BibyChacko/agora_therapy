@@ -96,7 +96,10 @@ export function validateBookingRequest(
       errors.push("Cannot book appointments in the past");
     }
 
-    if (isBefore(bookingRequest.date, minAdvanceDate)) {
+    if (
+      businessConfig.minAdvanceBookingHours > 0 &&
+      isBefore(bookingRequest.date, minAdvanceDate)
+    ) {
       errors.push(
         `Appointments must be booked at least ${businessConfig.minAdvanceBookingHours} hours in advance`
       );
