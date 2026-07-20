@@ -100,6 +100,7 @@ export interface TherapistPublicView {
   rating?: number;
   reviewCount?: number;
   location?: string;
+  currency?: string;
   isVerified: boolean;
   isFeatured?: boolean;
   timezone?: string;

@@ -7,6 +7,8 @@ import { Timestamp } from "firebase/firestore";
 import { AvailableSlot, TherapistProfile, ScheduleOverride, TimeSlot } from "@/types/database";
 import { businessConfig } from "@/lib/config";
 import { getAdminFirestore } from "@/lib/firebase/admin";
+import { AvailabilityService } from "./availability-service";
+import { AppointmentService } from "./appointment-service";
 import {
   addDays,
   format,

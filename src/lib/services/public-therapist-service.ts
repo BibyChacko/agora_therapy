@@ -80,6 +80,7 @@ async function getPublicTherapistsFromDb(
         experience: profileData.practice?.yearsExperience || 0,
         bio: profileData.practice?.bio || '',
         hourlyRate: normalizedRate,
+        currency: profileData.practice?.currency || "USD",
         rating: 5.0, 
         reviewCount: 0,
         location: profileData.practice?.location || 'Dubai, UAE',
@@ -150,6 +151,7 @@ async function getPublicTherapistByIdFromDb(
     experience: profileData.practice?.yearsExperience || 0,
     bio: profileData.practice?.bio || "",
     hourlyRate: hourlyRate,
+    currency: profileData.practice?.currency || "USD",
     rating: 5.0, // TODO: Calculate from reviews
     reviewCount: 0, // TODO: Count from reviews
     location: profileData.practice?.location || 'Dubai, UAE',

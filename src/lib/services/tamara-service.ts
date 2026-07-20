@@ -3,6 +3,10 @@ import jwt from "jsonwebtoken";
 import { appConfig, tamaraConfig } from "@/lib/config";
 
 const SUPPORTED_COUNTRIES = new Set(["SA", "AE", "BH", "KW", "OM"]);
+const DEFAULT_SUPPORTED_CURRENCY_BY_COUNTRY: Partial<Record<string, string>> = {
+  AE: "AED",
+  SA: "SAR",
+};
 
 interface Money {
   amount: number;
@@ -60,6 +64,15 @@ interface TamaraCheckoutResponse {
   status: string;
 }
 
+interface TamaraCheckoutPricing {
+  totalAmount: Money;
+  therapistFee?: Money;
+  platformFee?: Money;
+  originalCurrency: string;
+  originalTotalAmount: number;
+  exchangeRate?: number;
+}
+
 interface TamaraWebhookPayload {
   order_id: string;
   order_reference_id: string;
@@ -99,6 +112,76 @@ class TamaraService {
     return "en_US";
   }
 
+  private convertUsdMinorUnitsToAed(amount: number) {
+    return Math.round(amount * tamaraConfig.usdToAedRate);
+  }
+
+  getCheckoutPricing({
+    countryCode,
+    totalAmount,
+    therapistFee,
+    platformFee,
+    currency,
+  }: {
+    countryCode: string;
+    totalAmount: number;
+    therapistFee?: number;
+    platformFee?: number;
+    currency: string;
+  }): TamaraCheckoutPricing {
+    const normalizedCountryCode = countryCode.toUpperCase();
+    const normalizedCurrency = currency.toUpperCase();
+
+    if (normalizedCountryCode === "AE" && normalizedCurrency === "USD") {
+      return {
+        totalAmount: {
+          amount: this.convertUsdMinorUnitsToAed(totalAmount),
+          currency: "AED",
+        },
+        therapistFee:
+          therapistFee === undefined
+            ? undefined
+            : {
+                amount: this.convertUsdMinorUnitsToAed(therapistFee),
+                currency: "AED",
+              },
+        platformFee:
+          platformFee === undefined
+            ? undefined
+            : {
+                amount: this.convertUsdMinorUnitsToAed(platformFee),
+                currency: "AED",
+              },
+        originalCurrency: normalizedCurrency,
+        originalTotalAmount: totalAmount,
+        exchangeRate: tamaraConfig.usdToAedRate,
+      };
+    }
+
+    return {
+      totalAmount: {
+        amount: totalAmount,
+        currency: normalizedCurrency,
+      },
+      therapistFee:
+        therapistFee === undefined
+          ? undefined
+          : {
+              amount: therapistFee,
+              currency: normalizedCurrency,
+            },
+      platformFee:
+        platformFee === undefined
+          ? undefined
+          : {
+              amount: platformFee,
+              currency: normalizedCurrency,
+            },
+      originalCurrency: normalizedCurrency,
+      originalTotalAmount: totalAmount,
+    };
+  }
+
   private assertSupportedCountry(countryCode: string) {
     if (!SUPPORTED_COUNTRIES.has(countryCode)) {
       throw new Error(
@@ -107,9 +190,43 @@ class TamaraService {
     }
   }
 
+  getUnsupportedCountryCurrencyMessage(countryCode: string, currency: string) {
+    const normalizedCountryCode = countryCode.toUpperCase();
+    const normalizedCurrency = currency.toUpperCase();
+    const expectedCurrency =
+      DEFAULT_SUPPORTED_CURRENCY_BY_COUNTRY[normalizedCountryCode];
+
+    if (normalizedCountryCode === "AE" && normalizedCurrency === "USD") {
+      return null;
+    }
+
+    if (expectedCurrency && normalizedCurrency !== expectedCurrency) {
+      return `Tamara is currently available for ${normalizedCountryCode} checkouts in ${expectedCurrency} only. This booking is priced in ${normalizedCurrency}. Please use card payment or update the therapist pricing currency for Tamara.`;
+    }
+
+    if (!["AED", "SAR"].includes(normalizedCurrency)) {
+      return `Tamara does not currently support ${normalizedCurrency} for this checkout setup. Please use card payment instead.`;
+    }
+
+    return null;
+  }
+
+  assertSupportedCountryCurrency(countryCode: string, currency: string) {
+    this.assertSupportedCountry(countryCode);
+
+    const message = this.getUnsupportedCountryCurrencyMessage(
+      countryCode,
+      currency
+    );
+
+    if (message) {
+      throw new Error(message);
+    }
+  }
+
   async createCheckoutSession(input: TamaraCheckoutInput): Promise<TamaraCheckoutResponse> {
     const countryCode = input.shippingAddress.countryCode.toUpperCase();
-    this.assertSupportedCountry(countryCode);
+    this.assertSupportedCountryCurrency(countryCode, input.totalAmount.currency);
 
     const returnBase = `${appConfig.url}/booking/tamara`;
     const requestBody = {
@@ -255,4 +372,8 @@ class TamaraService {
 }
 
 export const tamaraService = new TamaraService();
-export type { TamaraWebhookPayload, TamaraCheckoutResponse };
+export type {
+  TamaraWebhookPayload,
+  TamaraCheckoutPricing,
+  TamaraCheckoutResponse,
+};

@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
     
     const appointmentRef = db.collection("appointments").doc();
 
-    const currency = therapistProfile.practice?.currency || "aed";
+    const currency = String(therapistProfile.practice?.currency || "USD").toUpperCase();
     const address = clientData.profile?.address || {};
     const countryCode = String(address.country || "AE").toUpperCase();
     const phoneNumber =
@@ -139,6 +139,45 @@ export async function POST(request: NextRequest) {
       clientData.profile?.lastName ||
       customerName.split(" ").slice(1).join(" ") ||
       "User";
+
+    const tamaraPricing =
+      paymentProvider === "tamara"
+        ? tamaraService.getCheckoutPricing({
+            countryCode,
+            totalAmount,
+            therapistFee,
+            platformFee,
+            currency,
+          })
+        : null;
+
+    if (paymentProvider === "tamara") {
+      if (!tamaraService.isEnabled()) {
+        return NextResponse.json(
+          { error: "Tamara is not configured yet." },
+          { status: 503 }
+        );
+      }
+
+      if (!clientData.email || !phoneNumber) {
+        return NextResponse.json(
+          {
+            error:
+              "Tamara checkout requires a client email address and phone number on file.",
+          },
+          { status: 400 }
+        );
+      }
+
+      const unsupportedMessage = tamaraService.getUnsupportedCountryCurrencyMessage(
+        countryCode,
+        tamaraPricing?.totalAmount.currency || currency
+      );
+
+      if (unsupportedMessage) {
+        return NextResponse.json({ error: unsupportedMessage }, { status: 400 });
+      }
+    }
 
     // Create appointment document (pending payment)
     const appointmentData = {
@@ -164,6 +203,13 @@ export async function POST(request: NextRequest) {
         status: "pending",
         transactionId: "",
         method: paymentProvider,
+        ...(tamaraPricing
+          ? {
+              originalAmount: totalAmount,
+              originalCurrency: tamaraPricing.originalCurrency,
+              exchangeRate: tamaraPricing.exchangeRate ?? null,
+            }
+          : {}),
       },
       communication: {
         clientNotes: clientNotes || "",
@@ -183,84 +229,84 @@ export async function POST(request: NextRequest) {
     await appointmentRef.set(appointmentData);
 
     if (paymentProvider === "tamara") {
-      if (!tamaraService.isEnabled()) {
-        await appointmentRef.delete();
-        return NextResponse.json(
-          { error: "Tamara is not configured yet." },
-          { status: 503 }
-        );
-      }
-
-      if (!clientData.email || !phoneNumber) {
-        await appointmentRef.delete();
-        return NextResponse.json(
-          {
-            error:
-              "Tamara checkout requires a client email address and phone number on file.",
+      try {
+        const checkoutSession = await tamaraService.createCheckoutSession({
+          appointmentId: appointmentRef.id,
+          totalAmount: tamaraPricing!.totalAmount,
+          shippingAmount: { amount: 0, currency: tamaraPricing!.totalAmount.currency },
+          taxAmount: { amount: 0, currency: tamaraPricing!.totalAmount.currency },
+          consumer: {
+            firstName,
+            lastName,
+            phoneNumber,
+            email: clientData.email,
           },
-          { status: 400 }
-        );
+          billingAddress: {
+            firstName,
+            lastName,
+            line1: address.line1 || "Address not provided",
+            line2: address.line2 || "-",
+            city: address.city || "Dubai",
+            region: address.state || address.region || "Dubai",
+            countryCode,
+            phoneNumber,
+          },
+          shippingAddress: {
+            firstName,
+            lastName,
+            line1: address.line1 || "Address not provided",
+            line2: address.line2 || "-",
+            city: address.city || "Dubai",
+            region: address.state || address.region || "Dubai",
+            countryCode,
+            phoneNumber,
+          },
+          item: {
+            name: `${sessionConfig.label} with ${therapistProfile.profile?.displayName || therapistId}`,
+            referenceId: appointmentRef.id,
+            sku: `therapy-${normalizedSessionType}`,
+            itemUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/booking/${therapistId}`,
+            imageUrl: therapistProfile.profileImage || therapistProfile.profile?.photoURL,
+            totalAmount: tamaraPricing!.totalAmount,
+            unitPrice: tamaraPricing!.totalAmount,
+            taxAmount: { amount: 0, currency: tamaraPricing!.totalAmount.currency },
+          },
+          description: `${sessionConfig.label} therapy session`,
+        });
+
+        await appointmentRef.update({
+          "payment.amount": tamaraPricing!.totalAmount.amount,
+          "payment.currency": tamaraPricing!.totalAmount.currency,
+          ...(tamaraPricing?.therapistFee
+            ? { "payment.therapistFee": tamaraPricing.therapistFee.amount }
+            : {}),
+          ...(tamaraPricing?.platformFee
+            ? { "payment.platformFee": tamaraPricing.platformFee.amount }
+            : {}),
+          "payment.transactionId": checkoutSession.order_id,
+          "payment.providerCheckoutId": checkoutSession.checkout_id,
+          "payment.providerStatus": checkoutSession.status,
+        });
+
+        return NextResponse.json({
+          appointmentId: appointmentRef.id,
+          amount: tamaraPricing!.totalAmount.amount,
+          therapistFee: tamaraPricing?.therapistFee?.amount ?? therapistFee,
+          platformFee: tamaraPricing?.platformFee?.amount ?? platformFee,
+          currency: tamaraPricing!.totalAmount.currency,
+          paymentProvider: "tamara",
+          checkoutUrl: checkoutSession.checkout_url,
+        });
+      } catch (error) {
+        await appointmentRef.delete();
+
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Failed to create Tamara checkout session";
+
+        return NextResponse.json({ error: message }, { status: 400 });
       }
-
-      const checkoutSession = await tamaraService.createCheckoutSession({
-        appointmentId: appointmentRef.id,
-        totalAmount: { amount: totalAmount, currency },
-        shippingAmount: { amount: 0, currency },
-        taxAmount: { amount: 0, currency },
-        consumer: {
-          firstName,
-          lastName,
-          phoneNumber,
-          email: clientData.email,
-        },
-        billingAddress: {
-          firstName,
-          lastName,
-          line1: address.line1 || "Address not provided",
-          line2: address.line2 || "-",
-          city: address.city || "Dubai",
-          region: address.state || address.region || "Dubai",
-          countryCode,
-          phoneNumber,
-        },
-        shippingAddress: {
-          firstName,
-          lastName,
-          line1: address.line1 || "Address not provided",
-          line2: address.line2 || "-",
-          city: address.city || "Dubai",
-          region: address.state || address.region || "Dubai",
-          countryCode,
-          phoneNumber,
-        },
-        item: {
-          name: `${sessionConfig.label} with ${therapistProfile.profile?.displayName || therapistId}`,
-          referenceId: appointmentRef.id,
-          sku: `therapy-${normalizedSessionType}`,
-          itemUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/booking/${therapistId}`,
-          imageUrl: therapistProfile.profileImage || therapistProfile.profile?.photoURL,
-          totalAmount: { amount: totalAmount, currency },
-          unitPrice: { amount: totalAmount, currency },
-          taxAmount: { amount: 0, currency },
-        },
-        description: `${sessionConfig.label} therapy session`,
-      });
-
-      await appointmentRef.update({
-        "payment.transactionId": checkoutSession.order_id,
-        "payment.providerCheckoutId": checkoutSession.checkout_id,
-        "payment.providerStatus": checkoutSession.status,
-      });
-
-      return NextResponse.json({
-        appointmentId: appointmentRef.id,
-        amount: totalAmount,
-        therapistFee,
-        platformFee,
-        currency,
-        paymentProvider: "tamara",
-        checkoutUrl: checkoutSession.checkout_url,
-      });
     }
 
     const paymentIntent = await stripe.paymentIntents.create({
@@ -308,7 +354,7 @@ export async function POST(request: NextRequest) {
       amount: totalAmount,
       therapistFee,
       platformFee,
-      currency,
+      currency: currency.toLowerCase(),
       paymentProvider: "stripe",
     });
   } catch (error) {

@@ -37,6 +37,7 @@ import {
   getUserTimezone,
 } from '@/lib/utils/timezone-utils';
 import { businessConfig } from '@/lib/config';
+import { normalizeCurrencyCode } from '@/lib/utils/currency';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 const isTamaraEnabled = process.env.NEXT_PUBLIC_TAMARA_ENABLED === 'true';
@@ -92,10 +93,14 @@ export default function BookingPage() {
   const [amount, setAmount] = useState(0);
   const [therapistFee, setTherapistFee] = useState(0);
   const [platformFee, setPlatformFee] = useState(0);
+  const [paymentCurrency, setPaymentCurrency] = useState('USD');
   const lastTrackedSlotRef = useRef<string | null>(null);
   const selectedSessionConfig =
     THERAPY_SESSION_CONFIGS.find((config) => config.value === selectedSessionType) ||
     THERAPY_SESSION_CONFIGS[0];
+  const therapistCurrency = (therapist?.currency || 'USD').toUpperCase();
+  const isTamaraSupportedForBooking =
+    isTamaraEnabled && ['AED', 'SAR', 'USD'].includes(therapistCurrency);
 
   const buildDateParam = useCallback((date: Date) => {
     const normalizedDate = new Date(
@@ -228,6 +233,12 @@ export default function BookingPage() {
   }, [selectedDate]);
 
   useEffect(() => {
+    if (paymentProvider === 'tamara' && !isTamaraSupportedForBooking) {
+      setPaymentProvider('stripe');
+    }
+  }, [isTamaraSupportedForBooking, paymentProvider]);
+
+  useEffect(() => {
     const selectedSlot = timeSlots.find((slot) => slot.timeSlotId === selectedTime);
 
     if (!therapist || !selectedDate || !selectedSlot) {
@@ -324,8 +335,9 @@ export default function BookingPage() {
       setAmount(data.amount);
       setTherapistFee(data.therapistFee);
       setPlatformFee(data.platformFee);
+      setPaymentCurrency(normalizeCurrencyCode(data.currency));
       trackBeginCheckout({
-        currency: 'AED',
+        currency: normalizeCurrencyCode(data.currency),
         value: data.amount / 100,
         items: [
           {
@@ -359,7 +371,7 @@ export default function BookingPage() {
     if (therapist && appointmentId) {
       trackPurchase({
         transaction_id: appointmentId,
-        currency: 'AED',
+        currency: normalizeCurrencyCode(paymentCurrency),
         value: amount / 100,
         items: [
           {
@@ -821,18 +833,25 @@ export default function BookingPage() {
                           {isTamaraEnabled && (
                             <button
                               type="button"
-                              onClick={() => setPaymentProvider('tamara')}
+                              onClick={() =>
+                                isTamaraSupportedForBooking && setPaymentProvider('tamara')
+                              }
+                              disabled={!isTamaraSupportedForBooking}
                               className={`rounded-2xl border p-4 text-left transition-all ${
                                 paymentProvider === 'tamara'
                                   ? 'border-teal-500 bg-white shadow-md'
-                                  : 'border-slate-200 bg-white hover:border-teal-300'
+                                  : isTamaraSupportedForBooking
+                                  ? 'border-slate-200 bg-white hover:border-teal-300'
+                                  : 'border-slate-200 bg-slate-100 opacity-60'
                               }`}
                             >
                               <div className="flex items-center justify-between gap-3">
                                 <div>
                                   <p className="font-semibold text-slate-900">Tamara</p>
                                   <p className="mt-1 text-sm text-slate-600">
-                                    Continue to Tamara to pay in instalments.
+                                    {isTamaraSupportedForBooking
+                                      ? 'Continue to Tamara to pay in instalments.'
+                                      : `Tamara is unavailable for ${therapistCurrency} pricing.`}
                                   </p>
                                 </div>
                                 <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
@@ -903,15 +922,21 @@ export default function BookingPage() {
                       <div className="mt-5 space-y-3 rounded-2xl bg-white p-4 text-sm">
                         <div className="flex justify-between">
                           <span className="text-slate-500">Therapist Fee</span>
-                          <span className="font-medium text-slate-900">${(therapistFee / 100).toFixed(2)}</span>
+                          <span className="font-medium text-slate-900">
+                            {paymentCurrency} {(therapistFee / 100).toFixed(2)}
+                          </span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-slate-500">Platform Fee</span>
-                          <span className="font-medium text-slate-900">${(platformFee / 100).toFixed(2)}</span>
+                          <span className="font-medium text-slate-900">
+                            {paymentCurrency} {(platformFee / 100).toFixed(2)}
+                          </span>
                         </div>
                         <div className="flex justify-between border-t border-slate-100 pt-3 text-base font-semibold text-slate-900">
                           <span>Total</span>
-                          <span>${(amount / 100).toFixed(2)}</span>
+                          <span>
+                            {paymentCurrency} {(amount / 100).toFixed(2)}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -921,7 +946,7 @@ export default function BookingPage() {
                         clientSecret={clientSecret}
                         appointmentId={appointmentId}
                         amount={amount}
-                        currency="aed"
+                        currency={paymentCurrency.toLowerCase()}
                         therapistId={therapist.id}
                         therapistName={therapist.name}
                         sessionType={selectedSessionType}

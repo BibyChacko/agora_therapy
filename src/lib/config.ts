@@ -54,6 +54,7 @@ export const config = {
     notificationToken: process.env.TAMARA_NOTIFICATION_TOKEN || "",
     publicKey: process.env.NEXT_PUBLIC_TAMARA_PUBLIC_KEY || "",
     enabled: process.env.NEXT_PUBLIC_TAMARA_ENABLED === "true",
+    usdToAedRate: parseFloat(process.env.TAMARA_USD_TO_AED_RATE || "3.6725"),
   },
 
   // Application Configuration
