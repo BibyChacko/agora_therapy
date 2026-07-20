@@ -16,6 +16,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Bell, Clock3 } from "lucide-react";
 import {
+  trackVideoSessionCompleted,
+  trackVideoSessionJoined,
+  trackVideoSessionJoinAttempt,
+  trackVideoSessionLeft,
+} from "@/lib/analytics/gtag";
+import {
   Dialog,
   DialogContent,
   DialogFooter,
@@ -29,6 +35,7 @@ interface VideoSessionProps {
   appointmentId: string;
   userId: string;
   userRole: "therapist" | "client" | "guest";
+  sessionType?: string;
   duration: number; // Duration in minutes
   scheduledFor: Date; // Scheduled start time
   guestName?: string;
@@ -47,6 +54,7 @@ export function VideoSession({
   appointmentId,
   userId,
   userRole,
+  sessionType,
   duration,
   scheduledFor,
   guestName,
@@ -55,6 +63,7 @@ export function VideoSession({
   className = "",
 }: VideoSessionProps) {
   const SESSION_DURATION_SECONDS = 60 * 60;
+  const MIN_CLIENT_COMPLETION_SECONDS = 50 * 60;
   const BUFFER_DURATION_SECONDS = 5 * 60;
   const TOTAL_SESSION_SECONDS =
     SESSION_DURATION_SECONDS + BUFFER_DURATION_SECONDS;
@@ -80,6 +89,7 @@ export function VideoSession({
     completed: false,
     completionInFlight: false,
   });
+  const sessionJoinTrackedRef = useRef(false);
 
   // Generate channel name based on appointment ID
   const channelName = `therapy_session_${appointmentId}`;
@@ -90,6 +100,10 @@ export function VideoSession({
   const totalSessionSeconds = TOTAL_SESSION_SECONDS;
   const sessionEndTimestamp =
     scheduledFor.getTime() + totalSessionSeconds * 1000;
+  const getElapsedSeconds = useCallback(() => {
+    const now = Date.now();
+    return Math.max(0, Math.floor((now - scheduledFor.getTime()) / 1000));
+  }, [scheduledFor]);
 
   const addNotification = useCallback((title: string, description: string) => {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -140,7 +154,7 @@ export function VideoSession({
     }
   }, [updateAppointmentStatus, userRole]);
 
-  const markSessionCompleted = useCallback(async () => {
+  const markSessionCompleted = useCallback(async (force = false) => {
     if (
       userRole !== "client" ||
       statusChangeRef.current.completed ||
@@ -149,31 +163,57 @@ export function VideoSession({
       return;
     }
 
+    if (!force && getElapsedSeconds() < MIN_CLIENT_COMPLETION_SECONDS) {
+      return;
+    }
+
     statusChangeRef.current.completionInFlight = true;
 
     try {
       await updateAppointmentStatus("completed");
       statusChangeRef.current.completed = true;
+      trackVideoSessionCompleted({
+        appointment_id: appointmentId,
+        user_role: userRole,
+        session_type: sessionType,
+        elapsed_seconds: getElapsedSeconds(),
+        completion_source: force ? "client_auto" : "client_manual",
+      });
     } catch (statusError) {
       console.error("Failed to mark session completed:", statusError);
       setError("Video session ended, but failed to complete the appointment.");
     } finally {
       statusChangeRef.current.completionInFlight = false;
     }
-  }, [updateAppointmentStatus, userRole]);
+  }, [
+    MIN_CLIENT_COMPLETION_SECONDS,
+    appointmentId,
+    getElapsedSeconds,
+    sessionType,
+    updateAppointmentStatus,
+    userRole,
+  ]);
 
   const handleLeaveSession = useCallback(async (isAutoCompleted = false) => {
     try {
       const shouldCompleteSession =
         userRole === "client" &&
         (sessionState.isConnected || isAutoCompleted) &&
-        !statusChangeRef.current.completed;
+        !statusChangeRef.current.completed &&
+        (isAutoCompleted || getElapsedSeconds() >= MIN_CLIENT_COMPLETION_SECONDS);
 
       if (shouldCompleteSession) {
-        await markSessionCompleted();
+        await markSessionCompleted(isAutoCompleted);
       }
 
       await agoraService.leaveSession();
+      trackVideoSessionLeft({
+        appointment_id: appointmentId,
+        user_role: userRole,
+        session_type: sessionType,
+        elapsed_seconds: getElapsedSeconds(),
+        auto_completed: isAutoCompleted,
+      });
       onSessionEnd?.();
     } catch (err) {
       console.error("Failed to leave session:", err);
@@ -181,7 +221,16 @@ export function VideoSession({
         err instanceof Error ? err.message : "Failed to leave video session"
       );
     }
-  }, [markSessionCompleted, onSessionEnd, sessionState.isConnected, userRole]);
+  }, [
+    MIN_CLIENT_COMPLETION_SECONDS,
+    appointmentId,
+    getElapsedSeconds,
+    markSessionCompleted,
+    onSessionEnd,
+    sessionState.isConnected,
+    sessionType,
+    userRole,
+  ]);
 
   const requestTherapistSessionEnd = useCallback(() => {
     setIsTherapistEndDialogOpen(true);
@@ -205,6 +254,13 @@ export function VideoSession({
         internalNotes: therapistPrivateSummary.trim(),
       });
       await updateAppointmentStatus("completed");
+      trackVideoSessionCompleted({
+        appointment_id: appointmentId,
+        user_role: userRole,
+        session_type: sessionType,
+        elapsed_seconds: getElapsedSeconds(),
+        completion_source: "therapist_end",
+      });
       await agoraService.leaveSession();
       setIsTherapistEndDialogOpen(false);
       onSessionEnd?.();
@@ -218,10 +274,13 @@ export function VideoSession({
     }
   }, [
     appointmentId,
+    getElapsedSeconds,
     onSessionEnd,
+    sessionType,
     therapistClientNote,
     therapistPrivateSummary,
     updateAppointmentStatus,
+    userRole,
   ]);
 
   useEffect(() => {
@@ -271,6 +330,26 @@ export function VideoSession({
 
     void markSessionStarted();
   }, [markSessionStarted, sessionState.isConnected]);
+
+  useEffect(() => {
+    if (!sessionState.isConnected || sessionJoinTrackedRef.current) {
+      return;
+    }
+
+    sessionJoinTrackedRef.current = true;
+    trackVideoSessionJoined({
+      appointment_id: appointmentId,
+      user_role: userRole,
+      session_type: sessionType,
+      participant_count: sessionState.participantCount,
+    });
+  }, [
+    appointmentId,
+    sessionState.isConnected,
+    sessionState.participantCount,
+    sessionType,
+    userRole,
+  ]);
 
   useEffect(() => {
     if (!sessionState.isConnected || sessionDurationSeconds <= 0) {
@@ -371,6 +450,11 @@ export function VideoSession({
       setIsJoining(true);
       setError(null);
       await requestNotificationPermission();
+      trackVideoSessionJoinAttempt({
+        appointment_id: appointmentId,
+        user_role: userRole,
+        session_type: sessionType,
+      });
 
       const config: VideoSessionConfig = {
         appointmentId,

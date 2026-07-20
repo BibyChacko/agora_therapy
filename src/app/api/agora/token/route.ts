@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     const rateLimit = createRateLimitResponse(request, {
       keyPrefix: "agora-token",
       windowMs: 60 * 1000,
-      maxRequests: 20,
+      maxRequests: 60,
     });
 
     if (!rateLimit.ok) {

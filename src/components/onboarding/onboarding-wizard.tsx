@@ -5,7 +5,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -47,6 +47,11 @@ import { PhotoUploadStep } from "./PhotoUploadStep";
 import { ServicesSelectionStep } from "./ServicesSelectionStep";
 import { LanguageMultiSelect } from "./LanguageMultiSelect";
 import { AvailabilitySetupStep } from "./AvailabilitySetupStep";
+import {
+  trackOnboardingCompleted,
+  trackOnboardingStarted,
+  trackOnboardingStepCompleted,
+} from "@/lib/analytics/gtag";
 
 export interface OnboardingData {
   basicInfo: {
@@ -146,6 +151,7 @@ export function OnboardingWizard({ user, onComplete }: OnboardingWizardProps) {
   const [uploadingCertificate, setUploadingCertificate] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [certificateURLs, setCertificateURLs] = useState<string[]>([]);
+  const hasTrackedStartRef = useRef(false);
   const isTherapist = user.role === "therapist";
   
   console.log("🎯 OnboardingWizard - User role:", user.role);
@@ -291,8 +297,29 @@ export function OnboardingWizard({ user, onComplete }: OnboardingWizardProps) {
 
   const progress = Math.round(((currentStep + 1) / steps.length) * 100);
 
+  useEffect(() => {
+    if (hasTrackedStartRef.current) {
+      return;
+    }
+
+    trackOnboardingStarted({
+      user_role: user.role,
+      total_steps: steps.length,
+    });
+    hasTrackedStartRef.current = true;
+  }, [steps.length, user.role]);
+
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
+      const currentStepConfig = steps[currentStep];
+
+      trackOnboardingStepCompleted({
+        user_role: user.role,
+        step_id: currentStepConfig.id,
+        step_title: currentStepConfig.title,
+        step_index: currentStep + 1,
+        total_steps: steps.length,
+      });
       setCurrentStep(currentStep + 1);
     }
   };
@@ -467,6 +494,14 @@ export function OnboardingWizard({ user, onComplete }: OnboardingWizardProps) {
       
       // Mark onboarding as complete
       await ProfileService.completeOnboarding(user.id);
+
+      trackOnboardingCompleted({
+        user_role: user.role,
+        total_steps: steps.length,
+        has_profile_photo: Boolean(data.basicInfo.photoURL),
+        selected_languages: data.basicInfo.languages.length,
+        selected_services: data.therapistProfile?.services.length,
+      });
 
       onComplete();
 

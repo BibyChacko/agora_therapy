@@ -3,7 +3,7 @@ import { getAdminFirestore } from "@/lib/firebase/admin";
 import { FieldValue } from "firebase-admin/firestore";
 import Stripe from "stripe";
 import { emailService } from "@/lib/services/email-service";
-import { RtcTokenBuilder, RtcRole } from "agora-token";
+import { googleMeetService } from "@/lib/services/google-meet-service";
 import {
   generateMeetingPasscode,
   getTherapySessionConfig,
@@ -24,10 +24,6 @@ const webhookSecrets = [
     .map((secret) => secret.trim())
     .filter(Boolean),
 ].filter((secret): secret is string => Boolean(secret));
-
-// Agora configuration
-const AGORA_APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
-const AGORA_APP_CERTIFICATE = process.env.AGORA_APP_CERTIFICATE!;
 
 export async function POST(request: NextRequest) {
   try {
@@ -114,6 +110,13 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
   const db = getAdminFirestore();
 
   try {
+    console.log("Handling successful Stripe payment intent", {
+      paymentIntentId: paymentIntent.id,
+      amount: paymentIntent.amount,
+      currency: paymentIntent.currency,
+      status: paymentIntent.status,
+    });
+
     // Find appointment by payment intent ID
     const appointmentsSnapshot = await db
       .collection("appointments")
@@ -128,51 +131,89 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
 
     const appointmentDoc = appointmentsSnapshot.docs[0];
     const appointmentData = appointmentDoc.data();
+    console.log("Matched payment intent to appointment", {
+      appointmentId: appointmentDoc.id,
+      appointmentStatus: appointmentData.status,
+      paymentStatus: appointmentData.payment?.status,
+      therapistId: appointmentData.therapistId,
+      clientId: appointmentData.clientId,
+      scheduledFor:
+        appointmentData.scheduledFor?.toDate?.()?.toISOString?.() || null,
+    });
+    const existingStatus = appointmentData.status;
+    const existingPaymentStatus = appointmentData.payment?.status;
+
+    if (
+      existingPaymentStatus === "paid" &&
+      ["confirmed", "in_progress", "completed"].includes(existingStatus)
+    ) {
+      console.log(
+        "Payment webhook already processed for appointment:",
+        appointmentDoc.id
+      );
+      return;
+    }
 
     const sessionConfig = getTherapySessionConfig(
       normalizeTherapySessionType(appointmentData.session?.type)
     );
 
-    // Generate Agora channel and tokens
-    const channelName = `session_${appointmentDoc.id}`;
-    const meetingId = appointmentDoc.id;
     const meetingPasscode = generateMeetingPasscode();
-    const expirationTime = Math.floor(Date.now() / 1000) + 24 * 3600; // 24 hours
+    // Keep the app session page as the verified entry point, then launch Meet from there.
+    const meetingLink = googleMeetService.getSessionLandingUrl(appointmentDoc.id);
+    console.log("Preparing session link data", {
+      appointmentId: appointmentDoc.id,
+      sessionLandingUrl: meetingLink,
+      generatedMeetingPasscode: meetingPasscode,
+    });
+    let meetingId = appointmentDoc.id;
+    let providerJoinUrl: string | null = null;
+    let providerSpaceName: string | null = null;
+    let sessionProvisioningWarning: string | null = null;
 
-    // Generate tokens for both client and therapist
-    const clientUid = parseInt(appointmentData.clientId.substring(0, 8), 36);
-    const therapistUid = parseInt(appointmentData.therapistId.substring(0, 8), 36);
+    try {
+      console.log("Attempting Google Meet provisioning", {
+        appointmentId: appointmentDoc.id,
+      });
+      const meetingSpace = await googleMeetService.createMeetingSpace();
+      meetingId = meetingSpace.meetingCode;
+      providerJoinUrl = meetingSpace.meetingUri;
+      providerSpaceName = meetingSpace.spaceName;
+      console.log("Google Meet provisioning succeeded", {
+        appointmentId: appointmentDoc.id,
+        meetingId,
+        providerJoinUrl,
+        providerSpaceName,
+      });
+    } catch (meetingError) {
+      sessionProvisioningWarning =
+        meetingError instanceof Error
+          ? meetingError.message
+          : "Google Meet session could not be provisioned automatically.";
 
-    const clientToken = RtcTokenBuilder.buildTokenWithUid(
-      AGORA_APP_ID,
-      AGORA_APP_CERTIFICATE,
-      channelName,
-      clientUid,
-      RtcRole.PUBLISHER,
-      expirationTime,
-      expirationTime
-    );
-
-    const therapistToken = RtcTokenBuilder.buildTokenWithUid(
-      AGORA_APP_ID,
-      AGORA_APP_CERTIFICATE,
-      channelName,
-      therapistUid,
-      RtcRole.PUBLISHER,
-      expirationTime,
-      expirationTime
-    );
-
-    // Generate meeting link
-    const meetingLink = `${process.env.NEXT_PUBLIC_APP_URL}/session/${appointmentDoc.id}`;
+      console.error(
+        "Google Meet provisioning failed for appointment:",
+        appointmentDoc.id,
+        sessionProvisioningWarning
+      );
+    }
 
     // Update appointment with session details
+    console.log("Persisting session details to appointment", {
+      appointmentId: appointmentDoc.id,
+      meetingId,
+      providerJoinUrl,
+      providerSpaceName,
+      sessionProvisioningWarning,
+    });
     await appointmentDoc.ref.update({
       status: "confirmed",
       "payment.status": "paid",
       "payment.paidAt": FieldValue.serverTimestamp(),
-      "session.channelId": channelName,
+      "session.platform": "google_meet",
       "session.joinUrl": meetingLink,
+      "session.providerJoinUrl": providerJoinUrl,
+      "session.providerSpaceName": providerSpaceName,
       "session.meetingId": meetingId,
       "session.meetingPasscode": meetingPasscode,
       "session.maxClientParticipants":
@@ -181,11 +222,14 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
       "session.totalParticipantLimit":
         appointmentData.session?.totalParticipantLimit ||
         sessionConfig.totalParticipants,
+      "communication.internalNotes": sessionProvisioningWarning
+        ? `Auto-generated after payment: ${sessionProvisioningWarning}`
+        : appointmentData.communication?.internalNotes || "",
       "metadata.confirmedAt": FieldValue.serverTimestamp(),
       "metadata.updatedAt": FieldValue.serverTimestamp(),
     });
 
-    // Store tokens separately for security (not in main appointment doc)
+    // Store only the external meeting metadata needed by the app.
     await db
       .collection("sessionCredentials")
       .doc(appointmentDoc.id)
@@ -193,11 +237,9 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
         appointmentId: appointmentDoc.id,
         meetingId,
         meetingPasscode,
-        channelName,
-        clientToken,
-        therapistToken,
-        clientUid,
-        therapistUid,
+        provider: "google_meet",
+        providerJoinUrl,
+        providerSpaceName,
         maxClientParticipants:
           appointmentData.session?.maxClientParticipants ||
           sessionConfig.clientParticipants,
@@ -208,10 +250,13 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
           `client:${appointmentData.clientId}`,
           `therapist:${appointmentData.therapistId}`,
         ],
-        appId: AGORA_APP_ID,
-        expiresAt: new Date(expirationTime * 1000),
         createdAt: FieldValue.serverTimestamp(),
       });
+    console.log("Stored session credentials document", {
+      appointmentId: appointmentDoc.id,
+      meetingId,
+      providerJoinUrl,
+    });
 
     // Get client and therapist details
     const [clientDoc, therapistDoc, therapistProfileDoc] = await Promise.all([
@@ -252,6 +297,12 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
         currency: appointmentData.payment.currency,
       });
       console.log("✅ Confirmation emails sent successfully!");
+      if (sessionProvisioningWarning) {
+        console.warn(
+          "Confirmation email sent without a provider Google Meet link. Session provisioning still needs attention for appointment:",
+          appointmentDoc.id
+        );
+      }
     } catch (emailError) {
       console.error("❌ Failed to send confirmation emails:", emailError);
       // Don't throw - we still want to mark payment as successful

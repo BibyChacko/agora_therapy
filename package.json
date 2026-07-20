@@ -46,6 +46,7 @@
     "firebase": "^12.1.0",
     "firebase-admin": "^13.4.0",
     "framer-motion": "^12.23.3",
+    "googleapis": "^173.0.0",
     "ical-generator": "^10.0.0",
     "jspdf": "^4.2.1",
     "lucide-react": "^0.540.0",

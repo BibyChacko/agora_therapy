@@ -60,7 +60,9 @@ export async function POST(
         clientId: appointment?.clientId,
         session: {
           type: sessionType,
+          platform: appointment?.session?.platform || "google_meet",
           joinUrl: appointment?.session?.joinUrl || null,
+          providerJoinUrl: appointment?.session?.providerJoinUrl || null,
           meetingId: appointment?.session?.meetingId || appointmentId,
           maxClientParticipants:
             appointment?.session?.maxClientParticipants ||

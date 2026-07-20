@@ -4,6 +4,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import Stripe from "stripe";
 import { verifyRequestUser } from "@/lib/server/firebase-request-auth";
 import { AvailableSlotsService } from "@/lib/services/available-slots-service";
+import { googleMeetService } from "@/lib/services/google-meet-service";
 import {
   getTherapySessionConfig,
   normalizeTherapySessionType,
@@ -56,6 +57,17 @@ export async function POST(request: NextRequest) {
     const normalizedSessionType = normalizeTherapySessionType(sessionType);
     const sessionConfig = getTherapySessionConfig(normalizedSessionType);
     const sessionDuration = duration || sessionConfig.duration;
+    const googleMeetStatus = await googleMeetService.getConnectionStatus();
+
+    if (!googleMeetStatus.connected) {
+      return NextResponse.json(
+        {
+          error:
+            "Bookings are temporarily unavailable because Google Meet is not connected yet. Please connect the Google Meet host account in admin settings first.",
+        },
+        { status: 503 }
+      );
+    }
 
     if (timeSlotId) {
       const availability = await AvailableSlotsService.checkSlotAvailability(
@@ -160,7 +172,7 @@ export async function POST(request: NextRequest) {
       session: {
         type: normalizedSessionType,
         deliveryType: "video",
-        platform: "agora",
+        platform: "google_meet",
         maxClientParticipants: sessionConfig.clientParticipants,
         totalParticipantLimit: sessionConfig.totalParticipants,
       },

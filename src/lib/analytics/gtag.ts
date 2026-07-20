@@ -179,3 +179,89 @@ export function trackLanguageDiscovery(params: {
 }) {
   trackEvent("language_discovery", params);
 }
+
+export function trackBookingSlotSelected(params: {
+  therapist_id: string;
+  therapist_name: string;
+  session_type: string;
+  slot_id: string;
+  selected_date: string;
+  selected_time: string;
+  timezone: string;
+  duration_minutes: number;
+}) {
+  trackEvent("booking_slot_selected", params);
+}
+
+export function trackOnboardingStarted(params: {
+  user_role: string;
+  total_steps: number;
+}) {
+  trackEvent("onboarding_started", params);
+}
+
+export function trackOnboardingStepCompleted(params: {
+  user_role: string;
+  step_id: string;
+  step_title: string;
+  step_index: number;
+  total_steps: number;
+}) {
+  trackEvent("onboarding_step_completed", params);
+}
+
+export function trackOnboardingCompleted(params: {
+  user_role: string;
+  total_steps: number;
+  has_profile_photo?: boolean;
+  selected_languages?: number;
+  selected_services?: number;
+}) {
+  trackEvent("onboarding_completed", params);
+}
+
+export function trackSessionAccessVerified(params: {
+  appointment_id: string;
+  viewer_role: "therapist" | "client" | "guest";
+  session_type?: string;
+  status?: string;
+}) {
+  trackEvent("session_access_verified", params);
+}
+
+export function trackVideoSessionJoinAttempt(params: {
+  appointment_id: string;
+  user_role: "therapist" | "client" | "guest";
+  session_type?: string;
+}) {
+  trackEvent("video_session_join_attempted", params);
+}
+
+export function trackVideoSessionJoined(params: {
+  appointment_id: string;
+  user_role: "therapist" | "client" | "guest";
+  session_type?: string;
+  participant_count?: number;
+}) {
+  trackEvent("video_session_joined", params);
+}
+
+export function trackVideoSessionLeft(params: {
+  appointment_id: string;
+  user_role: "therapist" | "client" | "guest";
+  session_type?: string;
+  elapsed_seconds?: number;
+  auto_completed?: boolean;
+}) {
+  trackEvent("video_session_left", params);
+}
+
+export function trackVideoSessionCompleted(params: {
+  appointment_id: string;
+  user_role: "therapist" | "client" | "guest";
+  session_type?: string;
+  elapsed_seconds?: number;
+  completion_source: "client_auto" | "client_manual" | "therapist_end";
+}) {
+  trackEvent("video_session_completed", params);
+}

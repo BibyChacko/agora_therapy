@@ -19,6 +19,9 @@ import {
   Globe,
   Save,
   AlertCircle,
+  Video,
+  CheckCircle2,
+  Link as LinkIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,6 +58,15 @@ interface PlatformSettings {
   adminNotifications: boolean;
 }
 
+interface GoogleMeetStatus {
+  connected: boolean;
+  hostEmail: string | null;
+  updatedAt: string | null;
+  hasRequiredScope?: boolean;
+  scope?: string | null;
+  statusMessage?: string | null;
+}
+
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<PlatformSettings>({
     supportEmail: "",
@@ -81,9 +93,34 @@ export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<"general" | "policies" | "features">("general");
+  const [googleMeetStatus, setGoogleMeetStatus] = useState<GoogleMeetStatus>({
+    connected: false,
+    hostEmail: null,
+    updatedAt: null,
+  });
+  const [googleMeetLoading, setGoogleMeetLoading] = useState(true);
+  const [googleMeetMessage, setGoogleMeetMessage] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSettings();
+    fetchGoogleMeetStatus();
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get("googleMeet");
+    const reason = params.get("reason");
+
+    if (status === "connected") {
+      setGoogleMeetMessage("Google Meet connected successfully.");
+      void fetchGoogleMeetStatus();
+    } else if (status === "error") {
+      setGoogleMeetMessage(
+        reason
+          ? `Google Meet connection failed: ${decodeURIComponent(reason)}`
+          : "Google Meet connection failed."
+      );
+    }
   }, []);
 
   const fetchSettings = async () => {
@@ -97,6 +134,22 @@ export default function AdminSettingsPage() {
       console.error("Error fetching settings:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchGoogleMeetStatus = async () => {
+    try {
+      setGoogleMeetLoading(true);
+      const response = await fetch("/api/admin/integrations/google-meet/status");
+
+      if (response.ok) {
+        const data = (await response.json()) as GoogleMeetStatus;
+        setGoogleMeetStatus(data);
+      }
+    } catch (error) {
+      console.error("Error fetching Google Meet status:", error);
+    } finally {
+      setGoogleMeetLoading(false);
     }
   };
 
@@ -379,6 +432,82 @@ export default function AdminSettingsPage() {
                       Existing payouts will use the rate at the time of booking.
                     </p>
                   </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Video className="mr-2 h-5 w-5" />
+                Google Meet Integration
+              </CardTitle>
+              <CardDescription>
+                Connect the Google Workspace host account used to create Google Meet links automatically after payment.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {googleMeetMessage && (
+                <div className="rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+                  {googleMeetMessage}
+                </div>
+              )}
+
+              <div className="rounded-lg border border-gray-200 p-4">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <p className="font-medium text-gray-900">Connection status</p>
+                    <p className="mt-1 text-sm text-gray-600">
+                      {googleMeetLoading
+                        ? "Checking Google Meet connection..."
+                        : googleMeetStatus.statusMessage ||
+                          (googleMeetStatus.connected
+                            ? `Connected as ${googleMeetStatus.hostEmail || "Google Workspace host account"}`
+                            : "No Google Meet host account connected yet.")}
+                    </p>
+                  </div>
+
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      window.location.href =
+                        "/api/admin/integrations/google-meet/connect";
+                    }}
+                    className="bg-slate-900 text-white hover:bg-slate-800"
+                  >
+                    <LinkIcon className="mr-2 h-4 w-4" />
+                    {googleMeetStatus.connected ? "Reconnect Google Meet" : "Connect Google Meet"}
+                  </Button>
+                </div>
+              </div>
+
+              {!googleMeetLoading &&
+                googleMeetStatus.hasRequiredScope === false && (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                    The current Google account is connected, but it did not grant the required Meet creation permission. Click
+                    {" "}
+                    <span className="font-semibold">Reconnect Google Meet</span>
+                    {" "}
+                    and approve access again.
+                  </div>
+                )}
+
+              <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4" />
+                  <div>
+                    The connected account will be used as the host when the Stripe webhook creates a Google Meet room for a paid booking.
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
+                Callback URL to register in Google Cloud:
+                <div className="mt-2 break-all rounded bg-white px-3 py-2 font-mono text-xs text-gray-900">
+                  {typeof window === "undefined"
+                    ? "/api/google/oauth/callback"
+                    : `${window.location.origin}/api/google/oauth/callback`}
                 </div>
               </div>
             </CardContent>

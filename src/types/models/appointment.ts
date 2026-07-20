@@ -24,7 +24,7 @@ export type SessionType =
   | "consultation"
   | "follow_up";
 export type SessionDeliveryType = "video" | "phone" | "in_person";
-export type SessionPlatform = "agora" | "zoom" | "teams";
+export type SessionPlatform = "agora" | "google_meet" | "zoom" | "teams";
 
 export interface Appointment {
   id: string;
@@ -43,6 +43,8 @@ export interface Appointment {
     channelId?: string;
     accessToken?: string;
     joinUrl?: string;
+    providerJoinUrl?: string;
+    providerSpaceName?: string;
     meetingId?: string;
     meetingPasscode?: string;
     maxClientParticipants?: number;

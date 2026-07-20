@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -25,6 +25,7 @@ import {
 } from '@/lib/session/therapy-session';
 import {
   trackBeginCheckout,
+  trackBookingSlotSelected,
   trackException,
   trackPurchase,
   trackViewItem,
@@ -86,6 +87,7 @@ export default function BookingPage() {
   const [amount, setAmount] = useState(0);
   const [therapistFee, setTherapistFee] = useState(0);
   const [platformFee, setPlatformFee] = useState(0);
+  const lastTrackedSlotRef = useRef<string | null>(null);
   const selectedSessionConfig =
     THERAPY_SESSION_CONFIGS.find((config) => config.value === selectedSessionType) ||
     THERAPY_SESSION_CONFIGS[0];
@@ -219,6 +221,47 @@ export default function BookingPage() {
   useEffect(() => {
     setVisibleMonth((currentMonth) => currentMonth || selectedDate || null);
   }, [selectedDate]);
+
+  useEffect(() => {
+    const selectedSlot = timeSlots.find((slot) => slot.timeSlotId === selectedTime);
+
+    if (!therapist || !selectedDate || !selectedSlot) {
+      return;
+    }
+
+    const trackingKey = [
+      therapist.id,
+      selectedSessionType,
+      selectedSlot.timeSlotId,
+      selectedDate.toISOString(),
+      userTimezone,
+    ].join(':');
+
+    if (lastTrackedSlotRef.current === trackingKey) {
+      return;
+    }
+
+    lastTrackedSlotRef.current = trackingKey;
+
+    trackBookingSlotSelected({
+      therapist_id: therapist.id,
+      therapist_name: therapist.name,
+      session_type: selectedSessionType,
+      slot_id: selectedSlot.timeSlotId,
+      selected_date: selectedSlot.localDate,
+      selected_time: selectedSlot.localStartTime,
+      timezone: userTimezone,
+      duration_minutes: selectedSessionConfig.duration,
+    });
+  }, [
+    selectedDate,
+    selectedSessionConfig.duration,
+    selectedSessionType,
+    selectedTime,
+    therapist,
+    timeSlots,
+    userTimezone,
+  ]);
 
   const isOverrideDate = (date: Date) => {
     const dateKey = [

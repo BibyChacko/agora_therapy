@@ -45,6 +45,8 @@ export class AgoraService {
   private maxRetries = 3;
   private retryTimeout: NodeJS.Timeout | null = null;
   private currentUid: number | null = null;
+  private currentToken: string | null = null;
+  private currentTokenExpiresAt: number | null = null;
 
   private currentState: VideoSessionState = {
     isConnected: false,
@@ -208,7 +210,7 @@ export class AgoraService {
 
     this.updateState({ connectionStatus: "reconnecting" });
 
-    const { token, uid } = await this.generateToken(this.sessionConfig);
+    const { token, uid } = await this.getValidToken(this.sessionConfig);
     this.currentUid = uid;
 
     await this.client.join(
@@ -254,7 +256,7 @@ export class AgoraService {
 
   private async generateToken(
     sessionConfig: VideoSessionConfig
-  ): Promise<{ token: string; uid: number }> {
+  ): Promise<{ token: string; uid: number; expiresAt?: number }> {
     try {
       const response = await fetch("/api/agora/token", {
         method: "POST",
@@ -279,12 +281,37 @@ export class AgoraService {
         );
       }
 
-      const { token, uid } = await response.json();
-      return { token, uid };
+      const { token, uid, expiresAt } = await response.json();
+      return { token, uid, expiresAt };
     } catch (error) {
       console.error("Error generating Agora token:", error);
       throw error;
     }
+  }
+
+  private async getValidToken(
+    sessionConfig: VideoSessionConfig
+  ): Promise<{ token: string; uid: number }> {
+    const now = Math.floor(Date.now() / 1000);
+    const hasReusableToken =
+      this.currentToken &&
+      this.currentUid &&
+      this.currentTokenExpiresAt &&
+      this.currentTokenExpiresAt - now > 60;
+
+    if (hasReusableToken) {
+      return {
+        token: this.currentToken!,
+        uid: this.currentUid!,
+      };
+    }
+
+    const { token, uid, expiresAt } = await this.generateToken(sessionConfig);
+    this.currentToken = token;
+    this.currentUid = uid;
+    this.currentTokenExpiresAt = expiresAt || null;
+
+    return { token, uid };
   }
 
   private async getFirebaseToken(): Promise<string> {
@@ -307,7 +334,7 @@ export class AgoraService {
         this.getFirebaseToken = async () => firebaseToken;
       }
 
-      const { token, uid } = await this.generateToken(config);
+      const { token, uid } = await this.getValidToken(config);
       this.currentUid = uid;
 
       await this.client.join(
@@ -362,6 +389,8 @@ export class AgoraService {
 
       this.sessionConfig = null;
       this.currentUid = null;
+      this.currentToken = null;
+      this.currentTokenExpiresAt = null;
       this.retryAttempts = 0;
       this.updateState({
         isConnected: false,

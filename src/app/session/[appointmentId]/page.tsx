@@ -1,25 +1,16 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Video } from "lucide-react";
+import { ArrowLeft, ExternalLink, ShieldCheck, Video } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import type { Appointment } from "@/types/database";
 import { getTherapySessionConfig } from "@/lib/session/therapy-session";
-
-// Dynamically import VideoSession with no SSR
-const VideoSession = dynamic(
-  () => import("@/components/video/VideoSession").then(mod => ({ default: mod.VideoSession })),
-  { 
-    ssr: false,
-    loading: () => <div className="flex justify-center p-8"><LoadingSpinner /></div>
-  }
-);
+import { trackSessionAccessVerified } from "@/lib/analytics/gtag";
 
 export default function SessionPage() {
   const params = useParams();
@@ -33,6 +24,7 @@ export default function SessionPage() {
   const [meetingPasscode, setMeetingPasscode] = useState("");
   const [guestName, setGuestName] = useState("");
   const [isVerifyingGuest, setIsVerifyingGuest] = useState(false);
+  const trackedSessionAccessRef = useRef<string | null>(null);
 
   const appointmentId = params.appointmentId as string;
 
@@ -64,6 +56,10 @@ export default function SessionPage() {
       try {
         setLoading(true);
         setError(null);
+        console.log("Loading session access details", {
+          appointmentId,
+          userId: user.uid,
+        });
 
         const response = await fetch(`/api/session/access/${appointmentId}`, {
           method: "POST",
@@ -78,6 +74,15 @@ export default function SessionPage() {
         if (!response.ok) {
           throw new Error(data.error || "Failed to load session");
         }
+
+        console.log("Session access details loaded", {
+          appointmentId,
+          viewerRole: data.viewerRole,
+          appointmentStatus: data.appointment?.status,
+          platform: data.appointment?.session?.platform || null,
+          meetingId: data.appointment?.session?.meetingId || null,
+          providerJoinUrl: data.appointment?.session?.providerJoinUrl || null,
+        });
 
         if (
           data.appointment.status !== "confirmed" &&
@@ -102,6 +107,27 @@ export default function SessionPage() {
 
     void loadAuthenticatedAppointment();
   }, [appointmentId, user]);
+
+  const handleSessionEnd = useCallback(() => {
+    // Redirect based on user role
+    if (userRole === "therapist") {
+      router.push("/therapist/appointments");
+    } else if (userRole === "guest") {
+      router.push("/");
+    } else {
+      router.push("/client/appointments");
+    }
+  }, [router, userRole]);
+
+  const handleGoBack = useCallback(() => {
+    if (userRole === "therapist") {
+      router.push("/therapist/appointments");
+    } else if (userRole === "guest") {
+      router.push("/");
+    } else {
+      router.push("/client/appointments");
+    }
+  }, [router, userRole]);
 
   useEffect(() => {
     if (!appointmentId || !userRole || userRole === "therapist" || !appointment) {
@@ -144,30 +170,30 @@ export default function SessionPage() {
   }, [
     appointment,
     appointmentId,
+    handleSessionEnd,
     meetingPasscode,
     userRole,
   ]);
 
-  const handleSessionEnd = () => {
-    // Redirect based on user role
-    if (userRole === "therapist") {
-      router.push("/therapist/appointments");
-    } else if (userRole === "guest") {
-      router.push("/");
-    } else {
-      router.push("/client/appointments");
+  useEffect(() => {
+    if (!appointment || !userRole) {
+      return;
     }
-  };
 
-  const handleGoBack = () => {
-    if (userRole === "therapist") {
-      router.push("/therapist/appointments");
-    } else if (userRole === "guest") {
-      router.push("/");
-    } else {
-      router.push("/client/appointments");
+    const trackingKey = `${appointment.id}:${userRole}:${appointment.status}`;
+    if (trackedSessionAccessRef.current === trackingKey) {
+      return;
     }
-  };
+
+    trackedSessionAccessRef.current = trackingKey;
+
+    trackSessionAccessVerified({
+      appointment_id: appointment.id,
+      viewer_role: userRole,
+      session_type: appointment.session?.type,
+      status: appointment.status,
+    });
+  }, [appointment, userRole]);
 
   const handleGuestAccess = async () => {
     if (!meetingPasscode.trim() || !guestName.trim()) {
@@ -217,6 +243,27 @@ export default function SessionPage() {
       setIsVerifyingGuest(false);
     }
   };
+
+  const handleLaunchMeeting = useCallback(() => {
+    const meetUrl = appointment?.session?.providerJoinUrl;
+    console.log("Attempting to launch Google Meet", {
+      appointmentId,
+      meetingId: appointment?.session?.meetingId || null,
+      providerJoinUrl: meetUrl || null,
+      platform: appointment?.session?.platform || null,
+    });
+
+    if (!meetUrl) {
+      console.error("Google Meet launch blocked because providerJoinUrl is missing", {
+        appointmentId,
+        appointment,
+      });
+      setError("The Google Meet link is not ready yet. Please try again shortly.");
+      return;
+    }
+
+    window.open(meetUrl, "_blank", "noopener,noreferrer");
+  }, [appointment]);
 
   if (loading || authLoading) {
     return (
@@ -291,6 +338,9 @@ export default function SessionPage() {
   }
 
   const sessionConfig = getTherapySessionConfig(appointment.session?.type);
+  const participantAllowance =
+    appointment.session?.maxClientParticipants ||
+    sessionConfig.clientParticipants;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50">
@@ -321,47 +371,85 @@ export default function SessionPage() {
 
       {/* Video Session */}
       <div className="container mx-auto px-4 py-8 max-w-6xl">
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <div className="mb-4">
-            <h2 className="text-lg font-medium text-gray-900">
-              Session Details
-            </h2>
-            <p className="text-sm text-gray-600">
-              Appointment ID: {appointmentId}
-            </p>
-            <p className="text-sm text-gray-600">
-              Duration: {appointment.duration} minutes
-            </p>
-            <p className="text-sm text-gray-600">
-              Session Type: {sessionConfig.label}
-            </p>
-            <p className="text-sm text-gray-600">
-              Meeting ID: {appointment.session?.meetingId || appointmentId}
-            </p>
-            {userRole !== "therapist" && (
-              <p className="text-sm text-gray-600">
-                Client-side participants allowed:{" "}
-                {appointment.session?.maxClientParticipants ||
-                  sessionConfig.clientParticipants}
-              </p>
-            )}
+        <div className="overflow-hidden rounded-[28px] bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+          <div className="border-b border-slate-100 bg-gradient-to-r from-teal-50 via-white to-blue-50 px-6 py-6 sm:px-8">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+              <div className="space-y-3">
+                <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-sm font-medium text-teal-700 shadow-sm">
+                  <ShieldCheck className="h-4 w-4" />
+                  Access verified for{" "}
+                  {userRole === "guest" ? guestName || "guest participant" : userRole}
+                </div>
+                <div>
+                  <h2 className="text-3xl font-semibold tracking-tight text-slate-900">
+                    Your session is ready
+                  </h2>
+                  <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
+                    Join your secure therapy session when you&apos;re ready. Access for this appointment has already been verified.
+                  </p>
+                </div>
+              </div>
+
+              <Button
+                onClick={handleLaunchMeeting}
+                className="min-w-[220px] self-start rounded-xl bg-teal-600 px-6 text-base font-semibold text-white shadow-[0_14px_32px_rgba(13,148,136,0.28)] hover:bg-teal-500"
+              >
+                Join Session
+                <ExternalLink className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
-          <VideoSession
-            appointmentId={appointmentId}
-            userId={user?.uid || `${appointmentId}:${guestName || "guest"}`}
-            userRole={userRole}
-            duration={appointment.duration || 60}
-            scheduledFor={
-              appointment.scheduledFor instanceof Date
-                ? appointment.scheduledFor
-                : (appointment.scheduledFor as any)?.toDate?.() || new Date()
-            }
-            guestName={userRole === "guest" ? guestName : undefined}
-            meetingPasscode={userRole === "guest" ? meetingPasscode : undefined}
-            onSessionEnd={handleSessionEnd}
-            className="w-full"
-          />
+          <div className="grid gap-4 px-6 py-6 sm:grid-cols-2 xl:grid-cols-4 sm:px-8">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                Session Type
+              </p>
+              <p className="mt-2 text-lg font-semibold text-slate-900">
+                {sessionConfig.label}
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                Duration
+              </p>
+              <p className="mt-2 text-lg font-semibold text-slate-900">
+                {appointment.duration} minutes
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                Meeting ID
+              </p>
+              <p className="mt-2 break-all text-lg font-semibold text-slate-900">
+                {appointment.session?.meetingId || appointmentId}
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                Participants
+              </p>
+              <p className="mt-2 text-lg font-semibold text-slate-900">
+                {userRole !== "therapist" ? participantAllowance : "Therapist host"}
+              </p>
+            </div>
+          </div>
+
+          <div className="px-6 pb-8 sm:px-8">
+            <div className="rounded-2xl border border-teal-100 bg-gradient-to-br from-teal-50/80 via-white to-cyan-50/80 p-6">
+              <div className="space-y-3">
+                <h3 className="text-2xl font-semibold text-slate-900">
+                  Before you join
+                </h3>
+                <p className="max-w-2xl text-sm leading-7 text-slate-600">
+                  Make sure you&apos;re in a quiet, private place and that your camera, microphone, and internet connection are ready before you begin.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Session Info */}

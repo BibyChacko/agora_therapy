@@ -38,6 +38,15 @@ export const config = {
     webhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
   },
 
+  // Google Meet Configuration
+  google: {
+    clientId: process.env.GOOGLE_CLIENT_ID || "",
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+    redirectUri:
+      process.env.GOOGLE_REDIRECT_URI ||
+      `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/google/oauth/callback`,
+  },
+
   // Application Configuration
   app: {
     url: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
@@ -142,6 +151,7 @@ export function validateConfig() {
 export const firebaseConfig = config.firebase;
 export const agoraConfig = config.agora;
 export const stripeConfig = config.stripe;
+export const googleConfig = config.google;
 export const appConfig = config.app;
 export const businessConfig = config.business;
 export const analyticsConfig = config.analytics;
