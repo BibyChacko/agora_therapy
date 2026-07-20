@@ -155,6 +155,9 @@ export default async function PsychologistDetail({ params }: Props) {
           "url": siteUrl,
           "name": siteName
         },
+        "mainEntity": {
+          "@id": `${canonicalUrl}#person`
+        },
         "about": {
           "@id": `${canonicalUrl}#person`
         },
