@@ -47,6 +47,15 @@ export const config = {
       `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/google/oauth/callback`,
   },
 
+  // Tamara Configuration
+  tamara: {
+    apiUrl: process.env.TAMARA_API_URL || "https://api-sandbox.tamara.co",
+    apiToken: process.env.TAMARA_API_TOKEN || "",
+    notificationToken: process.env.TAMARA_NOTIFICATION_TOKEN || "",
+    publicKey: process.env.NEXT_PUBLIC_TAMARA_PUBLIC_KEY || "",
+    enabled: process.env.NEXT_PUBLIC_TAMARA_ENABLED === "true",
+  },
+
   // Application Configuration
   app: {
     url: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
@@ -152,6 +161,7 @@ export const firebaseConfig = config.firebase;
 export const agoraConfig = config.agora;
 export const stripeConfig = config.stripe;
 export const googleConfig = config.google;
+export const tamaraConfig = config.tamara;
 export const appConfig = config.app;
 export const businessConfig = config.business;
 export const analyticsConfig = config.analytics;

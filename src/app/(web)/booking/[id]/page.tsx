@@ -39,8 +39,10 @@ import {
 import { businessConfig } from '@/lib/config';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+const isTamaraEnabled = process.env.NEXT_PUBLIC_TAMARA_ENABLED === 'true';
 
 type BookingStep = 'datetime' | 'payment' | 'confirmation';
+type PaymentProvider = 'stripe' | 'tamara';
 
 interface TimeSlot {
   timeSlotId: string;
@@ -80,6 +82,9 @@ export default function BookingPage() {
   const [selectedSessionType, setSelectedSessionType] =
     useState<SupportedTherapySessionType>('single');
   const [clientNotes, setClientNotes] = useState('');
+  const [paymentProvider, setPaymentProvider] = useState<PaymentProvider>(
+    isTamaraEnabled ? 'tamara' : 'stripe'
+  );
   
   // Payment state
   const [clientSecret, setClientSecret] = useState('');
@@ -305,15 +310,16 @@ export default function BookingPage() {
           duration: selectedSessionConfig.duration,
           sessionType: selectedSessionType,
           clientNotes,
+          paymentProvider,
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create booking');
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error || 'Failed to create booking');
       }
 
       const data = await response.json();
-      setClientSecret(data.clientSecret);
       setAppointmentId(data.appointmentId);
       setAmount(data.amount);
       setTherapistFee(data.therapistFee);
@@ -332,11 +338,18 @@ export default function BookingPage() {
           },
         ],
       });
+
+      if (data.paymentProvider === 'tamara' && data.checkoutUrl) {
+        window.location.assign(data.checkoutUrl);
+        return;
+      }
+
+      setClientSecret(data.clientSecret);
       setStep('payment');
     } catch (error) {
       console.error('Error creating booking:', (error as Error).message);
       trackException((error as Error).message || 'create_booking_failed');
-      alert('Failed to create booking. Please try again.');
+      alert((error as Error).message || 'Failed to create booking. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -777,6 +790,60 @@ export default function BookingPage() {
                         />
                       </div>
 
+                      <div className="rounded-[24px] border border-slate-200 bg-slate-50/70 p-5">
+                        <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+                          Payment Method
+                        </h3>
+                        <p className="mt-3 text-sm leading-6 text-slate-600">
+                          Choose how you&apos;d like to complete payment for this booking.
+                        </p>
+                        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                          <button
+                            type="button"
+                            onClick={() => setPaymentProvider('stripe')}
+                            className={`rounded-2xl border p-4 text-left transition-all ${
+                              paymentProvider === 'stripe'
+                                ? 'border-teal-500 bg-white shadow-md'
+                                : 'border-slate-200 bg-white hover:border-teal-300'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <p className="font-semibold text-slate-900">Card Payment</p>
+                                <p className="mt-1 text-sm text-slate-600">
+                                  Pay now with your credit or debit card.
+                                </p>
+                              </div>
+                              <FiCreditCard className="h-5 w-5 text-slate-500" />
+                            </div>
+                          </button>
+
+                          {isTamaraEnabled && (
+                            <button
+                              type="button"
+                              onClick={() => setPaymentProvider('tamara')}
+                              className={`rounded-2xl border p-4 text-left transition-all ${
+                                paymentProvider === 'tamara'
+                                  ? 'border-teal-500 bg-white shadow-md'
+                                  : 'border-slate-200 bg-white hover:border-teal-300'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-3">
+                                <div>
+                                  <p className="font-semibold text-slate-900">Tamara</p>
+                                  <p className="mt-1 text-sm text-slate-600">
+                                    Continue to Tamara to pay in instalments.
+                                  </p>
+                                </div>
+                                <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                                  BNPL
+                                </span>
+                              </div>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
                       <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-5">
                         <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
                           Cancellation Policy
@@ -791,7 +858,11 @@ export default function BookingPage() {
                         disabled={!canContinueToPayment}
                         className="w-full rounded-2xl bg-gradient-to-r from-teal-500 to-blue-600 px-5 py-4 text-base font-semibold text-white shadow-lg shadow-cyan-100 transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        {loading ? 'Processing...' : 'Continue to Payment'}
+                        {loading
+                          ? 'Processing...'
+                          : paymentProvider === 'tamara'
+                          ? 'Continue to Tamara'
+                          : 'Continue to Payment'}
                       </button>
                     </div>
                   </div>

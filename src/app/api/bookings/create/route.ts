@@ -5,6 +5,7 @@ import Stripe from "stripe";
 import { verifyRequestUser } from "@/lib/server/firebase-request-auth";
 import { AvailableSlotsService } from "@/lib/services/available-slots-service";
 import { googleMeetService } from "@/lib/services/google-meet-service";
+import { tamaraService } from "@/lib/services/tamara-service";
 import {
   getTherapySessionConfig,
   normalizeTherapySessionType,
@@ -44,6 +45,7 @@ export async function POST(request: NextRequest) {
       duration,
       sessionType = "single",
       clientNotes,
+      paymentProvider = "stripe",
     } = body;
 
     // Validate required fields
@@ -124,41 +126,19 @@ export async function POST(request: NextRequest) {
     
     const appointmentRef = db.collection("appointments").doc();
 
-    // Create Stripe PaymentIntent with customer details
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: totalAmount,
-      currency: therapistProfile.practice?.currency || "aed",
-      description: `${sessionConfig.label} - ${sessionDuration} minutes`,
-      statement_descriptor_suffix: "MINDGOOD",
-      receipt_email: clientData.email,
-      shipping: {
-        name: customerName,
-        address: {
-          line1: clientData.profile?.address?.line1 || 'Address not provided',
-          line2: clientData.profile?.address?.line2 || null,
-          city: clientData.profile?.address?.city || 'City not provided',
-          state: clientData.profile?.address?.state || null,
-          postal_code: clientData.profile?.address?.postalCode || '00000',
-          country: clientData.profile?.address?.country || 'AE',
-        },
-      },
-      metadata: {
-        appointmentId: appointmentRef.id,
-        therapistId,
-        clientId,
-        clientName: customerName,
-        clientEmail: clientData.email,
-        scheduledFor,
-        duration: sessionDuration.toString(),
-        sessionType: normalizedSessionType,
-        maxClientParticipants: sessionConfig.clientParticipants.toString(),
-        service: "Online Therapy Session",
-        company: "Nextauras Global Services LLC FZ",
-      },
-      automatic_payment_methods: {
-        enabled: true,
-      },
-    });
+    const currency = therapistProfile.practice?.currency || "aed";
+    const address = clientData.profile?.address || {};
+    const countryCode = String(address.country || "AE").toUpperCase();
+    const phoneNumber =
+      clientData.profile?.phone ||
+      clientData.profile?.phoneNumber ||
+      clientData.phoneNumber ||
+      "";
+    const firstName = clientData.profile?.firstName || customerName.split(" ")[0] || "Client";
+    const lastName =
+      clientData.profile?.lastName ||
+      customerName.split(" ").slice(1).join(" ") ||
+      "User";
 
     // Create appointment document (pending payment)
     const appointmentData = {
@@ -180,10 +160,10 @@ export async function POST(request: NextRequest) {
         amount: totalAmount,
         therapistFee,
         platformFee,
-        currency: therapistProfile.practice?.currency || "aed",
+        currency,
         status: "pending",
-        transactionId: paymentIntent.id,
-        method: "stripe",
+        transactionId: "",
+        method: paymentProvider,
       },
       communication: {
         clientNotes: clientNotes || "",
@@ -202,13 +182,134 @@ export async function POST(request: NextRequest) {
 
     await appointmentRef.set(appointmentData);
 
+    if (paymentProvider === "tamara") {
+      if (!tamaraService.isEnabled()) {
+        await appointmentRef.delete();
+        return NextResponse.json(
+          { error: "Tamara is not configured yet." },
+          { status: 503 }
+        );
+      }
+
+      if (!clientData.email || !phoneNumber) {
+        await appointmentRef.delete();
+        return NextResponse.json(
+          {
+            error:
+              "Tamara checkout requires a client email address and phone number on file.",
+          },
+          { status: 400 }
+        );
+      }
+
+      const checkoutSession = await tamaraService.createCheckoutSession({
+        appointmentId: appointmentRef.id,
+        totalAmount: { amount: totalAmount, currency },
+        shippingAmount: { amount: 0, currency },
+        taxAmount: { amount: 0, currency },
+        consumer: {
+          firstName,
+          lastName,
+          phoneNumber,
+          email: clientData.email,
+        },
+        billingAddress: {
+          firstName,
+          lastName,
+          line1: address.line1 || "Address not provided",
+          line2: address.line2 || "-",
+          city: address.city || "Dubai",
+          region: address.state || address.region || "Dubai",
+          countryCode,
+          phoneNumber,
+        },
+        shippingAddress: {
+          firstName,
+          lastName,
+          line1: address.line1 || "Address not provided",
+          line2: address.line2 || "-",
+          city: address.city || "Dubai",
+          region: address.state || address.region || "Dubai",
+          countryCode,
+          phoneNumber,
+        },
+        item: {
+          name: `${sessionConfig.label} with ${therapistProfile.profile?.displayName || therapistId}`,
+          referenceId: appointmentRef.id,
+          sku: `therapy-${normalizedSessionType}`,
+          itemUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/booking/${therapistId}`,
+          imageUrl: therapistProfile.profileImage || therapistProfile.profile?.photoURL,
+          totalAmount: { amount: totalAmount, currency },
+          unitPrice: { amount: totalAmount, currency },
+          taxAmount: { amount: 0, currency },
+        },
+        description: `${sessionConfig.label} therapy session`,
+      });
+
+      await appointmentRef.update({
+        "payment.transactionId": checkoutSession.order_id,
+        "payment.providerCheckoutId": checkoutSession.checkout_id,
+        "payment.providerStatus": checkoutSession.status,
+      });
+
+      return NextResponse.json({
+        appointmentId: appointmentRef.id,
+        amount: totalAmount,
+        therapistFee,
+        platformFee,
+        currency,
+        paymentProvider: "tamara",
+        checkoutUrl: checkoutSession.checkout_url,
+      });
+    }
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: totalAmount,
+      currency,
+      description: `${sessionConfig.label} - ${sessionDuration} minutes`,
+      statement_descriptor_suffix: "MINDGOOD",
+      receipt_email: clientData.email,
+      shipping: {
+        name: customerName,
+        address: {
+          line1: address.line1 || 'Address not provided',
+          line2: address.line2 || null,
+          city: address.city || 'City not provided',
+          state: address.state || null,
+          postal_code: address.postalCode || '00000',
+          country: countryCode,
+        },
+      },
+      metadata: {
+        appointmentId: appointmentRef.id,
+        therapistId,
+        clientId,
+        clientName: customerName,
+        clientEmail: clientData.email,
+        scheduledFor,
+        duration: sessionDuration.toString(),
+        sessionType: normalizedSessionType,
+        maxClientParticipants: sessionConfig.clientParticipants.toString(),
+        service: "Online Therapy Session",
+        company: "Nextauras Global Services LLC FZ",
+      },
+      automatic_payment_methods: {
+        enabled: true,
+      },
+    });
+
+    await appointmentRef.update({
+      "payment.transactionId": paymentIntent.id,
+    });
+
     return NextResponse.json({
       appointmentId: appointmentRef.id,
       clientSecret: paymentIntent.client_secret,
       amount: totalAmount,
       therapistFee,
       platformFee,
-      currency: therapistProfile.practice?.currency || "aed",
+      currency,
+      paymentProvider: "stripe",
     });
   } catch (error) {
     console.error("Error creating booking:", error);
