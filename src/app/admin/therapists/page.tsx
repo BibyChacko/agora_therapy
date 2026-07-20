@@ -23,29 +23,18 @@ import {
   Search,
   Filter,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { TherapistAdminView } from "@/types/models/therapist";
 
 export default function TherapistsManagement() {
   const { user, userData, loading } = useAuth();
   const [therapists, setTherapists] = useState<TherapistAdminView[]>([]);
-  const [filteredTherapists, setFilteredTherapists] = useState<TherapistAdminView[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "verified" | "pending">("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  useEffect(() => {
-    if (user && userData?.role === "admin") {
-      fetchTherapists();
-    }
-  }, [user, userData]);
-
-  useEffect(() => {
-    filterTherapists();
-  }, [therapists, filter, searchQuery]);
-
-  const fetchTherapists = async () => {
+  const fetchTherapists = useCallback(async () => {
     try {
       setDataLoading(true);
       const response = await fetch('/api/admin/therapists');
@@ -58,9 +47,9 @@ export default function TherapistsManagement() {
     } finally {
       setDataLoading(false);
     }
-  };
+  }, []);
 
-  const filterTherapists = () => {
+  const filteredTherapists = useMemo(() => {
     let filtered = therapists;
 
     // Apply verification filter
@@ -87,8 +76,14 @@ export default function TherapistsManagement() {
       );
     }
 
-    setFilteredTherapists(filtered);
-  };
+    return filtered;
+  }, [filter, searchQuery, therapists]);
+
+  useEffect(() => {
+    if (user && userData?.role === "admin") {
+      void fetchTherapists();
+    }
+  }, [fetchTherapists, user, userData]);
 
   const handleVerify = async (therapistId: string) => {
     try {

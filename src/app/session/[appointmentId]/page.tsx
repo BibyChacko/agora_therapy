@@ -263,7 +263,7 @@ export default function SessionPage() {
     }
 
     window.open(meetUrl, "_blank", "noopener,noreferrer");
-  }, [appointment]);
+  }, [appointment, appointmentId]);
 
   if (loading || authLoading) {
     return (

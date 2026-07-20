@@ -1,7 +1,7 @@
 "use client";
 
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 
 type BookingReturnStatus = "loading" | "confirmed" | "cancelled" | "failed" | "pending";
 
-export default function TamaraBookingReturnPage() {
+function TamaraBookingReturnContent() {
   const searchParams = useSearchParams();
   const appointmentId = searchParams.get("appointmentId");
   const status = searchParams.get("status");
@@ -134,5 +134,27 @@ export default function TamaraBookingReturnPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function TamaraBookingReturnPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(20,184,166,0.12),_transparent_28%),linear-gradient(180deg,_#f7fbff_0%,_#ffffff_65%,_#f8fcff_100%)] px-4 py-16">
+          <div className="mx-auto max-w-2xl rounded-[28px] border border-slate-200 bg-white p-8 text-center shadow-[0_24px_70px_rgba(15,23,42,0.08)]">
+            <div className="mb-6 flex justify-center">
+              <LoadingSpinner />
+            </div>
+            <h1 className="text-3xl font-bold text-slate-900">Checking Payment</h1>
+            <p className="mt-4 text-base leading-7 text-slate-600">
+              We&apos;re checking your payment status and booking confirmation.
+            </p>
+          </div>
+        </div>
+      }
+    >
+      <TamaraBookingReturnContent />
+    </Suspense>
   );
 }

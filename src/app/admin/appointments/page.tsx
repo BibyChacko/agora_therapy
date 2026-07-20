@@ -24,7 +24,7 @@ import {
   Video,
   Filter,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 interface Appointment {
@@ -45,21 +45,10 @@ interface Appointment {
 export default function AppointmentsManagement() {
   const { user, userData, loading } = useAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [filteredAppointments, setFilteredAppointments] = useState<Appointment[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "upcoming" | "completed" | "cancelled">("all");
 
-  useEffect(() => {
-    if (user && userData?.role === "admin") {
-      fetchAppointments();
-    }
-  }, [user, userData]);
-
-  useEffect(() => {
-    filterAppointments();
-  }, [appointments, filter]);
-
-  const fetchAppointments = async () => {
+  const fetchAppointments = useCallback(async () => {
     try {
       setDataLoading(true);
       // API call would go here
@@ -69,9 +58,9 @@ export default function AppointmentsManagement() {
     } finally {
       setDataLoading(false);
     }
-  };
+  }, []);
 
-  const filterAppointments = () => {
+  const filteredAppointments = useMemo(() => {
     let filtered = appointments;
     const now = new Date();
 
@@ -85,8 +74,14 @@ export default function AppointmentsManagement() {
       filtered = filtered.filter((a) => a.status === "cancelled");
     }
 
-    setFilteredAppointments(filtered);
-  };
+    return filtered;
+  }, [appointments, filter]);
+
+  useEffect(() => {
+    if (user && userData?.role === "admin") {
+      void fetchAppointments();
+    }
+  }, [fetchAppointments, user, userData]);
 
   const getStatusBadge = (status: string) => {
     const badges = {

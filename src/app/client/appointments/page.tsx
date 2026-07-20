@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { AppointmentService } from "@/lib/services/appointment-service";
 import { ClientLayout } from "@/components/client/ClientLayout";
@@ -45,18 +45,16 @@ export default function MySessionsPage() {
   const [submittingReview, setSubmittingReview] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (user?.uid) {
-      loadAppointments();
+  const loadAppointments = useCallback(async () => {
+    if (!user?.uid) {
+      return;
     }
-  }, [user?.uid]);
 
-  const loadAppointments = async () => {
     try {
       setLoading(true);
       setError(null);
       const [appointmentsData, reviewsResponse] = await Promise.all([
-        AppointmentService.getClientAppointments(user!.uid),
+        AppointmentService.getClientAppointments(user.uid),
         fetch("/api/client/reviews"),
       ]);
 
@@ -74,7 +72,13 @@ export default function MySessionsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.uid]);
+
+  useEffect(() => {
+    if (user?.uid) {
+      void loadAppointments();
+    }
+  }, [loadAppointments, user?.uid]);
 
   const formatDate = (timestamp: any) => {
     const date = timestamp?.toDate?.() || new Date(timestamp);

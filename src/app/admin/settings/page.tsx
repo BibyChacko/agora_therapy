@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -101,10 +101,40 @@ export default function AdminSettingsPage() {
   const [googleMeetLoading, setGoogleMeetLoading] = useState(true);
   const [googleMeetMessage, setGoogleMeetMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchSettings();
-    fetchGoogleMeetStatus();
+  const fetchSettings = useCallback(async () => {
+    try {
+      const response = await fetch("/api/admin/settings");
+      if (response.ok) {
+        const data = await response.json();
+        setSettings((current) => ({ ...current, ...data.settings }));
+      }
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  const fetchGoogleMeetStatus = useCallback(async () => {
+    try {
+      setGoogleMeetLoading(true);
+      const response = await fetch("/api/admin/integrations/google-meet/status");
+
+      if (response.ok) {
+        const data = (await response.json()) as GoogleMeetStatus;
+        setGoogleMeetStatus(data);
+      }
+    } catch (error) {
+      console.error("Error fetching Google Meet status:", error);
+    } finally {
+      setGoogleMeetLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void fetchSettings();
+    void fetchGoogleMeetStatus();
+  }, [fetchGoogleMeetStatus, fetchSettings]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -121,37 +151,7 @@ export default function AdminSettingsPage() {
           : "Google Meet connection failed."
       );
     }
-  }, []);
-
-  const fetchSettings = async () => {
-    try {
-      const response = await fetch("/api/admin/settings");
-      if (response.ok) {
-        const data = await response.json();
-        setSettings({ ...settings, ...data.settings });
-      }
-    } catch (error) {
-      console.error("Error fetching settings:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchGoogleMeetStatus = async () => {
-    try {
-      setGoogleMeetLoading(true);
-      const response = await fetch("/api/admin/integrations/google-meet/status");
-
-      if (response.ok) {
-        const data = (await response.json()) as GoogleMeetStatus;
-        setGoogleMeetStatus(data);
-      }
-    } catch (error) {
-      console.error("Error fetching Google Meet status:", error);
-    } finally {
-      setGoogleMeetLoading(false);
-    }
-  };
+  }, [fetchGoogleMeetStatus]);
 
   const handleSave = async () => {
     try {
