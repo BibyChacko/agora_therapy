@@ -946,6 +946,8 @@ export default function BookingPage() {
                         clientSecret={clientSecret}
                         appointmentId={appointmentId}
                         amount={amount}
+                        therapistFee={therapistFee}
+                        platformFee={platformFee}
                         currency={paymentCurrency.toLowerCase()}
                         therapistId={therapist.id}
                         therapistName={therapist.name}

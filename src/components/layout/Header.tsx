@@ -7,30 +7,12 @@ import { usePathname } from 'next/navigation';
 import LanguageSelector from '../language-selector/LanguageSelector';
 import { FiMenu, FiX } from 'react-icons/fi';
 import { LogIn, UserPlus } from 'lucide-react';
-import { useAuth } from '@/lib/hooks/useAuth';
-import { AuthDialog } from '@/components/auth/AuthDialog';
 import { Button } from '@/components/ui/button';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
-  const { user, userData } = useAuth();
-
-  const getDashboardLink = () => {
-    if (!user || !userData) return '/login';
-    
-    switch (userData.role) {
-      case 'admin':
-        return '/admin';
-      case 'therapist':
-        return '/therapist';
-      case 'client':
-        return '/client';
-      default:
-        return '/login';
-    }
-  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -98,29 +80,22 @@ const Header = () => {
 
         <div className="hidden md:flex items-center gap-4">
           {/* <LanguageSelector /> */}
-          {user ? (
-            <Link
-              href={getDashboardLink()}
-              className={`px-4 py-2 rounded-full border-2 font-medium text-sm transition-all ${
-                pathname.startsWith('/client') || pathname.startsWith('/therapist') || pathname.startsWith('/admin')
-                  ? 'bg-teal-500 text-white border-teal-500'
-                  : 'border-teal-500 text-teal-500 hover:bg-teal-500 hover:text-white'
-              }`}
+          <Link href="/login">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 border-teal-500 text-teal-500 hover:bg-teal-500 hover:text-white"
             >
-              Dashboard
-            </Link>
-          ) : (
-            <AuthDialog>
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2 border-teal-500 text-teal-500 hover:bg-teal-500 hover:text-white"
-              >
-                <LogIn className="h-4 w-4" />
-                Sign In
-              </Button>
-            </AuthDialog>
-          )}
+              <LogIn className="h-4 w-4" />
+              Sign In
+            </Button>
+          </Link>
+          <Link
+            href="/register"
+            className="px-4 py-2 rounded-full bg-gradient-to-r from-teal-500 to-blue-600 font-medium text-sm text-white transition-opacity hover:opacity-90"
+          >
+            Get Started
+          </Link>
         </div>
 
         {/* Mobile Menu Button */}
@@ -153,29 +128,22 @@ const Header = () => {
             ))}
             <div className="flex flex-col gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
               <LanguageSelector />
-              {user ? (
-                <Link
-                  href={getDashboardLink()}
-                  className={`px-4 py-2 rounded-full border-2 font-medium text-sm transition-all text-center ${
-                    pathname.startsWith('/client') || pathname.startsWith('/therapist') || pathname.startsWith('/admin')
-                      ? 'bg-teal-500 text-white border-teal-500'
-                      : 'border-teal-500 text-teal-500 hover:bg-teal-500 hover:text-white'
-                  }`}
-                  onClick={() => setIsMenuOpen(false)}
+              <Link href="/login" onClick={() => setIsMenuOpen(false)}>
+                <Button
+                  variant="outline"
+                  className="gap-2 border-teal-500 text-teal-500 hover:bg-teal-500 hover:text-white w-full"
                 >
-                  Dashboard
-                </Link>
-              ) : (
-                <AuthDialog onOpenChange={(open) => !open && setIsMenuOpen(false)}>
-                  <Button
-                    variant="outline"
-                    className="gap-2 border-teal-500 text-teal-500 hover:bg-teal-500 hover:text-white w-full"
-                  >
-                    <LogIn className="h-4 w-4" />
-                    Sign In
-                  </Button>
-                </AuthDialog>
-              )}
+                  <LogIn className="h-4 w-4" />
+                  Sign In
+                </Button>
+              </Link>
+              <Link
+                href="/register"
+                className="px-4 py-2 rounded-full border-2 border-teal-500 font-medium text-sm text-center text-teal-500 transition-all hover:bg-teal-500 hover:text-white"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Get Started
+              </Link>
               <Link 
                 href="/psychologists" 
                 className="px-4 py-2 rounded-full bg-gradient-to-r from-teal-500 to-blue-600 text-white font-medium text-sm hover:opacity-90 transition-opacity text-center"

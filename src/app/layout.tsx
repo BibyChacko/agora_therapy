@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Providers } from "@/lib/providers";
 import { LayoutWrapper } from "@/components/layout/LayoutWrapper";
 import { CookieConsentBanner } from "@/components/analytics/CookieConsentBanner";
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
@@ -78,17 +77,15 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Providers>
-          <GoogleAnalytics
-            measurementId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}
-          />
-          <PostHogAnalytics
-            apiKey={process.env.NEXT_PUBLIC_POSTHOG_KEY}
-            apiHost={process.env.NEXT_PUBLIC_POSTHOG_HOST}
-          />
-          <LayoutWrapper>{children}</LayoutWrapper>
-          <CookieConsentBanner />
-        </Providers>
+        <GoogleAnalytics
+          measurementId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}
+        />
+        <PostHogAnalytics
+          apiKey={process.env.NEXT_PUBLIC_POSTHOG_KEY}
+          apiHost={process.env.NEXT_PUBLIC_POSTHOG_HOST}
+        />
+        <LayoutWrapper>{children}</LayoutWrapper>
+        <CookieConsentBanner />
       </body>
     </html>
   );
