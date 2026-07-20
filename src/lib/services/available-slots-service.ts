@@ -6,10 +6,7 @@
 import { Timestamp } from "firebase/firestore";
 import { AvailableSlot, TherapistProfile, ScheduleOverride, TimeSlot } from "@/types/database";
 import { businessConfig } from "@/lib/config";
-import { AvailabilityService } from "./availability-service";
-import { AppointmentService } from "./appointment-service";
-import { TherapistService } from "./therapist-service";
-import { TimeSlotService } from "./timeslot-service";
+import { getAdminFirestore } from "@/lib/firebase/admin";
 import {
   addDays,
   format,
@@ -58,9 +55,118 @@ interface TimeRange {
 type WeeklyHours = Record<number, TimeRange[]>;
 
 export class AvailableSlotsService {
+  private static async getTherapistProfileForServer(
+    therapistId: string
+  ): Promise<TherapistProfile | null> {
+    const db = getAdminFirestore();
+    const snapshot = await db.collection("therapistProfiles").doc(therapistId).get();
+
+    if (!snapshot.exists) {
+      return null;
+    }
+
+    return {
+      ...(snapshot.data() as TherapistProfile),
+      id: therapistId,
+    };
+  }
+
   private static parseTimeToMinutes(time: string): number {
     const [hours, minutes] = time.split(":").map(Number);
     return hours * 60 + minutes;
+  }
+
+  private static async getAppointmentsInRangeForServer(
+    therapistId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<
+    Array<{
+      scheduledFor: Timestamp;
+      timeSlotId: string;
+      status: string;
+      duration?: number;
+    }>
+  > {
+    const db = getAdminFirestore();
+    const snapshot = await db
+      .collection("appointments")
+      .where("therapistId", "==", therapistId)
+      .get();
+
+    return snapshot.docs
+      .map((doc) => {
+        const data = doc.data() as {
+          scheduledFor: Timestamp;
+          timeSlotId: string;
+          status: string;
+          duration?: number;
+        };
+
+        return {
+          scheduledFor: data.scheduledFor,
+          timeSlotId: data.timeSlotId,
+          status: data.status,
+          duration: data.duration,
+        };
+      })
+      .filter((appointment) => {
+        const scheduledFor = appointment.scheduledFor?.toDate();
+
+        if (!scheduledFor || Number.isNaN(scheduledFor.getTime())) {
+          return false;
+        }
+
+        return scheduledFor >= startDate && scheduledFor <= endDate;
+      });
+  }
+
+  private static async getScheduleOverridesForServer(
+    therapistId: string,
+    fromDate: Date,
+    toDate: Date
+  ): Promise<ScheduleOverride[]> {
+    const db = getAdminFirestore();
+    const snapshot = await db
+      .collection("scheduleOverrides")
+      .where("therapistId", "==", therapistId)
+      .get();
+
+    return snapshot.docs
+      .map((doc) => {
+        const data = doc.data() as Omit<ScheduleOverride, "id">;
+
+        return {
+          id: doc.id,
+          ...data,
+        } as ScheduleOverride;
+      })
+      .filter((override) => {
+        const overrideDate = override.date?.toDate();
+
+        if (!overrideDate || Number.isNaN(overrideDate.getTime())) {
+          return false;
+        }
+
+        return (
+          overrideDate.getTime() >= fromDate.getTime() &&
+          overrideDate.getTime() <= toDate.getTime()
+        );
+      })
+      .sort((a, b) => a.date.toDate().getTime() - b.date.toDate().getTime());
+  }
+
+  private static async getTimeSlotsForServer(): Promise<TimeSlot[]> {
+    const db = getAdminFirestore();
+    const snapshot = await db
+      .collection("timeSlots")
+      .orderBy("sortOrder", "asc")
+      .get();
+
+    return snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...(doc.data() as Omit<TimeSlot, "id">),
+    }));
   }
 
   private static formatMinutes(minutes: number): string {
@@ -199,7 +305,8 @@ export class AvailableSlotsService {
   ): Promise<TherapistSlotsResult> {
     try {
       // Get therapist profile
-      const therapistProfile = await TherapistService.getProfile(therapistId);
+      const therapistProfile =
+        await this.getTherapistProfileForServer(therapistId);
       if (!therapistProfile) {
         throw new Error("Therapist profile not found");
       }
@@ -208,12 +315,11 @@ export class AvailableSlotsService {
       const therapistTimezone = therapistProfile.availability.timezone;
 
       // Get all appointments in the date range
-      const existingAppointments =
-        await AppointmentService.getAppointmentsInRange(
-          therapistId,
-          options.startDate,
-          options.endDate
-        );
+      const existingAppointments = await this.getAppointmentsInRangeForServer(
+        therapistId,
+        options.startDate,
+        options.endDate
+      );
 
       const availableSlots: EnhancedAvailableSlot[] = [];
       const currentDate = new Date(options.startDate);
@@ -282,12 +388,12 @@ export class AvailableSlotsService {
 
       const dateStart = startOfDay(date);
       const dateEnd = endOfDay(date);
-      const overrides = await AvailabilityService.getScheduleOverrides(
+      const overrides = await this.getScheduleOverridesForServer(
         therapistId,
         dateStart,
         dateEnd
       );
-      const allTimeSlots = await TimeSlotService.getTimeSlots();
+      const allTimeSlots = await this.getTimeSlotsForServer();
       const baseSlots = this.buildHourlySlotsFromRanges(dayRanges, slotDuration);
       const { slots: effectiveSlots, overrideSlotKeys } =
         this.applyOverridesToHourlySlots(
