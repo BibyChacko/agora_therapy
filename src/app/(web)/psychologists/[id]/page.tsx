@@ -59,11 +59,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const primarySpecialization = specializationsList[0] || 'Therapy';
 
   const languagesStr = therapist.languages.map(getLanguageName).join(', ');
+  const primaryLanguage = therapist.languages[0] ? getLanguageName(therapist.languages[0]) : '';
   const therapistLocation = therapist.location || 'Dubai, UAE';
   const ogImage = toAbsoluteUrl(therapist.image);
-  const title = `${therapist.name} | ${primarySpecialization} Psychologist in ${therapistLocation}`;
+  const title = primaryLanguage
+    ? `${therapist.name} | ${primaryLanguage}-Speaking ${primarySpecialization} Psychologist in ${therapistLocation}`
+    : `${therapist.name} | ${primarySpecialization} Psychologist in ${therapistLocation}`;
   const description = [
-    `Book online therapy with ${therapist.name}, a verified psychologist on MindGood.`,
+    primaryLanguage
+      ? `${therapist.name} is a verified ${primaryLanguage}-speaking psychologist on MindGood.`
+      : `Book online therapy with ${therapist.name}, a verified psychologist on MindGood.`,
     specializations ? `Specializes in ${specializations}.` : null,
     therapist.experience ? `${therapist.experience}+ years of experience.` : null,
     languagesStr ? `Sessions available in ${languagesStr}.` : null,
