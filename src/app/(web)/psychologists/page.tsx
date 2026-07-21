@@ -1,11 +1,20 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
+import Link from 'next/link';
 import PsychologistFilters from '@/components/psychologists/PsychologistFilters';
 import { TherapistCard } from '@/components/psychologists/TherapistCard';
 import { getPublicTherapists } from '@/lib/services/public-therapist-service';
 import { getLanguageName, LANGUAGES } from '@/lib/constants/languages';
 import { getServiceById, AVAILABLE_SERVICES } from '@/types/models/service';
 import { gccAreas, siteUrl } from '@/lib/seo';
+
+function buildDirectoryQuery(params: { language?: string; specialization?: string }) {
+  const queryParams = new URLSearchParams();
+  if (params.language) queryParams.set('language', params.language);
+  if (params.specialization) queryParams.set('specialization', params.specialization);
+  const queryString = queryParams.toString();
+  return queryString ? `/psychologists?${queryString}` : '/psychologists';
+}
 
 export async function generateMetadata({ searchParams }: { searchParams: Promise<any> }): Promise<Metadata> {
   const params = await searchParams;
@@ -67,7 +76,7 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
       title,
       description,
       type: 'website',
-      url: `${siteUrl}/psychologists`,
+      url: canonicalUrl,
       locale: 'en_AE',
     }
   };
@@ -99,11 +108,62 @@ async function TherapistsList({ searchParams }: { searchParams: any }) {
 
 export default async function PsychologistsPage({ searchParams }: { searchParams: Promise<any> }) {
   const params = await searchParams;
-  const therapists = await getPublicTherapists({
-    specialization: params.specialization,
-    language: params.language,
-    minExperience: params.minExperience,
+  const [allTherapists, therapists] = await Promise.all([
+    getPublicTherapists(),
+    getPublicTherapists({
+      specialization: params.specialization,
+      language: params.language,
+      minExperience: params.minExperience,
+    }),
+  ]);
+
+  const specializationCode = params.specialization || '';
+  const languageCode = params.language || '';
+  const specializationName = specializationCode ? getServiceById(specializationCode)?.name || specializationCode : '';
+  const languageName = languageCode ? getLanguageName(languageCode) : '';
+  const currentResultsLabel = [
+    languageName ? `${languageName}-speaking` : '',
+    specializationName ? specializationName : '',
+    'psychologists',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  const availableLanguageCounts = allTherapists.reduce<Record<string, number>>((acc, therapist) => {
+    therapist.languages.forEach((language) => {
+      acc[language] = (acc[language] || 0) + 1;
+    });
+    return acc;
+  }, {});
+
+  const availableSpecializationCounts = allTherapists.reduce<Record<string, number>>((acc, therapist) => {
+    therapist.specializations.forEach((specialization) => {
+      acc[specialization] = (acc[specialization] || 0) + 1;
+    });
+    return acc;
+  }, {});
+
+  const languageLinks = LANGUAGES
+    .filter((language) => availableLanguageCounts[language.code] > 0)
+    .sort((a, b) => (availableLanguageCounts[b.code] || 0) - (availableLanguageCounts[a.code] || 0))
+    .slice(0, 10);
+
+  const specializationLinks = AVAILABLE_SERVICES
+    .filter((service) => service.isActive && availableSpecializationCounts[service.id] > 0)
+    .sort((a, b) => (availableSpecializationCounts[b.id] || 0) - (availableSpecializationCounts[a.id] || 0))
+    .slice(0, 12);
+
+  const canonicalPath = buildDirectoryQuery({
+    language: languageCode || undefined,
+    specialization: specializationCode || undefined,
   });
+  const canonicalUrl = `${siteUrl}${canonicalPath}`;
+  const listTitle = currentResultsLabel
+    ? `${therapists.length} ${currentResultsLabel} in Dubai, UAE`
+    : `${therapists.length} verified psychologists in Dubai, UAE`;
+  const listDescription = languageName || specializationName
+    ? `Browse named therapist profiles, compare languages and concerns, and book secure online therapy with ${languageName || 'multilingual'} specialists for ${specializationName || 'anxiety, stress, relationships, and more'}.`
+    : 'Browse named therapist profiles, compare languages and concerns, and book secure online therapy for Dubai, the UAE, and the wider GCC.';
 
   // JSON-LD structured data for AEO
   const jsonLd = {
@@ -111,22 +171,25 @@ export default async function PsychologistsPage({ searchParams }: { searchParams
     "@graph": [
       {
         "@type": "MedicalWebPage",
-        "@id": "https://mindgood.life/psychologists#webpage",
-        "name": "Licensed Psychologists & Online Therapy in UAE",
-        "description": "Directory of verified psychologists and therapists providing online counselling for Dubai, the UAE, and the wider GCC.",
+        "@id": `${canonicalUrl}#webpage`,
+        "url": canonicalUrl,
+        "name": listTitle,
+        "description": listDescription,
         "medicalSpecialty": AVAILABLE_SERVICES.map(s => s.name),
         "areaServed": gccAreas,
         "knowsLanguage": LANGUAGES.map(l => l.name)
       },
       {
         "@type": "ItemList",
-        "name": "Verified Therapists in Dubai and the GCC",
+        "name": listTitle,
         "numberOfItems": therapists.length,
         "itemListElement": therapists.slice(0, 15).map((t, index) => ({
           "@type": "ListItem",
           "position": index + 1,
           "item": {
             "@type": "Physician",
+            "@id": `${siteUrl}/psychologists/${t.slug}#person`,
+            "url": `${siteUrl}/psychologists/${t.slug}`,
             "name": t.name,
             "description": t.bio,
             "image": t.image,
@@ -153,11 +216,19 @@ export default async function PsychologistsPage({ searchParams }: { searchParams
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-black text-gray-900 dark:text-white mb-4 tracking-tight">
-            Find Your Therapist in Dubai, UAE
+            {languageName && specializationName
+              ? `${languageName} ${specializationName} Specialists in Dubai, UAE`
+              : languageName
+              ? `${languageName} Speaking Psychologists in Dubai, UAE`
+              : specializationName
+              ? `${specializationName} Therapy in Dubai, UAE`
+              : 'Find Your Therapist in Dubai, UAE'}
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            Verified, culturally aware mental health support for Dubai residents, expats,
-            and clients across the GCC. Connect with specialists who speak your language.
+            {listDescription}
+          </p>
+          <p className="mt-4 text-sm font-semibold uppercase tracking-[0.18em] text-teal-700 dark:text-teal-300">
+            {listTitle}
           </p>
         </div>
 
@@ -189,21 +260,75 @@ export default async function PsychologistsPage({ searchParams }: { searchParams
           </div>
         </div>
 
-        {/* SEO Enrichment Section (Hidden visually but accessible to crawlers) */}
-        <section className="mt-20 sr-only" aria-hidden="true">
-          <h2>Specialized Therapy Services in Dubai and the GCC</h2>
-          <ul>
-            {AVAILABLE_SERVICES.map(s => (
-              <li key={s.id}>{s.name}: {s.description}</li>
-            ))}
-          </ul>
-          <h2>Therapists speaking multiple languages</h2>
-          <ul>
-            {LANGUAGES.map(l => (
-              <li key={l.code}>{l.name} {l.nativeName ? `(${l.nativeName})` : ''}</li>
-            ))}
-          </ul>
-        </section>
+        <div className="mt-16 grid gap-8 lg:grid-cols-3">
+          <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950 lg:col-span-1">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              Browse Therapists by Concern
+            </h2>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              Explore high-intent therapy searches like anxiety, depression, couples therapy, trauma healing, and stress management.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              {specializationLinks.map((service) => (
+                <Link
+                  key={service.id}
+                  href={buildDirectoryQuery({ specialization: service.id })}
+                  className="rounded-full border border-teal-200 bg-teal-50 px-3 py-2 text-sm font-medium text-teal-800 transition-colors hover:bg-teal-100 dark:border-teal-900 dark:bg-teal-950/40 dark:text-teal-200"
+                >
+                  {service.name} ({availableSpecializationCounts[service.id]})
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950 lg:col-span-1">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              Browse Therapists by Language
+            </h2>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              Find named therapist profiles for Malayalam, Tamil, Arabic, Hindi, English, and other supported languages across the UAE and GCC.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              {languageLinks.map((language) => (
+                <Link
+                  key={language.code}
+                  href={buildDirectoryQuery({ language: language.code })}
+                  className="rounded-full border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-800 transition-colors hover:bg-blue-100 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-200"
+                >
+                  {language.name} ({availableLanguageCounts[language.code]})
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-950 lg:col-span-1">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              Named Therapist Profiles
+            </h2>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              These public therapist pages include biographies, languages, concerns, and booking links for direct discovery in search and AI assistants.
+            </p>
+            <ul className="mt-5 space-y-3">
+              {therapists.slice(0, 8).map((therapist) => (
+                <li key={therapist.id}>
+                  <Link
+                    href={`/psychologists/${therapist.slug}`}
+                    className="block rounded-2xl border border-gray-200 px-4 py-3 transition-colors hover:border-teal-300 hover:bg-teal-50 dark:border-gray-800 dark:hover:border-teal-800 dark:hover:bg-teal-950/30"
+                  >
+                    <span className="block font-semibold text-gray-900 dark:text-white">
+                      {therapist.name}
+                    </span>
+                    <span className="mt-1 block text-sm text-gray-600 dark:text-gray-400">
+                      {therapist.languages.map(getLanguageName).join(', ')} | {therapist.specializations
+                        .map((specialization) => getServiceById(specialization)?.name || specialization)
+                        .join(', ')}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </div>
       </div>
     </div>
   );
