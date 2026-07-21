@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin, FaYoutube } from 'react-icons/fa';
+import { supportEmail, supportPhone } from '@/lib/seo';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -11,7 +12,7 @@ const Footer = () => {
   return (
     <footer className="bg-gray-50 dark:bg-gray-900 pt-16 pb-8">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           {/* Logo and About */}
           <div className="space-y-4">
             <Link href="/" className="flex items-center gap-2">
@@ -140,15 +141,46 @@ const Footer = () => {
             </ul>
           </div>
 
+          <div>
+            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Trust & Safety</h3>
+            <ul className="space-y-2">
+              <li>
+                <Link href="/clinical-standards" className="text-gray-600 dark:text-gray-400 hover:text-teal-500 dark:hover:text-teal-500 transition-colors text-sm">
+                  About Clinical Standards
+                </Link>
+              </li>
+              <li>
+                <Link href="/how-we-verify-therapists" className="text-gray-600 dark:text-gray-400 hover:text-teal-500 dark:hover:text-teal-500 transition-colors text-sm">
+                  How We Verify Therapists
+                </Link>
+              </li>
+              <li>
+                <Link href="/editorial-policy" className="text-gray-600 dark:text-gray-400 hover:text-teal-500 dark:hover:text-teal-500 transition-colors text-sm">
+                  Editorial Policy
+                </Link>
+              </li>
+              <li>
+                <Link href="/medical-review-policy" className="text-gray-600 dark:text-gray-400 hover:text-teal-500 dark:hover:text-teal-500 transition-colors text-sm">
+                  Medical Review Policy
+                </Link>
+              </li>
+              <li>
+                <Link href="/crisis-emergency-help" className="text-gray-600 dark:text-gray-400 hover:text-teal-500 dark:hover:text-teal-500 transition-colors text-sm">
+                  Crisis & Emergency Help
+                </Link>
+              </li>
+            </ul>
+          </div>
+
           {/* Contact */}
           <div>
             <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Contact Us</h3>
             <ul className="space-y-2">
               <li className="text-gray-600 dark:text-gray-400 text-sm">
-                <strong>Email:</strong> support@mindgood.com
+                <strong>Email:</strong> {supportEmail}
               </li>
               <li className="text-gray-600 dark:text-gray-400 text-sm">
-                <strong>Phone:</strong> +971 505134930
+                <strong>Phone:</strong> {supportPhone}
               </li>
               <li className="text-gray-600 dark:text-gray-400 text-sm">
                 <strong>Hours:</strong> Mon-Sat: 9am - 7pm
@@ -175,6 +207,9 @@ const Footer = () => {
             </Link>
             <Link href="/terms" className="text-gray-600 dark:text-gray-400 hover:text-teal-500 dark:hover:text-teal-500 transition-colors text-xs">
               Terms of Service
+            </Link>
+            <Link href="/crisis-emergency-help" className="text-gray-600 dark:text-gray-400 hover:text-teal-500 dark:hover:text-teal-500 transition-colors text-xs">
+              Crisis Help
             </Link>
           </div>
         </div>

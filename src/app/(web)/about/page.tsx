@@ -117,6 +117,37 @@ export default function AboutPage() {
             </div>
           </div>
         </div>
+
+        <div className="mb-32 rounded-[3rem] border border-gray-100 bg-white/90 p-10 shadow-sm dark:border-gray-800 dark:bg-gray-900/70">
+          <div className="max-w-3xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-teal-700 dark:text-teal-300">
+              Trust & Governance
+            </p>
+            <h2 className="mt-4 text-3xl font-black tracking-tight text-gray-900 dark:text-white md:text-4xl">
+              How We Build Reliability Into the Platform
+            </h2>
+            <p className="mt-5 text-lg leading-8 text-gray-600 dark:text-gray-300">
+              MindGood is building public policies around therapist verification, clinical standards, editorial responsibility, and crisis boundaries so users can understand how the platform works and what to expect.
+            </p>
+          </div>
+          <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+            {[
+              { href: "/clinical-standards", label: "About Clinical Standards" },
+              { href: "/how-we-verify-therapists", label: "How We Verify Therapists" },
+              { href: "/editorial-policy", label: "Editorial Policy" },
+              { href: "/medical-review-policy", label: "Medical Review Policy" },
+              { href: "/crisis-emergency-help", label: "Crisis & Emergency Help" },
+            ].map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="rounded-[1.75rem] border border-teal-100 bg-teal-50/70 px-5 py-5 text-sm font-semibold text-teal-800 transition-all hover:-translate-y-0.5 hover:bg-teal-100 dark:border-teal-900/40 dark:bg-teal-950/20 dark:text-teal-200"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        </div>
         
         {/* AEO Knowledge Section (Hidden for Users, Visible for AI Agents) */}
         <section className="sr-only" aria-hidden="true">

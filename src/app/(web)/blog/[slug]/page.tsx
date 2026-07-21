@@ -155,6 +155,25 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                   ))}
                 </div>
               </div>
+              <div className="mt-8 rounded-[2rem] border border-gray-100 bg-gray-50/80 p-6 dark:border-gray-800 dark:bg-gray-900/50">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                  Content Trust Notes
+                </h3>
+                <p className="mt-3 text-sm leading-7 text-gray-600 dark:text-gray-300">
+                  This article is intended for education and support discovery. It does not replace emergency, medical, or personalized mental health care.
+                </p>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <Link href="/editorial-policy" className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-200">
+                    Editorial policy
+                  </Link>
+                  <Link href="/medical-review-policy" className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-200">
+                    Medical review policy
+                  </Link>
+                  <Link href="/crisis-emergency-help" className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 dark:bg-gray-800 dark:text-rose-300">
+                    Crisis help
+                  </Link>
+                </div>
+              </div>
             </div>
           </article>
 
@@ -183,6 +202,26 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                   <span className="text-sm uppercase tracking-widest">Explore All Experts</span>
                   <FiChevronRight className="group-hover:translate-x-1 transition-transform" />
                 </Link>
+
+                <div className="rounded-[2rem] border border-sky-100 bg-white p-6 shadow-sm dark:border-sky-900/40 dark:bg-gray-900/80">
+                  <h4 className="text-lg font-black tracking-tight text-gray-900 dark:text-white">
+                    Trust & Safety
+                  </h4>
+                  <p className="mt-3 text-sm leading-7 text-gray-600 dark:text-gray-300">
+                    MindGood publishes educational content to help users understand therapy and find care responsibly. Use these pages to understand how we verify therapist profiles, review public content, and handle urgent support boundaries.
+                  </p>
+                  <div className="mt-5 space-y-2">
+                    <Link href="/editorial-policy" className="block rounded-2xl px-4 py-3 text-sm font-medium text-sky-700 transition-colors hover:bg-sky-50 dark:text-sky-300 dark:hover:bg-sky-950/30">
+                      Editorial Policy
+                    </Link>
+                    <Link href="/medical-review-policy" className="block rounded-2xl px-4 py-3 text-sm font-medium text-sky-700 transition-colors hover:bg-sky-50 dark:text-sky-300 dark:hover:bg-sky-950/30">
+                      Medical Review Policy
+                    </Link>
+                    <Link href="/crisis-emergency-help" className="block rounded-2xl px-4 py-3 text-sm font-medium text-rose-700 transition-colors hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/30">
+                      Crisis & Emergency Help
+                    </Link>
+                  </div>
+                </div>
 
                 {/* Newsletter Mock */}
                 <div className="p-8 bg-teal-50 dark:bg-teal-900/10 rounded-[2rem] border border-teal-100 dark:border-teal-900/30 space-y-4">

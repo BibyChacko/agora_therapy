@@ -434,37 +434,3 @@ Publish How We Verify Therapists and Editorial Policy.
 Add reviewed by and last reviewed to concern/blog pages.
 Add real trust blocks on homepage, therapist pages, and booking pages.
 Build external mentions and citations over time.
-If you want, I can turn this into a concrete implementation checklist for MindGood with:
-exact pages to add
-exact sections to add on therapist pages
-exact schema fields to implement
-a priority order for dev vs content vs SEO work.
-
-
-10:36 AM
-
-
-
-
-
-
-make this as a read me
-
-
-
-
-
-
-10:56 AM
-
-
-
-
-
-
-Worked for 54s
-
-
-
-Added the README as [MINDGOOD_AUTHORITY_AND_CREDIBILITY_README.md (line 1)](/Users/bibychacko/Desktop/Nextware/agora_therapy/readme/MINDGOOD_AUTHORITY_AND_CREDIBILITY_README.md:1).
-It’s structured as an execution guide for the team, covering identity trust, therapist verification, content credibility, technical trust, external authority, phased rollout, and success metrics. If you want, I can also turn this into a shorter founder-facing action plan or a dev checklist next.

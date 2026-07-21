@@ -11,6 +11,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages = [
     '',
     '/about',
+    '/clinical-standards',
+    '/how-we-verify-therapists',
+    '/editorial-policy',
+    '/medical-review-policy',
+    '/crisis-emergency-help',
     '/services',
     '/psychologists',
     '/languages',

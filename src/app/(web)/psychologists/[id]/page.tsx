@@ -363,6 +363,20 @@ export default async function PsychologistDetail({ params }: Props) {
                       </p>
                     ) : null}
                   </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Link
+                      href="/how-we-verify-therapists"
+                      className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 dark:bg-gray-900 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
+                    >
+                      How we verify therapists
+                    </Link>
+                    <Link
+                      href="/clinical-standards"
+                      className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 dark:bg-gray-900 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
+                    >
+                      Clinical standards
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>
@@ -412,6 +426,20 @@ export default async function PsychologistDetail({ params }: Props) {
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
                 50-minute session
               </p>
+              <div className="mt-4 space-y-2 border-t border-gray-200 pt-4 dark:border-gray-700">
+                <Link
+                  href="/medical-review-policy"
+                  className="block text-center text-xs font-semibold text-teal-700 hover:text-teal-600 dark:text-teal-300"
+                >
+                  Read our medical review policy
+                </Link>
+                <Link
+                  href="/crisis-emergency-help"
+                  className="block text-center text-xs font-semibold text-rose-700 hover:text-rose-600 dark:text-rose-300"
+                >
+                  Need urgent help instead?
+                </Link>
+              </div>
             </div>
           </div>
         </aside>
