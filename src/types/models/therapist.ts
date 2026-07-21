@@ -102,6 +102,9 @@ export interface TherapistPublicView {
   location?: string;
   currency?: string;
   isVerified: boolean;
+  verifiedAt?: string;
+  licenseNumber?: string;
+  licenseAuthority?: string;
   isFeatured?: boolean;
   timezone?: string;
 }

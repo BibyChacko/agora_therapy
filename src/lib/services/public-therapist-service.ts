@@ -85,6 +85,9 @@ async function getPublicTherapistsFromDb(
         reviewCount: 0,
         location: profileData.practice?.location || 'Dubai, UAE',
         isVerified: true,
+        verifiedAt: profileData.verification?.verifiedAt?.toDate?.().toISOString?.(),
+        licenseNumber: profileData.credentials?.licenseNumber || '',
+        licenseAuthority: profileData.credentials?.licenseState || '',
         isFeatured: profileData.isFeatured || false,
         timezone: profileData.availability?.timezone || userData?.profile?.timezone || 'UTC',
       } as TherapistPublicView;
@@ -156,6 +159,9 @@ async function getPublicTherapistByIdFromDb(
     reviewCount: 0, // TODO: Count from reviews
     location: profileData.practice?.location || 'Dubai, UAE',
     isVerified: profileData.verification?.isVerified || false,
+    verifiedAt: profileData.verification?.verifiedAt?.toDate?.().toISOString?.(),
+    licenseNumber: profileData.credentials?.licenseNumber || '',
+    licenseAuthority: profileData.credentials?.licenseState || '',
     isFeatured: profileData.isFeatured || false,
     timezone: profileData.availability?.timezone || userData.profile?.timezone || 'UTC',
   };

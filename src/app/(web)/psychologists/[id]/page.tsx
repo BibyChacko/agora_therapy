@@ -20,6 +20,21 @@ function toAbsoluteUrl(url: string) {
   return url.startsWith('http') ? url : `${siteUrl}${url}`;
 }
 
+function formatVerificationDate(value?: string) {
+  if (!value) return null;
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return new Intl.DateTimeFormat('en-AE', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  }).format(date);
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const therapist =
@@ -131,6 +146,7 @@ export default async function PsychologistDetail({ params }: Props) {
   const canonicalUrl = `${siteUrl}/psychologists/${psychologist.slug}`;
   const imageUrl = toAbsoluteUrl(psychologist.image);
   const therapistLocation = psychologist.location || 'Dubai, UAE';
+  const verifiedDate = formatVerificationDate(psychologist.verifiedAt);
   const description = [
     `${psychologist.name} is a verified psychologist on MindGood.`,
     specializations.length ? `Specializations include ${specializations.join(', ')}.` : null,
@@ -205,12 +221,29 @@ export default async function PsychologistDetail({ params }: Props) {
           "@type": "Organization",
           "name": siteName
         },
+        "memberOf": {
+          "@type": "Organization",
+          "name": siteName
+        },
         "knowsLanguage": languages,
         "availableLanguage": languages,
         "hasOccupation": {
           "@type": "Occupation",
           "name": "Psychologist"
         },
+        "hasCredential": psychologist.licenseNumber || psychologist.licenseAuthority
+          ? {
+              "@type": "EducationalOccupationalCredential",
+              "credentialCategory": "Professional License",
+              "identifier": psychologist.licenseNumber || undefined,
+              "recognizedBy": psychologist.licenseAuthority
+                ? {
+                    "@type": "Organization",
+                    "name": psychologist.licenseAuthority
+                  }
+                : undefined
+            }
+          : undefined,
         "areaServed": gccAreas,
         "address": {
           "@type": "PostalAddress",
@@ -306,6 +339,30 @@ export default async function PsychologistDetail({ params }: Props) {
                 <div className="flex items-center text-gray-700 dark:text-gray-300">
                   <FiClock className="mr-2" />
                   <span>{psychologist.experience} years of experience</span>
+                </div>
+
+                <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50/80 p-4 dark:border-emerald-900/40 dark:bg-emerald-950/30">
+                  <p className="text-sm font-semibold uppercase tracking-[0.14em] text-emerald-700 dark:text-emerald-300">
+                    Verified by MindGood
+                  </p>
+                  <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
+                    This therapist&apos;s professional profile, experience, and licensing details have been reviewed by the MindGood team.
+                    {verifiedDate ? ` Verified on ${verifiedDate}.` : ''}
+                  </p>
+                  <div className="mt-3 grid gap-2 text-sm text-gray-700 dark:text-gray-300 sm:grid-cols-2">
+                    {psychologist.licenseAuthority ? (
+                      <p>
+                        <span className="font-semibold text-gray-900 dark:text-white">Issuing Authority:</span>{' '}
+                        {psychologist.licenseAuthority}
+                      </p>
+                    ) : null}
+                    {psychologist.licenseNumber ? (
+                      <p>
+                        <span className="font-semibold text-gray-900 dark:text-white">License Number:</span>{' '}
+                        {psychologist.licenseNumber}
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
               </div>
             </div>

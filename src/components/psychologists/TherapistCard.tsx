@@ -10,11 +10,26 @@ interface TherapistCardProps {
   therapist: TherapistPublicView;
 }
 
+function formatVerificationDate(value?: string) {
+  if (!value) return null;
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return new Intl.DateTimeFormat('en-AE', {
+    year: 'numeric',
+    month: 'short',
+  }).format(date);
+}
+
 export function TherapistCard({ therapist }: TherapistCardProps) {
   // Limit specializations to show only the first 2 for extreme compactness
   const displaySpecializations = therapist.specializations?.slice(0, 2) || [];
   const remainingCount = (therapist.specializations?.length || 0) - 2;
   const profilePath = therapist.slug || therapist.id;
+  const verifiedDate = formatVerificationDate(therapist.verifiedAt);
 
   return (
     <Link 
@@ -76,6 +91,36 @@ export function TherapistCard({ therapist }: TherapistCardProps) {
             ))}
           </div>
         </div>
+
+        {therapist.isVerified && (
+          <div className="flex items-center justify-between gap-3 rounded-[1.35rem] border border-sky-100 bg-gradient-to-r from-sky-50 via-white to-sky-50 px-3 py-2.5 shadow-[0_10px_24px_rgba(14,116,244,0.08)] dark:border-sky-900/40 dark:from-sky-950/50 dark:via-gray-900 dark:to-sky-950/40">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <div className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center">
+                <div
+                  className="h-9 w-9 bg-sky-500 shadow-[0_10px_20px_rgba(14,116,244,0.25)]"
+                  style={{
+                    clipPath:
+                      'polygon(50% 0%, 63% 7%, 77% 4%, 84% 16%, 97% 21%, 94% 35%, 100% 50%, 94% 65%, 97% 79%, 84% 84%, 77% 96%, 63% 93%, 50% 100%, 37% 93%, 23% 96%, 16% 84%, 3% 79%, 6% 65%, 0% 50%, 6% 35%, 3% 21%, 16% 16%, 23% 4%, 37% 7%)',
+                  }}
+                />
+                <CheckCircle className="absolute h-5 w-5 fill-white text-white" strokeWidth={2.8} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-600 dark:text-sky-300">
+                  MindGood
+                </p>
+                <p className="truncate text-sm font-black leading-none text-gray-900 dark:text-white">
+                  Verified
+                </p>
+              </div>
+            </div>
+            {verifiedDate ? (
+              <span className="flex-shrink-0 rounded-full bg-sky-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-sky-700 dark:bg-sky-900/40 dark:text-sky-200">
+                {verifiedDate}
+              </span>
+            ) : null}
+          </div>
+        )}
 
         {/* Minimal Specializations */}
         <div className="flex flex-wrap gap-1.5">
