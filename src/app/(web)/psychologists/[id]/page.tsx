@@ -20,6 +20,15 @@ function toAbsoluteUrl(url: string) {
   return url.startsWith('http') ? url : `${siteUrl}${url}`;
 }
 
+function getPreferredTitleLanguage(languageCodes: string[]) {
+  const nonEnglishLanguage = languageCodes.find((code) => code.toLowerCase() !== 'en');
+  if (nonEnglishLanguage) {
+    return getLanguageName(nonEnglishLanguage);
+  }
+
+  return null;
+}
+
 function formatVerificationDate(value?: string) {
   if (!value) return null;
 
@@ -59,15 +68,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const primarySpecialization = specializationsList[0] || 'Therapy';
 
   const languagesStr = therapist.languages.map(getLanguageName).join(', ');
-  const primaryLanguage = therapist.languages[0] ? getLanguageName(therapist.languages[0]) : '';
+  const titleLanguage = getPreferredTitleLanguage(therapist.languages);
   const therapistLocation = therapist.location || 'Dubai, UAE';
   const ogImage = toAbsoluteUrl(therapist.image);
-  const title = primaryLanguage
-    ? `${therapist.name} | ${primaryLanguage}-Speaking ${primarySpecialization} Psychologist in ${therapistLocation}`
+  const title = titleLanguage
+    ? `${therapist.name} | ${titleLanguage}-Speaking ${primarySpecialization} Psychologist in ${therapistLocation}`
     : `${therapist.name} | ${primarySpecialization} Psychologist in ${therapistLocation}`;
   const description = [
-    primaryLanguage
-      ? `${therapist.name} is a verified ${primaryLanguage}-speaking psychologist on MindGood.`
+    titleLanguage
+      ? `${therapist.name} is a verified ${titleLanguage}-speaking psychologist on MindGood.`
       : `Book online therapy with ${therapist.name}, a verified psychologist on MindGood.`,
     specializations ? `Specializes in ${specializations}.` : null,
     therapist.experience ? `${therapist.experience}+ years of experience.` : null,
