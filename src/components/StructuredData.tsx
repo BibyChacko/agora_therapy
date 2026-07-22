@@ -2,10 +2,14 @@ import Script from 'next/script';
 import { dubaiAddress, gccAreas, organizationName, seoLanguages, siteName, siteUrl, supportEmail, supportPhone } from '@/lib/seo';
 
 export function StructuredData() {
+  const organizationId = `${siteUrl}/#organization`;
+  const websiteId = `${siteUrl}/#website`;
+  const medicalBusinessId = `${siteUrl}/#medical-business`;
+
   const organizationSchema = {
     "@context": "https://schema.org",
-    "@type": "MedicalBusiness",
-    "@id": `${siteUrl}/#organization`,
+    "@type": "Organization",
+    "@id": organizationId,
     "name": siteName,
     "legalName": organizationName,
     "url": siteUrl,
@@ -31,6 +35,21 @@ export function StructuredData() {
       "https://www.linkedin.com/company/mind-good/posts/",
     ],
     "description": "MindGood provides multilingual online therapy and counselling for individuals, couples, and families in Dubai, the UAE, and across the GCC.",
+    "knowsLanguage": seoLanguages,
+    "areaServed": gccAreas,
+  };
+
+  const medicalBusinessSchema = {
+    "@context": "https://schema.org",
+    "@type": "MedicalBusiness",
+    "@id": medicalBusinessId,
+    "name": siteName,
+    "url": siteUrl,
+    "image": `${siteUrl}/Mindgood.png`,
+    "description": "MindGood provides multilingual online therapy and counselling for individuals, couples, and families in Dubai, the UAE, and across the GCC.",
+    "parentOrganization": {
+      "@id": organizationId,
+    },
     "priceRange": "$$",
     "areaServed": gccAreas,
     "medicalSpecialty": [
@@ -58,7 +77,7 @@ export function StructuredData() {
     "name": "Online Therapy and Counselling",
     "serviceType": "Online Therapy and Counseling",
     "provider": {
-      "@id": `${siteUrl}/#organization`
+      "@id": medicalBusinessId
     },
     "areaServed": gccAreas,
     "availableChannel": {
@@ -98,12 +117,12 @@ export function StructuredData() {
   const websiteSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "@id": `${siteUrl}/#website`,
+    "@id": websiteId,
     "url": siteUrl,
     "name": siteName,
     "description": "Online therapy in Dubai, UAE and GCC with multilingual psychologists.",
     "publisher": {
-      "@id": `${siteUrl}/#organization`
+      "@id": organizationId
     },
     "potentialAction": {
       "@type": "SearchAction",
@@ -116,22 +135,10 @@ export function StructuredData() {
     "inLanguage": ["en", "ar", "hi", "ml", "ta", "te", "kn", "ur"]
   };
 
-  const breadcrumbSchema = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      {
-        "@type": "ListItem",
-        "position": 1,
-        "name": "Home",
-        "item": siteUrl
-      }
-    ]
-  };
-
   const professionalServiceSchema = {
     "@context": "https://schema.org",
     "@type": "ProfessionalService",
+    "@id": `${siteUrl}/#professional-service`,
     "name": `${siteName} Online Therapy`,
     "image": `${siteUrl}/Mindgood.png`,
     "url": siteUrl,
@@ -173,6 +180,11 @@ export function StructuredData() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
       />
       <Script
+        id="medical-business-schema"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(medicalBusinessSchema) }}
+      />
+      <Script
         id="service-schema"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }}
@@ -181,11 +193,6 @@ export function StructuredData() {
         id="website-schema"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
-      />
-      <Script
-        id="breadcrumb-schema"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
       <Script
         id="professional-service-schema"

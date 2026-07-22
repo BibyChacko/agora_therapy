@@ -2,7 +2,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Metadata } from 'next';
-import { FiClock, FiUser, FiArrowLeft, FiMessageCircle, FiHeart, FiChevronRight } from 'react-icons/fi';
+import { FiClock, FiUser, FiArrowLeft, FiMessageCircle, FiHeart, FiChevronRight, FiShield } from 'react-icons/fi';
 import { getBlogPostBySlug, getRelatedPosts } from '@/lib/data/blogPosts';
 import { getPublicTherapists } from '@/lib/services/public-therapist-service';
 import { TherapistCard } from '@/components/psychologists/TherapistCard';
@@ -12,7 +12,7 @@ import { siteUrl } from '@/lib/seo';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const blogPost = getBlogPostBySlug(slug);
+  const blogPost = await getBlogPostBySlug(slug);
   
   if (!blogPost) return { title: 'Post Not Found' };
 
@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       'mental health',
       'psychology blog',
       'therapy',
-      blogPost.author,
+      blogPost.author.name,
       ...blogPost.title.split(' ').filter(w => w.length > 4)
     ],
     alternates: {
@@ -40,9 +40,19 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
+function formatDisplayDate(value: string) {
+  const date = new Date(value);
+
+  return new Intl.DateTimeFormat('en-AE', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(date);
+}
+
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const blogPost = getBlogPostBySlug(slug);
+  const blogPost = await getBlogPostBySlug(slug);
   
   if (!blogPost) {
     return (
@@ -66,9 +76,93 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     specialization: blogPost.category.toLowerCase().replace(' ', '-'),
   });
   const limitedTherapists = relatedTherapists.slice(0, 3);
+  const relatedPosts = await getRelatedPosts(slug, blogPost.category, 3);
+  const canonicalUrl = `${siteUrl}/blog/${slug}`;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": ["BlogPosting", "MedicalWebPage"],
+        "@id": `${canonicalUrl}#article`,
+        "url": canonicalUrl,
+        "headline": blogPost.title,
+        "description": blogPost.excerpt,
+        "image": blogPost.image.startsWith('http') ? blogPost.image : `${siteUrl}${blogPost.image}`,
+        "datePublished": blogPost.publishedAt,
+        "dateModified": blogPost.lastReviewedAt,
+        "lastReviewed": blogPost.lastReviewedAt,
+        "inLanguage": blogPost.languages,
+        "isPartOf": {
+          "@id": `${siteUrl}/#website`,
+        },
+        "about": [
+          {
+            "@type": "Thing",
+            "name": blogPost.category,
+          },
+        ],
+        "author": {
+          "@type": "Person",
+          "name": blogPost.author.name,
+          "url": blogPost.author.profileSlug ? `${siteUrl}/psychologists/${blogPost.author.profileSlug}` : undefined,
+          "worksFor": {
+            "@id": `${siteUrl}/#organization`,
+          },
+        },
+        "reviewedBy": blogPost.reviewer
+          ? {
+              "@type": "Person",
+              "name": blogPost.reviewer.name,
+              "url": blogPost.reviewer.profileSlug ? `${siteUrl}/psychologists/${blogPost.reviewer.profileSlug}` : undefined,
+              "worksFor": {
+                "@id": `${siteUrl}/#organization`,
+              },
+            }
+          : undefined,
+        "publisher": {
+          "@id": `${siteUrl}/#organization`,
+        },
+        "citation": blogPost.references.map((reference) => reference.href),
+        "mainEntity": {
+          "@id": `${canonicalUrl}#article`,
+        },
+        "breadcrumb": {
+          "@id": `${canonicalUrl}#breadcrumb`,
+        },
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": `${canonicalUrl}#breadcrumb`,
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": siteUrl,
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Blog",
+            "item": `${siteUrl}/blog`,
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": blogPost.title,
+            "item": canonicalUrl,
+          },
+        ],
+      },
+    ],
+  };
 
   return (
     <div className="min-h-screen bg-[#FDFCFB] dark:bg-[#050505] transition-colors duration-500">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <ReadingProgressBar />
 
       {/* Hero Header */}
@@ -97,15 +191,20 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
               {blogPost.title}
             </h1>
 
-            {/* <div className="flex items-center gap-4 pt-4">
-              <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white dark:border-gray-800 shadow-lg">
-                <Image src={blogPost.authorImage} alt={blogPost.author} fill className="object-cover" />
+            <div className="flex flex-wrap items-center gap-4 pt-4 text-sm text-gray-600 dark:text-gray-300">
+              <div className="flex items-center gap-2">
+                <FiUser className="h-4 w-4" />
+                <span className="font-semibold text-gray-900 dark:text-white">{blogPost.author.name}</span>
               </div>
-              <div className="flex flex-col">
-                <span className="font-bold text-gray-900 dark:text-white">{blogPost.author}</span>
-                <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{blogPost.date}</span>
+              <div className="flex items-center gap-2">
+                <FiClock className="h-4 w-4" />
+                <span>Published {formatDisplayDate(blogPost.publishedAt)}</span>
               </div>
-            </div> */}
+              <div className="flex items-center gap-2">
+                <FiShield className="h-4 w-4" />
+                <span>Reviewed {formatDisplayDate(blogPost.lastReviewedAt)}</span>
+              </div>
+            </div>
           </div>
         </div>
       </header>
@@ -119,6 +218,55 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
               languages={blogPost.languages} 
               initialLanguage={blogPost.languages[0]} 
             />
+
+            <section className="grid gap-4 rounded-[2rem] border border-gray-100 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900/80 md:grid-cols-2">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
+                  Author
+                </p>
+                <p className="mt-2 text-lg font-black text-gray-900 dark:text-white">
+                  {blogPost.author.name}
+                </p>
+                <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">{blogPost.author.role}</p>
+                {blogPost.author.credentials ? (
+                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{blogPost.author.credentials}</p>
+                ) : null}
+                {blogPost.author.profileSlug ? (
+                  <Link href={`/psychologists/${blogPost.author.profileSlug}`} className="mt-3 inline-flex text-sm font-semibold text-sky-700 hover:text-sky-800 dark:text-sky-300">
+                    View therapist profile
+                  </Link>
+                ) : null}
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
+                  Clinical review
+                </p>
+                {blogPost.reviewer ? (
+                  <>
+                    <p className="mt-2 text-lg font-black text-gray-900 dark:text-white">
+                      {blogPost.reviewer.name}
+                    </p>
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">{blogPost.reviewer.role}</p>
+                    {blogPost.reviewer.credentials ? (
+                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{blogPost.reviewer.credentials}</p>
+                    ) : null}
+                    {blogPost.reviewer.profileSlug ? (
+                      <Link href={`/psychologists/${blogPost.reviewer.profileSlug}`} className="mt-3 inline-flex text-sm font-semibold text-sky-700 hover:text-sky-800 dark:text-sky-300">
+                        View reviewer profile
+                      </Link>
+                    ) : null}
+                  </>
+                ) : (
+                  <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">This post currently uses editorial review only.</p>
+                )}
+              </div>
+              <div className="md:col-span-2 rounded-[1.5rem] bg-gray-50 p-5 dark:bg-gray-800/60">
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
+                  Why this content was created
+                </p>
+                <p className="mt-2 text-sm leading-7 text-gray-700 dark:text-gray-300">{blogPost.whyCreated}</p>
+              </div>
+            </section>
 
             {/* Content body */}
             <div 
@@ -162,16 +310,49 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                 <p className="mt-3 text-sm leading-7 text-gray-600 dark:text-gray-300">
                   This article is intended for education and support discovery. It does not replace emergency, medical, or personalized mental health care.
                 </p>
+                <div className="mt-5 space-y-3">
+                  <div className="text-sm text-gray-600 dark:text-gray-300">
+                    <span className="font-semibold text-gray-900 dark:text-white">Published:</span>{' '}
+                    {formatDisplayDate(blogPost.publishedAt)}
+                  </div>
+                  <div className="text-sm text-gray-600 dark:text-gray-300">
+                    <span className="font-semibold text-gray-900 dark:text-white">Last reviewed:</span>{' '}
+                    {formatDisplayDate(blogPost.lastReviewedAt)}
+                  </div>
+                </div>
                 <div className="mt-4 flex flex-wrap gap-3">
                   <Link href="/editorial-policy" className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-200">
                     Editorial policy
                   </Link>
                   <Link href="/medical-review-policy" className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-200">
-                    Medical review policy
+                    Clinical review policy
+                  </Link>
+                  <Link href="/sources-referencing-policy" className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-200">
+                    Sources policy
                   </Link>
                   <Link href="/crisis-emergency-help" className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 dark:bg-gray-800 dark:text-rose-300">
                     Crisis help
                   </Link>
+                </div>
+              </div>
+
+              <div className="rounded-[2rem] border border-gray-100 bg-white p-6 dark:border-gray-800 dark:bg-gray-900/60">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                  References
+                </h3>
+                <div className="mt-4 space-y-3">
+                  {blogPost.references.map((reference) => (
+                    <a
+                      key={reference.href}
+                      href={reference.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block rounded-2xl border border-gray-100 px-4 py-4 transition-colors hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/70"
+                    >
+                      <div className="font-semibold text-gray-900 dark:text-white">{reference.title}</div>
+                      <div className="mt-1 text-sm text-gray-600 dark:text-gray-300">{reference.source}</div>
+                    </a>
+                  ))}
                 </div>
               </div>
             </div>
@@ -215,7 +396,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                       Editorial Policy
                     </Link>
                     <Link href="/medical-review-policy" className="block rounded-2xl px-4 py-3 text-sm font-medium text-sky-700 transition-colors hover:bg-sky-50 dark:text-sky-300 dark:hover:bg-sky-950/30">
-                      Medical Review Policy
+                      Clinical Review Policy
+                    </Link>
+                    <Link href="/sources-referencing-policy" className="block rounded-2xl px-4 py-3 text-sm font-medium text-sky-700 transition-colors hover:bg-sky-50 dark:text-sky-300 dark:hover:bg-sky-950/30">
+                      Sources & Referencing Policy
                     </Link>
                     <Link href="/crisis-emergency-help" className="block rounded-2xl px-4 py-3 text-sm font-medium text-rose-700 transition-colors hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/30">
                       Crisis & Emergency Help
@@ -258,7 +442,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {getRelatedPosts(slug, blogPost.category, 3).map((post) => (
+            {relatedPosts.map((post) => (
               <Link 
                 href={`/blog/${post.id}`} 
                 key={post.id} 

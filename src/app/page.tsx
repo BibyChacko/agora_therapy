@@ -13,7 +13,6 @@ import { GlassYogaSection } from '@/components/home/GlassYogaSection';
 import { GlassRehabSection } from '@/components/home/GlassRehabSection';
 import { GlassCTASection } from '@/components/home/GlassCTASection';
 import { InstagramEmbedSection } from '@/components/home/InstagramEmbedSection';
-import { StructuredData } from '@/components/StructuredData';
 import { getPopularLanguages, getServices, getFeaturedTherapists } from '@/lib/data/home-data';
 import { siteUrl } from '@/lib/seo';
 
@@ -92,7 +91,6 @@ export default async function Home() {
 
   return (
     <>
-      <StructuredData />
       <GlassHeroSection />
       <GlassLanguageSection languages={languages} />
       <GlassServicesSection services={services} />

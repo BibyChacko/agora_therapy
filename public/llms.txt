@@ -1,0 +1,43 @@
+# MindGood
+
+> MindGood is an online mental health platform for Dubai, the UAE, and the GCC. It helps users find verified psychologists by language, specialization, and therapist profile.
+
+## Canonical Site
+- https://mindgood.life/
+
+## Key Pages
+- Home: https://mindgood.life/
+- Psychologists directory: https://mindgood.life/psychologists
+- Languages directory: https://mindgood.life/languages
+- Therapy services: https://mindgood.life/services
+- Blog and educational content: https://mindgood.life/blog
+
+## Trust And Governance
+- About Clinical Standards: https://mindgood.life/clinical-standards
+- How We Verify Therapists: https://mindgood.life/how-we-verify-therapists
+- Editorial Policy: https://mindgood.life/editorial-policy
+- Clinical Review Policy: https://mindgood.life/medical-review-policy
+- Sources and Referencing Policy: https://mindgood.life/sources-referencing-policy
+- Crisis & Emergency Help: https://mindgood.life/crisis-emergency-help
+
+## Discovery Feeds
+- Sitemap: https://mindgood.life/sitemap.xml
+- Robots: https://mindgood.life/robots.txt
+- Extended model-readable summary: https://mindgood.life/llms-full.txt
+
+## Primary Topics
+- Online therapy in Dubai, UAE, and GCC
+- Multilingual psychologists
+- Anxiety therapy
+- Stress management
+- OCD support
+- Trauma and PTSD support
+- Couples therapy
+- Family counselling
+- Parenting support
+- ADHD support
+
+## Important Notes
+- Therapist profile pages are the canonical public source for therapist languages, specializations, and verification signals.
+- Governance and trust pages explain how MindGood verifies therapists and reviews educational content.
+- Content is educational and should not be treated as emergency or crisis advice.

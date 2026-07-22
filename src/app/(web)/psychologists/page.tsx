@@ -175,26 +175,72 @@ export default async function PsychologistsPage({ searchParams }: { searchParams
         "url": canonicalUrl,
         "name": listTitle,
         "description": listDescription,
-        "medicalSpecialty": AVAILABLE_SERVICES.map(s => s.name),
+        "isPartOf": {
+          "@id": `${siteUrl}/#website`,
+        },
+        "about": {
+          "@id": `${siteUrl}/#medical-business`,
+        },
+        "mainEntity": {
+          "@id": `${canonicalUrl}#results`,
+        },
+        "breadcrumb": {
+          "@id": `${canonicalUrl}#breadcrumb`,
+        },
+        "medicalSpecialty": specializationName ? [specializationName] : AVAILABLE_SERVICES.map(s => s.name),
         "areaServed": gccAreas,
-        "knowsLanguage": LANGUAGES.map(l => l.name)
+        "knowsLanguage": languageName ? [languageName] : LANGUAGES.map(l => l.name)
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": `${canonicalUrl}#breadcrumb`,
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": siteUrl
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Psychologists",
+            "item": `${siteUrl}/psychologists`
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": listTitle,
+            "item": canonicalUrl
+          }
+        ]
       },
       {
         "@type": "ItemList",
+        "@id": `${canonicalUrl}#results`,
         "name": listTitle,
+        "url": canonicalUrl,
         "numberOfItems": therapists.length,
         "itemListElement": therapists.slice(0, 15).map((t, index) => ({
           "@type": "ListItem",
           "position": index + 1,
           "item": {
-            "@type": "Physician",
+            "@type": "Person",
             "@id": `${siteUrl}/psychologists/${t.slug}#person`,
             "url": `${siteUrl}/psychologists/${t.slug}`,
             "name": t.name,
             "description": t.bio,
             "image": t.image,
+            "worksFor": {
+              "@id": `${siteUrl}/#organization`,
+            },
+            "hasOccupation": {
+              "@type": "Occupation",
+              "name": "Psychologist",
+            },
             "medicalSpecialty": t.specializations.map(spec => getServiceById(spec)?.name || spec),
             "knowsLanguage": t.languages.map(getLanguageName),
+            "availableLanguage": t.languages.map(getLanguageName),
             "address": {
               "@type": "PostalAddress",
               "addressCountry": "AE"

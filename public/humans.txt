@@ -1,0 +1,20 @@
+/* TEAM */
+Brand: MindGood
+Site: https://mindgood.life
+Region: Dubai, UAE and GCC
+Contact: hello@mindgood.com
+
+/* PURPOSE */
+MindGood helps users discover verified psychologists by language, specialization, and therapist profile.
+
+/* TRUST */
+Clinical standards: https://mindgood.life/clinical-standards
+Therapist verification: https://mindgood.life/how-we-verify-therapists
+Editorial policy: https://mindgood.life/editorial-policy
+Clinical review policy: https://mindgood.life/medical-review-policy
+Sources policy: https://mindgood.life/sources-referencing-policy
+Crisis help: https://mindgood.life/crisis-emergency-help
+
+/* MACHINE-READABLE */
+Sitemap: https://mindgood.life/sitemap.xml
+LLMs: https://mindgood.life/llms.txt

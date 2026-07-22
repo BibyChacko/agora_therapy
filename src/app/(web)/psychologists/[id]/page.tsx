@@ -174,16 +174,13 @@ export default async function PsychologistDetail({ params }: Props) {
     "@context": "https://schema.org",
     "@graph": [
       {
-        "@type": "ProfilePage",
+        "@type": ["ProfilePage", "MedicalWebPage"],
         "@id": `${canonicalUrl}#webpage`,
         "url": canonicalUrl,
         "name": `${psychologist.name} | MindGood`,
         "description": description,
         "isPartOf": {
-          "@type": "WebSite",
-          "@id": `${siteUrl}#website`,
-          "url": siteUrl,
-          "name": siteName
+          "@id": `${siteUrl}/#website`,
         },
         "mainEntity": {
           "@id": `${canonicalUrl}#person`
@@ -191,6 +188,13 @@ export default async function PsychologistDetail({ params }: Props) {
         "about": {
           "@id": `${canonicalUrl}#person`
         },
+        "reviewedBy": {
+          "@id": `${siteUrl}/#organization`
+        },
+        "lastReviewed": psychologist.verifiedAt || undefined,
+        "medicalSpecialty": specializations,
+        "knowsLanguage": languages,
+        "areaServed": gccAreas,
         "primaryImageOfPage": {
           "@type": "ImageObject",
           "url": imageUrl
@@ -232,12 +236,10 @@ export default async function PsychologistDetail({ params }: Props) {
         "description": psychologist.bio || description,
         "jobTitle": psychologist.title,
         "worksFor": {
-          "@type": "Organization",
-          "name": siteName
+          "@id": `${siteUrl}/#organization`,
         },
         "memberOf": {
-          "@type": "Organization",
-          "name": siteName
+          "@id": `${siteUrl}/#organization`,
         },
         "knowsLanguage": languages,
         "availableLanguage": languages,

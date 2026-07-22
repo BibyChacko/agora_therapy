@@ -161,7 +161,12 @@ const Footer = () => {
               </li>
               <li>
                 <Link href="/medical-review-policy" className="text-gray-600 dark:text-gray-400 hover:text-teal-500 dark:hover:text-teal-500 transition-colors text-sm">
-                  Medical Review Policy
+                  Clinical Review Policy
+                </Link>
+              </li>
+              <li>
+                <Link href="/sources-referencing-policy" className="text-gray-600 dark:text-gray-400 hover:text-teal-500 dark:hover:text-teal-500 transition-colors text-sm">
+                  Sources & Referencing Policy
                 </Link>
               </li>
               <li>

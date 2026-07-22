@@ -2,7 +2,6 @@ import { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { FiUsers, FiGlobe, FiHeart, FiCheck } from 'react-icons/fi';
-import { StructuredData } from '@/components/StructuredData';
 
 export const metadata: Metadata = {
   title: 'About MindGood | Multilingual Therapy for Dubai, UAE & GCC',
@@ -23,7 +22,6 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <>
-      <StructuredData />
       <div className="container mx-auto px-4 py-16">
         {/* Hero Section */}
         <div className="text-center mb-20">

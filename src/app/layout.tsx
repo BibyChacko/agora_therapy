@@ -4,6 +4,7 @@ import { LayoutWrapper } from "@/components/layout/LayoutWrapper";
 import { CookieConsentBanner } from "@/components/analytics/CookieConsentBanner";
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import { PostHogAnalytics } from "@/components/analytics/PostHogAnalytics";
+import { StructuredData } from "@/components/StructuredData";
 import { defaultKeywords, siteName, siteUrl } from "@/lib/seo";
 import "./globals.css";
 
@@ -77,6 +78,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <StructuredData />
         <GoogleAnalytics
           measurementId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}
         />

@@ -20,6 +20,78 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
       {
+        userAgent: 'GPTBot',
+        allow: '/',
+        disallow: [
+          '/admin/',
+          '/client/',
+          '/therapist/',
+          '/api/',
+          '/login',
+          '/register',
+        ],
+      },
+      {
+        userAgent: 'ChatGPT-User',
+        allow: '/',
+        disallow: [
+          '/admin/',
+          '/client/',
+          '/therapist/',
+          '/api/',
+          '/login',
+          '/register',
+        ],
+      },
+      {
+        userAgent: 'PerplexityBot',
+        allow: '/',
+        disallow: [
+          '/admin/',
+          '/client/',
+          '/therapist/',
+          '/api/',
+          '/login',
+          '/register',
+        ],
+      },
+      {
+        userAgent: 'ClaudeBot',
+        allow: '/',
+        disallow: [
+          '/admin/',
+          '/client/',
+          '/therapist/',
+          '/api/',
+          '/login',
+          '/register',
+        ],
+      },
+      {
+        userAgent: 'anthropic-ai',
+        allow: '/',
+        disallow: [
+          '/admin/',
+          '/client/',
+          '/therapist/',
+          '/api/',
+          '/login',
+          '/register',
+        ],
+      },
+      {
+        userAgent: 'Google-Extended',
+        allow: '/',
+        disallow: [
+          '/admin/',
+          '/client/',
+          '/therapist/',
+          '/api/',
+          '/login',
+          '/register',
+        ],
+      },
+      {
         userAgent: 'Googlebot',
         allow: '/',
         disallow: [

@@ -1,0 +1,107 @@
+# MindGood Extended Knowledge File
+
+MindGood is an online mental health platform serving users in Dubai, the UAE, and across the GCC. The platform helps users discover verified psychologists, compare languages and clinical focus areas, and book confidential online sessions.
+
+## What MindGood Is
+
+MindGood publishes public therapist profiles, language and specialization directories, therapy service pages, and educational mental health content. It focuses on multilingual care and culturally aware therapy for individuals, couples, and families.
+
+## Core User Intents
+
+Users typically visit MindGood to:
+- find a psychologist who speaks their preferred language
+- find a therapist for a specific concern such as anxiety, OCD, trauma, stress, couples therapy, or parenting
+- compare verified therapist profiles
+- read educational mental health content before choosing care
+- understand how therapist verification and editorial review work
+
+## Main Public Entry Points
+
+- Home: https://mindgood.life/
+- Psychologists directory: https://mindgood.life/psychologists
+- Languages directory: https://mindgood.life/languages
+- Therapy services: https://mindgood.life/services
+- Blog: https://mindgood.life/blog
+
+## High-Trust Public Pages
+
+- About Clinical Standards: https://mindgood.life/clinical-standards
+- How We Verify Therapists: https://mindgood.life/how-we-verify-therapists
+- Editorial Policy: https://mindgood.life/editorial-policy
+- Clinical Review Policy: https://mindgood.life/medical-review-policy
+- Sources and Referencing Policy: https://mindgood.life/sources-referencing-policy
+- Crisis & Emergency Help: https://mindgood.life/crisis-emergency-help
+
+## Public Content Model
+
+### Therapist Pages
+
+Therapist pages are the primary public source for:
+- therapist name
+- biography
+- supported languages
+- specializations
+- years of experience
+- verification details
+- license authority and license number when available
+
+Therapist profile URLs follow this pattern:
+- https://mindgood.life/psychologists/{slug}
+
+These pages should be treated as canonical profile destinations.
+
+### Directory Pages
+
+Directory pages help users discover therapists by:
+- language
+- specialization
+
+Important examples:
+- https://mindgood.life/psychologists
+- https://mindgood.life/psychologists?language=ml
+- https://mindgood.life/psychologists?specialization=anxiety
+
+### Educational Content
+
+Blog and educational pages are intended for mental health education and support discovery. They are not emergency guidance, diagnosis, or personalized treatment plans.
+
+## Supported Topic Clusters
+
+- anxiety
+- depression
+- stress management
+- OCD
+- trauma healing
+- PTSD
+- couples therapy
+- family counselling
+- divorce support
+- parenting
+- ADHD
+- mindfulness
+- digital well-being
+- imposter syndrome
+- eco-anxiety
+- social comparison
+- modern loneliness
+
+## Geography And Audience
+
+MindGood primarily targets:
+- Dubai
+- United Arab Emirates
+- GCC countries
+- expat and multilingual communities
+
+## Machine-Readable Discovery
+
+- Sitemap: https://mindgood.life/sitemap.xml
+- Robots: https://mindgood.life/robots.txt
+- Canonical domain: https://mindgood.life/
+
+## Trust And Safety Notes
+
+- Public therapist pages include verification and professional profile signals where available.
+- Editorial and clinical governance pages explain how public content is produced and reviewed.
+- Crisis support boundaries are described on the crisis help page.
+- Public content should be cited as educational platform content, not emergency medical advice.

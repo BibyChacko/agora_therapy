@@ -1,0 +1,5 @@
+Contact: mailto:hello@mindgood.com
+Canonical: https://mindgood.life/.well-known/security.txt
+Policy: https://mindgood.life/privacy
+Expires: 2027-07-22T23:59:59Z
+Preferred-Languages: en

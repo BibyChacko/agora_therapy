@@ -1,7 +1,19 @@
 import { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import { FiClock, FiUser, FiTag } from 'react-icons/fi';
+import { FiClock, FiUser, FiTag, FiShield } from 'react-icons/fi';
+import { getBlogPosts } from '@/lib/data/blogPosts';
+import { getLanguageName } from '@/lib/constants/languages';
+
+function formatDisplayDate(value: string) {
+  const date = new Date(value);
+
+  return new Intl.DateTimeFormat('en-AE', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(date);
+}
 
 export const metadata: Metadata = {
   title: 'Mental Health Blog | MindGood',
@@ -9,83 +21,9 @@ export const metadata: Metadata = {
   keywords: 'mental health blog, psychology articles, multilingual mental health resources, Indian languages',
 };
 
-// Mock blog data - in a real app, this would come from a CMS or API
-const blogPosts = [
-  {
-    id: 'managing-workplace-stress',
-    title: 'Managing Workplace Stress in the Modern Era',
-    excerpt: 'Learn effective strategies to handle workplace stress and maintain a healthy work-life balance in today\'s fast-paced professional environment.',
-    image: '/images/blog/mindgood-workplace-stress-relief.jpg',
-    date: 'July 10, 2025',
-    author: 'Dr. Priya Sharma',
-    authorImage: '/images/psychologists/priya-sharma.jpg',
-    category: 'Stress Management',
-    readTime: '5 min read',
-    languages: ['English', 'Hindi', 'Malayalam', 'Tamil', 'Telugu', 'Kannada']
-  },
-  {
-    id: 'understanding-anxiety',
-    title: 'Understanding Anxiety: Signs, Symptoms, and Support',
-    excerpt: 'Recognize the common signs of anxiety disorders and discover coping mechanisms that can help manage symptoms and improve quality of life.',
-    image: '/images/blog/mindfulness-support-mindgood.jpg',
-    date: 'July 5, 2025',
-    author: 'Dr. Anand Kumar',
-    authorImage: '/images/psychologists/anand-kumar.jpg',
-    category: 'Anxiety',
-    readTime: '7 min read',
-    languages: ['English', 'Malayalam', 'Tamil', 'Hindi', 'Telugu', 'Kannada']
-  },
-  {
-    id: 'parenting-challenges',
-    title: 'Navigating Parenting Challenges in the Digital Age',
-    excerpt: 'Explore strategies for effective parenting in an era dominated by technology and social media, while fostering healthy family relationships.',
-    image: '/images/blog/parenting-challenge-digital-era.jpg',
-    date: 'June 28, 2025',
-    author: 'Dr. Lakshmi Nair',
-    authorImage: '/images/psychologists/lakshmi-nair.jpg',
-    category: 'Parenting',
-    readTime: '6 min read',
-    languages: ['English', 'Malayalam', 'Kannada', 'Hindi', 'Tamil', 'Telugu']
-  },
-  {
-    id: 'supporting-learning-disabilities',
-    title: 'Supporting Children with Learning Disabilities: A Guide for Parents',
-    excerpt: 'Practical advice for parents to help children with dyslexia, ADHD, and other learning disabilities thrive academically and socially.',
-    image: '/images/blog/learning-disability-support-mindgood.jpg',
-    date: 'June 20, 2025',
-    author: 'Dr. Rajesh Menon',
-    authorImage: '/images/psychologists/rajesh-menon.jpg',
-    category: 'Specialized',
-    readTime: '8 min read',
-    languages: ['English', 'Tamil', 'Telugu', 'Hindi', 'Malayalam', 'Kannada']
-  },
-  {
-    id: 'career-transitions',
-    title: 'Navigating Career Transitions with Confidence',
-    excerpt: 'Strategies to manage the psychological aspects of career changes, from handling uncertainty to building resilience during professional transitions.',
-    image: '/images/blog/career-transition-support-mindgood.jpg',
-    date: 'June 15, 2025',
-    author: 'Dr. Vikram Desai',
-    authorImage: '/images/psychologists/vikram-desai.jpg',
-    category: 'Modern Life',
-    readTime: '5 min read',
-    languages: ['English', 'Hindi', 'Kannada', 'Malayalam', 'Tamil', 'Telugu']  
-  },
-  {
-    id: 'mindfulness-practices',
-    title: 'Mindfulness Practices for Daily Mental Wellness',
-    excerpt: 'Simple mindfulness techniques that can be incorporated into your daily routine to reduce stress, improve focus, and enhance overall mental wellbeing.',
-    image: '/images/blog/mindfulness-support-mindgood.jpg',
-    date: 'June 8, 2025',
-    author: 'Dr. Meena Krishnan',
-    authorImage: '/images/psychologists/meena-krishnan.jpg',
-    category: 'Wellness',
-    readTime: '4 min read',
-    languages: ['English', 'Tamil', 'Telugu', 'Malayalam', 'Hindi', 'Kannada']
-  }
-];
+export default async function BlogPage() {
+  const blogPosts = await getBlogPosts();
 
-export default function BlogPage() {
   return (
     <div className="container mx-auto px-4 py-12">
       <div className="text-center mb-12">
@@ -110,9 +48,9 @@ export default function BlogPage() {
             <div className="p-8">
               <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 mb-3">
                 <FiClock className="mr-1" />
-                <span className="mr-4">{blogPosts[0].date}</span>
+                <span className="mr-4">{formatDisplayDate(blogPosts[0].publishedAt)}</span>
                 <FiUser className="mr-1" />
-                <span>{blogPosts[0].author}</span>
+                <span>{blogPosts[0].author.name}</span>
               </div>
               
               <h2 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">
@@ -132,9 +70,14 @@ export default function BlogPage() {
                     key={lang}
                     className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full"
                   >
-                    {lang}
+                    {getLanguageName(lang)}
                   </span>
                 ))}
+              </div>
+
+              <div className="mb-6 rounded-2xl bg-gray-50 px-4 py-3 text-sm text-gray-600 dark:bg-gray-800/60 dark:text-gray-300">
+                <div className="font-semibold text-gray-900 dark:text-white">Why this was created</div>
+                <p className="mt-1">{blogPosts[0].whyCreated}</p>
               </div>
               
               <Link 
@@ -167,7 +110,7 @@ export default function BlogPage() {
               <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 mb-3">
                 <FiClock className="mr-1" />
                 <span className="mr-3">{post.readTime}</span>
-                <span>{post.date}</span>
+                <span>{formatDisplayDate(post.publishedAt)}</span>
               </div>
               
               <h3 className="text-xl font-bold mb-3 text-gray-900 dark:text-white">
@@ -185,25 +128,25 @@ export default function BlogPage() {
               </div>
               
               <div className="flex items-center justify-between">
-                {/* <div className="flex items-center">
-                  <div className="relative w-8 h-8 rounded-full overflow-hidden mr-2">
-                    <Image 
-                      src={post.authorImage} 
-                      alt={post.author}
-                      fill
-                      className="object-cover"
-                    />
+                <div className="min-w-0 pr-3">
+                  <div className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                    {post.author.name}
                   </div>
-                  <span className="text-sm text-gray-700 dark:text-gray-300">{post.author}</span>
-                </div> */}
-                
-                <div className="flex gap-1">
+                  {post.reviewer ? (
+                    <div className="mt-1 inline-flex items-center gap-1 text-xs text-sky-700 dark:text-sky-300">
+                      <FiShield className="h-3.5 w-3.5" />
+                      Reviewed by {post.reviewer.name}
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="flex gap-1 flex-shrink-0">
                   {post.languages.slice(0, 2).map((lang) => (
                     <span 
                       key={lang}
                       className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full"
                     >
-                      {lang}
+                      {getLanguageName(lang)}
                     </span>
                   ))}
                   {post.languages.length > 2 && (

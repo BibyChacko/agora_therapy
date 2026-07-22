@@ -15,6 +15,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '/how-we-verify-therapists',
     '/editorial-policy',
     '/medical-review-policy',
+    '/sources-referencing-policy',
     '/crisis-emergency-help',
     '/services',
     '/psychologists',
@@ -87,7 +88,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const blogRoutes = blogPosts.map((post) => ({
     url: `${baseUrl}/blog/${post.id}`,
-    lastModified: new Date(),
+    lastModified: new Date(post.lastReviewedAt || post.publishedAt),
     changeFrequency: 'monthly' as const,
     priority: 0.6,
   }));
