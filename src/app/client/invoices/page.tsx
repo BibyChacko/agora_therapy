@@ -1,16 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { ClientLayout } from "@/components/client/ClientLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { 
   FileText, 
   Download, 
-  Calendar, 
-  DollarSign,
   CheckCircle,
   Clock,
   XCircle
@@ -91,6 +91,14 @@ export default function InvoicesPage() {
     return appointment.therapist?.name || appointment.therapistId || "Therapist";
   };
 
+  const getTherapistProfileHref = (appointment: Appointment) => {
+    return `/psychologists/${appointment.therapist?.id || appointment.therapistId}`;
+  };
+
+  const getTherapistInitial = (appointment: Appointment) => {
+    return getTherapistDisplayName(appointment).trim().charAt(0).toUpperCase() || "T";
+  };
+
   const formatInvoiceAmount = (appointment: Appointment) => {
     return formatAmountFromMinorUnits(
       appointment.payment?.amount,
@@ -147,63 +155,68 @@ export default function InvoicesPage() {
 
   return (
     <ClientLayout>
-      <div className="space-y-8">
+      <div className="space-y-5 pb-32 sm:space-y-6 sm:pb-36 lg:space-y-8 lg:pb-0">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Invoices</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Invoices</h1>
+          <p className="mt-2 max-w-2xl text-sm text-gray-600 sm:text-base">
             View and download your payment invoices
           </p>
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="border border-blue-200/60 bg-white shadow-sm hover:shadow-lg transition-all duration-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 lg:gap-6">
+          <Card className="overflow-hidden rounded-[1.1rem] border border-blue-200/60 bg-white shadow-[0_8px_18px_rgba(37,99,235,0.06)] transition-all duration-300 hover:shadow-lg">
+            <CardContent className="px-3 py-2.5 sm:px-4 sm:py-3">
+              <div className="flex flex-col gap-1.5">
+                <div className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-blue-400 to-blue-600 shadow-sm sm:h-9 sm:w-9">
+                  <FileText className="h-3 w-3 text-white sm:h-4 sm:w-4" />
+                </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-2">
-                    Total Invoices
+                  <p className="mb-0.5 text-[8px] font-semibold uppercase leading-3 tracking-[0.06em] text-gray-500 sm:text-[11px] sm:tracking-[0.08em]">
+                    <span className="sm:hidden">Invoices</span>
+                    <span className="hidden sm:inline">Total Invoices</span>
                   </p>
-                  <p className="text-3xl font-bold text-gray-900">
+                  <p className="text-[0.95rem] font-bold leading-none text-gray-900 sm:text-[1.35rem]">
                     {appointments.length}
                   </p>
                 </div>
-                <div className="w-14 h-14 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
-                  <FileText className="h-7 w-7 text-white" />
-                </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border border-blue-200/60 bg-white shadow-sm hover:shadow-lg transition-all duration-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
+          <Card className="overflow-hidden rounded-[1.1rem] border border-blue-200/60 bg-white shadow-[0_8px_18px_rgba(37,99,235,0.06)] transition-all duration-300 hover:shadow-lg">
+            <CardContent className="px-3 py-2.5 sm:px-4 sm:py-3">
+              <div className="flex flex-col gap-1.5">
+                <div className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-green-400 to-green-600 shadow-sm sm:h-9 sm:w-9">
+                  <CheckCircle className="h-3 w-3 text-white sm:h-4 sm:w-4" />
+                </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-2">Total Paid</p>
-                  <p className="text-3xl font-bold text-gray-900">
+                  <p className="mb-0.5 text-[8px] font-semibold uppercase leading-3 tracking-[0.06em] text-gray-500 sm:text-[11px] sm:tracking-[0.08em]">
+                    <span className="sm:hidden">Paid</span>
+                    <span className="hidden sm:inline">Total Paid</span>
+                  </p>
+                  <p className="truncate text-[0.82rem] font-bold leading-none text-gray-900 sm:text-[1.2rem]">
                     ${totalPaid.toFixed(2)}
                   </p>
                 </div>
-                <div className="w-14 h-14 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center shadow-md">
-                  <CheckCircle className="h-7 w-7 text-white" />
-                </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border border-blue-200/60 bg-white shadow-sm hover:shadow-lg transition-all duration-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
+          <Card className="overflow-hidden rounded-[1.1rem] border border-blue-200/60 bg-white shadow-[0_8px_18px_rgba(37,99,235,0.06)] transition-all duration-300 hover:shadow-lg">
+            <CardContent className="px-3 py-2.5 sm:px-4 sm:py-3">
+              <div className="flex flex-col gap-1.5">
+                <div className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-orange-400 to-orange-600 shadow-sm sm:h-9 sm:w-9">
+                  <Clock className="h-3 w-3 text-white sm:h-4 sm:w-4" />
+                </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-2">
-                    Total Pending
+                  <p className="mb-0.5 text-[8px] font-semibold uppercase leading-3 tracking-[0.06em] text-gray-500 sm:text-[11px] sm:tracking-[0.08em]">
+                    <span className="sm:hidden">Pending</span>
+                    <span className="hidden sm:inline">Total Pending</span>
                   </p>
-                  <p className="text-3xl font-bold text-gray-900">
+                  <p className="truncate text-[0.82rem] font-bold leading-none text-gray-900 sm:text-[1.2rem]">
                     ${totalPending.toFixed(2)}
                   </p>
-                </div>
-                <div className="w-14 h-14 bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl flex items-center justify-center shadow-md">
-                  <Clock className="h-7 w-7 text-white" />
                 </div>
               </div>
             </CardContent>
@@ -213,11 +226,11 @@ export default function InvoicesPage() {
         {/* Invoices List */}
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100">
               <FileText className="h-5 w-5 text-purple-600" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">All Invoices</h2>
+              <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">All Invoices</h2>
               <p className="text-sm text-gray-600">{appointments.length} total invoices</p>
             </div>
           </div>
@@ -242,74 +255,100 @@ export default function InvoicesPage() {
               const StatusIcon = paymentStatus.icon;
 
               return (
-                <Card key={appointment.id} className="border border-blue-200/60 bg-white shadow-sm hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                      {/* Left Section - Invoice Details */}
-                      <div className="flex-1 space-y-4">
-                        {/* Header */}
-                        <div className="flex items-start gap-3">
-                          <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Card
+                  key={appointment.id}
+                  className="overflow-hidden rounded-[1.4rem] border border-blue-200/60 bg-white shadow-[0_12px_30px_rgba(37,99,235,0.08)] transition-shadow hover:shadow-[0_16px_36px_rgba(37,99,235,0.12)]"
+                >
+                  <CardContent className="px-4 py-1 sm:px-5 sm:py-1 lg:px-6 lg:py-1">
+                    <div className="space-y-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex min-w-0 items-start gap-3">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-100">
                             <FileText className="h-5 w-5 text-purple-600" />
                           </div>
-                          <div className="flex-1">
-                            <h3 className="text-lg font-semibold text-gray-900">
+                          <div className="min-w-0">
+                            <h3 className="text-base font-semibold text-gray-900 sm:text-lg">
                               Invoice #{appointment.id.substring(0, 8).toUpperCase()}
                             </h3>
-                            <p className="text-sm text-gray-600 mt-1">
+                            <p className="mt-1 text-sm text-gray-600">
                               {formatDate(appointment.scheduledFor)} at {formatTime(appointment.scheduledFor)}
                             </p>
                           </div>
                         </div>
+                        <Badge className={`${paymentStatus.color} rounded-full px-2.5 py-1 text-[10px] font-semibold sm:text-xs`}>
+                          <StatusIcon className="mr-1 h-3 w-3" />
+                          {paymentStatus.text}
+                        </Badge>
+                      </div>
 
-                        {/* Details Grid */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pl-13">
-                          <div>
-                            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Therapist</p>
-                            <p className="font-medium text-gray-900">{getTherapistDisplayName(appointment)}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Session Type</p>
-                            <p className="font-medium text-gray-900 capitalize">
-                              {appointment.session?.type || "Individual"}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Duration</p>
-                            <p className="font-medium text-gray-900">{appointment.duration} min</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Amount</p>
-                            <div className="flex items-center gap-2">
-                              <span className="text-lg font-bold text-gray-900">
-                                {formatInvoiceAmount(appointment)}
-                              </span>
-                              <Badge className={paymentStatus.color}>
-                                <StatusIcon className="h-3 w-3 mr-1" />
-                                {paymentStatus.text}
-                              </Badge>
-                            </div>
-                          </div>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-[1.1rem] bg-slate-50/80 p-3">
+                        <div className="min-w-0">
+                          <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Therapist</p>
+                          <Link
+                            href={getTherapistProfileHref(appointment)}
+                            className="flex items-center gap-2 text-slate-900 transition-colors hover:text-teal-700"
+                          >
+                            {appointment.therapist?.image ? (
+                              <Image
+                                src={appointment.therapist.image}
+                                alt={getTherapistDisplayName(appointment)}
+                                width={40}
+                                height={40}
+                                className="h-10 w-10 rounded-xl object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500 text-sm font-semibold text-white">
+                                {getTherapistInitial(appointment)}
+                              </div>
+                            )}
+                            <span className="min-w-0 font-medium leading-5">
+                              {getTherapistDisplayName(appointment)}
+                            </span>
+                          </Link>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Session Type</p>
+                          <p className="font-medium capitalize text-slate-900">
+                            {appointment.session?.type || "Individual"}
+                          </p>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Duration</p>
+                          <p className="font-medium text-slate-900">{appointment.duration} min</p>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Amount</p>
+                          <p className="text-lg font-bold text-slate-900">
+                            {formatInvoiceAmount(appointment)}
+                          </p>
                         </div>
                       </div>
 
-                      {/* Right Section - Action Button */}
-                      <div className="flex lg:flex-col gap-2">
+                      <div className="flex items-center justify-between gap-3 rounded-[1rem] border border-slate-200 bg-white px-3 py-3">
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+                            Payment
+                          </p>
+                          <p className="mt-1 text-sm font-medium text-slate-900">
+                            {appointment.payment?.currency?.toUpperCase() || "USD"} invoice ready
+                          </p>
+                        </div>
                         <Button
                           onClick={() => handleDownloadInvoice(appointment)}
                           variant="outline"
-                          className="border-blue-300 hover:bg-blue-50 w-full lg:w-auto"
+                          size="icon"
+                          className="h-10 w-10 shrink-0 rounded-xl border-blue-200 hover:bg-blue-50"
+                          aria-label={`Download invoice ${appointment.id.substring(0, 8).toUpperCase()}`}
                         >
-                          <Download className="h-4 w-4 mr-2" />
-                          Download
+                          <Download className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-            );
-          })
-        )}
+              );
+            })
+          )}
         </div>
       </div>
     </ClientLayout>

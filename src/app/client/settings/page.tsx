@@ -9,6 +9,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { 
   User, 
   Bell, 
@@ -16,16 +26,18 @@ import {
   CreditCard,
   Save,
   Mail,
-  Phone
+  Phone,
+  LogOut,
 } from "lucide-react";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useToast } from "@/lib/hooks/useToast";
 import { Badge } from "@/components/ui/badge";
 
 export default function SettingsPage() {
-  const { user, userData } = useAuth();
+  const { user, userData, signOut } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   // Profile settings
   const [firstName, setFirstName] = useState("");
@@ -92,15 +104,36 @@ export default function SettingsPage() {
     toast.success("Email Sent", "Password reset link has been sent to your email");
   };
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Error signing out:", error);
+      toast.error("Sign Out Failed", "Please try again.");
+    }
+  };
+
   return (
     <ClientLayout>
       <div className="space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-          <p className="text-gray-600 mt-2">
-            Manage your account settings and preferences
+          <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
+          <p className="mt-2 text-gray-600">
+            Manage your profile, preferences, and account details
           </p>
+        </div>
+
+        <div className="lg:hidden">
+          <Button
+            variant="outline"
+            onClick={() => setShowLogoutDialog(true)}
+            className="min-h-11 w-full justify-center border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            Log out
+          </Button>
         </div>
 
         {/* Grid Layout */}
@@ -337,6 +370,26 @@ export default function SettingsPage() {
         </div>
         </div>
       </div>
+
+      <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to log out?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You will be redirected to the home page and will need to log in again to access your account.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleSignOut}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Log out
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </ClientLayout>
   );
 }

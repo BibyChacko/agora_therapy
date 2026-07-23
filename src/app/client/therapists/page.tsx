@@ -1,253 +1,137 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { ClientLayout } from "@/components/client/ClientLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { 
-  Search, 
-  MapPin, 
-  Star, 
-  Calendar, 
-  DollarSign,
-  Filter,
-  Clock
-} from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
-import { TherapistService } from "@/lib/services/therapist-service";
-import { TherapistProfile } from "@/types/database";
+import { FileSearch } from "lucide-react";
+import { ClientLayout } from "@/components/client/ClientLayout";
+import { ClientTherapistsControls } from "@/components/client/ClientTherapistsControls";
+import { TherapistCard } from "@/components/psychologists/TherapistCard";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { getPublicTherapists } from "@/lib/services/public-therapist-service";
 
-export default function TherapistsPage() {
-  const [therapists, setTherapists] = useState<TherapistProfile[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedSpecialty, setSelectedSpecialty] = useState<string>("all");
+type PageProps = {
+  searchParams: Promise<{
+    q?: string;
+    specialization?: string;
+    language?: string;
+    minExperience?: string;
+    location?: string;
+  }>;
+};
 
-  useEffect(() => {
-    loadTherapists();
-  }, []);
+function matchesSearch(
+  therapist: Awaited<ReturnType<typeof getPublicTherapists>>[number],
+  query: string
+) {
+  if (!query) {
+    return true;
+  }
 
-  const loadTherapists = async () => {
-    try {
-      setLoading(true);
-      const data = await TherapistService.searchTherapists({});
-      setTherapists(data);
-    } catch (error) {
-      console.error("Error loading therapists:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const normalizedQuery = query.toLowerCase();
+  const searchableText = [
+    therapist.name,
+    therapist.title,
+    therapist.bio,
+    therapist.location,
+    therapist.languages.join(" "),
+    therapist.specializations.join(" "),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
 
-  const specialties = [
-    "all",
-    "Anxiety",
-    "Depression",
-    "Relationships",
-    "Trauma",
-    "Stress",
-    "Family",
-  ];
+  return searchableText.includes(normalizedQuery);
+}
 
-  const filteredTherapists = therapists.filter((therapist) => {
-    const matchesSearch =
-      searchQuery === "" ||
-      therapist.practice?.bio?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      therapist.credentials?.specializations?.some((s: string) =>
-        s.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+export default async function ClientTherapistsPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const searchQuery = (params.q || "").trim();
 
-    const matchesSpecialty =
-      selectedSpecialty === "all" ||
-      therapist.credentials?.specializations?.includes(selectedSpecialty);
-
-    return matchesSearch && matchesSpecialty;
+  const therapists = await getPublicTherapists({
+    specialization: params.specialization,
+    language: params.language,
+    minExperience: params.minExperience,
+    location: params.location,
   });
 
-  if (loading) {
-    return (
-      <ClientLayout>
-        <div className="flex justify-center items-center h-64">
-          <LoadingSpinner size="lg" />
-        </div>
-      </ClientLayout>
-    );
-  }
+  const filteredTherapists = therapists.filter((therapist) =>
+    matchesSearch(therapist, searchQuery)
+  );
 
   return (
     <ClientLayout>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Find a Therapist
-        </h1>
-        <p className="text-lg text-gray-600">
-          Browse our qualified therapists and book your session
-        </p>
-      </div>
+      <div className="space-y-5 pb-32 sm:space-y-6 sm:pb-36 lg:space-y-8 lg:pb-0">
+        <div className="rounded-[2rem] border border-teal-100 bg-[linear-gradient(135deg,_#f0fdfa_0%,_#ecfeff_48%,_#fdf2f8_100%)] px-5 py-6 shadow-[0_20px_60px_rgba(15,118,110,0.10)] sm:px-7 sm:py-8">
+          <h1 className="text-2xl font-black tracking-tight text-slate-950 sm:text-4xl">
+            Find Your Therapist
+          </h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+            Browse the same verified therapist directory available on the web, then narrow it down by language, concern, experience, or a quick search.
+          </p>
+          <p className="mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-teal-700 sm:text-sm">
+            {filteredTherapists.length} therapist
+            {filteredTherapists.length === 1 ? "" : "s"} available
+          </p>
+        </div>
 
-      {/* Search and Filter */}
-      <div className="mb-6 space-y-4">
-        <div className="flex gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            <Input
-              type="text"
-              placeholder="Search by name or specialization..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+        <div className="grid gap-6 lg:grid-cols-4 lg:gap-8">
+          <div className="lg:col-span-1">
+            <ClientTherapistsControls
+              initialFilters={{
+                q: searchQuery,
+                specialization: params.specialization || "",
+                language: params.language || "",
+                minExperience: params.minExperience || "",
+                location: params.location || "",
+              }}
             />
           </div>
-          <Button variant="outline" className="flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            Filters
-          </Button>
-        </div>
 
-        {/* Specialty Filter */}
-        <div className="flex gap-2 flex-wrap">
-          {specialties.map((specialty) => (
-            <Badge
-              key={specialty}
-              variant={selectedSpecialty === specialty ? "default" : "outline"}
-              className="cursor-pointer"
-              onClick={() => setSelectedSpecialty(specialty)}
-            >
-              {specialty.charAt(0).toUpperCase() + specialty.slice(1)}
-            </Badge>
-          ))}
-        </div>
-      </div>
-
-      {/* Results Count */}
-      <div className="mb-4 text-sm text-gray-600">
-        Showing {filteredTherapists.length} therapist
-        {filteredTherapists.length !== 1 ? "s" : ""}
-      </div>
-
-      {/* Therapists Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredTherapists.map((therapist) => (
-          <Card key={therapist.id} className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center overflow-hidden">
-                    {therapist.photoURL ? (
-                      <Image
-                        src={therapist.photoURL}
-                        alt="Therapist"
-                        width={64}
-                        height={64}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-white font-bold text-xl">
-                        T
-                      </span>
-                    )}
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg">
-                      Dr. Therapist
-                    </CardTitle>
-                    <div className="flex items-center gap-1 mt-1">
-                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      <span className="text-sm font-medium">5.0</span>
-                      <span className="text-sm text-gray-500">(0)</span>
-                    </div>
-                  </div>
-                </div>
+          <div className="space-y-5 lg:col-span-3">
+            <div className="flex flex-col gap-3 rounded-[1.6rem] border border-slate-200 bg-white px-4 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-950 sm:text-xl">
+                  Therapist matches
+                </h2>
+                <p className="mt-1 text-sm text-slate-600">
+                  {searchQuery
+                    ? `Showing ${filteredTherapists.length} result${filteredTherapists.length === 1 ? "" : "s"} for "${searchQuery}".`
+                    : `Showing ${filteredTherapists.length} verified therapist${filteredTherapists.length === 1 ? "" : "s"}.`}
+                </p>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {/* Specializations */}
-                <div>
-                  <p className="text-sm font-medium text-gray-700 mb-2">
-                    Specializations
-                  </p>
-                  <div className="flex flex-wrap gap-1">
-                    {therapist.credentials?.specializations?.slice(0, 3).map((spec: string) => (
-                      <Badge key={spec} variant="secondary" className="text-xs">
-                        {spec}
-                      </Badge>
-                    ))}
-                    {(therapist.credentials?.specializations?.length || 0) > 3 && (
-                      <Badge variant="secondary" className="text-xs">
-                        +{(therapist.credentials?.specializations?.length || 0) - 3} more
-                      </Badge>
-                    )}
+
+              {searchQuery || params.specialization || params.language || params.minExperience || params.location ? (
+                <Button asChild variant="outline" className="h-11 rounded-xl border-slate-200">
+                  <Link href="/client/therapists">Clear search</Link>
+                </Button>
+              ) : null}
+            </div>
+
+            {filteredTherapists.length === 0 ? (
+              <Card className="rounded-[1.8rem] border border-slate-200 bg-white shadow-sm">
+                <CardContent className="flex flex-col items-center px-6 py-12 text-center">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+                    <FileSearch className="h-7 w-7" />
                   </div>
-                </div>
-
-                {/* Experience */}
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Clock className="h-4 w-4" />
-                  <span>{therapist.practice?.yearsExperience || 5}+ years experience</span>
-                </div>
-
-                {/* Languages */}
-                {therapist.practice?.languages && therapist.practice.languages.length > 0 && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <MapPin className="h-4 w-4" />
-                    <span>{therapist.practice.languages.join(", ")}</span>
-                  </div>
-                )}
-
-                {/* Price */}
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <DollarSign className="h-4 w-4" />
-                  <span>
-                    ${therapist.practice?.hourlyRate || 100}/session
-                  </span>
-                </div>
-
-                {/* Bio Preview */}
-                {therapist.practice?.bio && (
-                  <p className="text-sm text-gray-600 line-clamp-2">
-                    {therapist.practice.bio}
+                  <h3 className="mt-4 text-lg font-semibold text-slate-950">
+                    No therapists found
+                  </h3>
+                  <p className="mt-2 max-w-md text-sm leading-6 text-slate-600">
+                    Try adjusting your search, language, specialization, or experience filters to explore more therapist matches.
                   </p>
-                )}
-
-                {/* Actions */}
-                <div className="flex gap-2 pt-2">
-                  <Button asChild className="flex-1">
-                    <Link href={`/client/therapists/${therapist.id}`}>
-                      View Profile
-                    </Link>
+                  <Button asChild className="mt-5 rounded-xl bg-teal-600 px-5 text-white hover:bg-teal-700">
+                    <Link href="/client/therapists">Reset filters</Link>
                   </Button>
-                  <Button asChild variant="outline" className="flex-1">
-                    <Link href={`/client/book/${therapist.id}`}>
-                      <Calendar className="h-4 w-4 mr-2" />
-                      Book
-                    </Link>
-                  </Button>
-                </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {filteredTherapists.map((therapist) => (
+                  <TherapistCard key={therapist.id} therapist={therapist} />
+                ))}
               </div>
-            </CardContent>
-          </Card>
-        ))}
+            )}
+          </div>
+        </div>
       </div>
-
-      {/* Empty State */}
-      {filteredTherapists.length === 0 && (
-        <Card>
-          <CardContent className="text-center py-12">
-            <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No therapists found
-            </h3>
-            <p className="text-gray-600">
-              Try adjusting your search or filters
-            </p>
-          </CardContent>
-        </Card>
-      )}
     </ClientLayout>
   );
 }

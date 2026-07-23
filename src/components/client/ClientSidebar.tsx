@@ -10,6 +10,7 @@ import {
   Users,
   FileText,
   Settings,
+  User,
   LogOut,
   Sparkles,
 } from "lucide-react";
@@ -83,6 +84,11 @@ const mobileDockItems = [
     name: "Invoices",
     href: "/client/invoices",
     icon: FileText,
+  },
+  {
+    name: "Profile",
+    href: "/client/settings",
+    icon: User,
   },
 ];
 
@@ -267,7 +273,7 @@ export function ClientSidebar() {
       </aside>
 
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-800 bg-slate-950 px-2 py-2 shadow-[0_-12px_32px_rgba(15,23,42,0.18)] lg:hidden">
-        <ul className="grid grid-cols-4 items-center gap-1">
+        <ul className="grid grid-cols-5 items-center gap-1">
           {mobileDockItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
@@ -277,7 +283,7 @@ export function ClientSidebar() {
                 <Link
                   href={item.href}
                   className={cn(
-                    "flex flex-col items-center justify-center rounded-[1.4rem] px-2 py-2 text-[11px] font-medium transition-colors",
+                    "flex min-h-11 flex-col items-center justify-center rounded-[1.2rem] px-1.5 py-2 text-[10px] font-medium transition-colors",
                     isActive
                       ? "bg-teal-500 text-white"
                       : "text-slate-300 hover:bg-white/10 hover:text-white"
