@@ -1,14 +1,10 @@
-/**
- * Client Profile View
- * Profile-focused dashboard for clients
- */
-
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { ClientLayout } from "@/components/client/ClientLayout";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -16,26 +12,72 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useAuth } from "@/lib/hooks/useAuth";
 import {
   LoadingSpinner,
   PageLoadingSpinner,
 } from "@/components/ui/loading-spinner";
-import { 
-  Calendar, 
-  Clock, 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin,
-  Edit,
-  CheckCircle,
-  Video,
-  FileText
-} from "lucide-react";
-import Link from "next/link";
+import { useAuth } from "@/lib/hooks/useAuth";
 import { AppointmentService } from "@/lib/services/appointment-service";
 import { Appointment } from "@/types/database";
+import {
+  ArrowRight,
+  Calendar,
+  CheckCircle2,
+  Clock3,
+  FileText,
+  HeartHandshake,
+  Mail,
+  MapPin,
+  Phone,
+  Sparkles,
+  User,
+  Video,
+} from "lucide-react";
+
+function formatAppointmentDate(value: unknown) {
+  const candidate = value as { toDate?: () => Date } | Date | string | number;
+  const date =
+    typeof candidate === "object" && candidate !== null && "toDate" in candidate
+      ? candidate.toDate?.()
+      : new Date(candidate as string | number | Date);
+
+  if (!date || Number.isNaN(date.getTime())) {
+    return "Date to be confirmed";
+  }
+
+  return date.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function formatAppointmentTime(value: unknown) {
+  const candidate = value as { toDate?: () => Date } | Date | string | number;
+  const date =
+    typeof candidate === "object" && candidate !== null && "toDate" in candidate
+      ? candidate.toDate?.()
+      : new Date(candidate as string | number | Date);
+
+  if (!date || Number.isNaN(date.getTime())) {
+    return "Time to be confirmed";
+  }
+
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function getDateValue(value: unknown) {
+  const candidate = value as { toDate?: () => Date } | Date | string | number;
+  const date =
+    typeof candidate === "object" && candidate !== null && "toDate" in candidate
+      ? candidate.toDate?.()
+      : new Date(candidate as string | number | Date);
+
+  return date && !Number.isNaN(date.getTime()) ? date : null;
+}
 
 export default function ClientDashboard() {
   const { user, userData, loading } = useAuth();
@@ -61,377 +103,416 @@ export default function ClientDashboard() {
     }
   };
 
-  const upcomingAppointments = appointments.filter(
-    (apt) => {
-      const timestamp = apt.scheduledFor as any;
-      const appointmentDate = timestamp?.toDate?.() || new Date(timestamp);
-      return appointmentDate > new Date() && apt.status !== "cancelled";
-    }
-  );
-
-  const completedSessions = appointments.filter(
-    (apt) => apt.status === "completed"
-  ).length;
-
-  // Log userData to debug createdAt issue
-  useEffect(() => {
-    if (userData) {
-      console.log("🔍 ClientDashboard - Full userData:", JSON.stringify(userData, null, 2));
-      console.log("🔍 ClientDashboard - metadata:", userData.metadata);
-      console.log("🔍 ClientDashboard - createdAt:", userData.metadata?.createdAt);
-      console.log("🔍 ClientDashboard - createdAt type:", typeof userData.metadata?.createdAt);
-      console.log("🔍 ClientDashboard - createdAt constructor:", userData.metadata?.createdAt?.constructor?.name);
-    }
-  }, [userData]);
-
   if (loading) {
-    return <PageLoadingSpinner text="Loading your profile..." />;
+    return <PageLoadingSpinner text="Loading your dashboard..." />;
   }
 
   if (!user || !userData) {
     return null;
   }
 
-  // Daily affirmations and positive thoughts
-  const dailyAffirmations = [
-    { text: "You are worthy of love, care, and healing.", emoji: "💖" },
-    { text: "Every step you take towards wellness is a victory.", emoji: "🌟" },
-    { text: "Your feelings are valid, and it's okay to not be okay.", emoji: "🤗" },
-    { text: "You are stronger than you know, braver than you believe.", emoji: "💪" },
-    { text: "Healing is not linear, and that's perfectly okay.", emoji: "🌈" },
-    { text: "You deserve peace, happiness, and inner calm.", emoji: "🕊️" },
-    { text: "Taking care of your mental health is a sign of strength.", emoji: "🌸" },
+  const now = new Date();
+  const upcomingAppointments = appointments
+    .filter((appointment) => {
+      const appointmentDate = getDateValue(appointment.scheduledFor);
+      return appointmentDate && appointmentDate > now && appointment.status !== "cancelled";
+    })
+    .sort((a, b) => {
+      const first = getDateValue(a.scheduledFor)?.getTime() || 0;
+      const second = getDateValue(b.scheduledFor)?.getTime() || 0;
+      return first - second;
+    });
+
+  const nextAppointment = upcomingAppointments[0] || null;
+  const completedSessions = appointments.filter(
+    (appointment) => appointment.status === "completed"
+  ).length;
+  const totalSessions = appointments.length;
+
+  const profileSignals = [
+    Boolean(userData.profile?.firstName),
+    Boolean(userData.profile?.lastName),
+    Boolean(userData.email),
+    Boolean(userData.profile?.phoneNumber),
+    Boolean(userData.profile?.timezone),
+  ];
+  const profileCompletion = Math.round(
+    (profileSignals.filter(Boolean).length / profileSignals.length) * 100
+  );
+
+  const stats = [
+    {
+      label: "Total sessions",
+      value: totalSessions,
+      helper: totalSessions === 0 ? "Your journey starts here" : "All booked sessions",
+      icon: Video,
+      tone: "from-teal-500 to-cyan-500",
+    },
+    {
+      label: "Completed",
+      value: completedSessions,
+      helper:
+        completedSessions === 0 ? "Your first milestone is ahead" : "Sessions finished successfully",
+      icon: CheckCircle2,
+      tone: "from-emerald-500 to-green-500",
+    },
+    {
+      label: "Upcoming",
+      value: upcomingAppointments.length,
+      helper:
+        upcomingAppointments.length === 0 ? "No future sessions booked" : "Planned check-ins ahead",
+      icon: Calendar,
+      tone: "from-amber-500 to-orange-500",
+    },
+    {
+      label: "Profile complete",
+      value: `${profileCompletion}%`,
+      helper: "Keep your details ready for smoother care",
+      icon: Sparkles,
+      tone: "from-fuchsia-500 to-pink-500",
+    },
   ];
 
-  const wellnessTips = [
-    { title: "Breathe Deeply", tip: "Take 5 deep breaths when feeling overwhelmed", icon: "🫁" },
-    { title: "Stay Hydrated", tip: "Drink water - it helps your mind and body", icon: "💧" },
-    { title: "Move Gently", tip: "A short walk can lift your spirits", icon: "🚶" },
-    { title: "Rest Well", tip: "Quality sleep is essential for mental health", icon: "😴" },
+  const accountItems = [
+    {
+      label: "Email",
+      value: userData.email || "Not added",
+      icon: Mail,
+    },
+    {
+      label: "Phone",
+      value: userData.profile?.phoneNumber || "Add a contact number",
+      icon: Phone,
+    },
+    {
+      label: "Timezone",
+      value: userData.profile?.timezone || "Not set",
+      icon: Clock3,
+    },
+    {
+      label: "Locale",
+      value: userData.profile?.locale || "en-US",
+      icon: MapPin,
+    },
   ];
 
-  // Get today's affirmation (changes daily)
-  const todayIndex = new Date().getDate() % dailyAffirmations.length;
-  const todayAffirmation = dailyAffirmations[todayIndex];
+  const wellnessNotes = [
+    "Small, consistent check-ins often work better than waiting for the perfect moment.",
+    "A quiet five-minute reset still counts as meaningful self-care.",
+    "Your therapist can help adjust the pace whenever life feels heavy.",
+  ];
 
   return (
     <ClientLayout>
-      <div className="space-y-8">
-        {/* Warm Welcome Section with Affirmation */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-teal-50 via-blue-50 to-purple-50 border-2 border-teal-200 p-6 shadow-lg">
-          <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-3">
-              <span className="text-4xl animate-bounce-slow">🌻</span>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-teal-600 to-blue-600 bg-clip-text text-transparent">
-                Welcome back, {userData.profile?.firstName}!
-              </h1>
-            </div>
-            <p className="text-gray-700 text-lg mb-4">
-              We're so glad you're here. Your wellness journey matters. ✨
-            </p>
-            
-            {/* Daily Affirmation */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-teal-200 shadow-md">
-              <div className="flex items-start gap-3">
-                <span className="text-3xl mt-1">{todayAffirmation.emoji}</span>
-                <div>
-                  <p className="text-sm font-semibold text-teal-600 mb-1">💫 Today's Affirmation</p>
-                  <p className="text-gray-800 font-medium italic leading-relaxed">
-                    "{todayAffirmation.text}"
-                  </p>
-                </div>
+      <div className="space-y-5 sm:space-y-6 lg:space-y-8">
+        <section className="overflow-hidden rounded-[2rem] border border-teal-100 bg-[linear-gradient(135deg,_#f0fdfa_0%,_#ecfeff_42%,_#fdf2f8_100%)] shadow-[0_20px_60px_rgba(15,118,110,0.10)]">
+          <div className="grid gap-6 px-5 py-6 sm:px-7 sm:py-8 lg:grid-cols-[minmax(0,1.5fr)_minmax(320px,0.9fr)] lg:px-8">
+            <div className="space-y-4">
+              <Badge className="w-fit rounded-full bg-white/90 px-3 py-1 text-teal-700 shadow-sm">
+                Your care space
+              </Badge>
+              <div className="space-y-2">
+                <h1 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
+                  Welcome back, {userData.profile?.firstName || "there"}
+                </h1>
+                <p className="max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+                  Keep track of upcoming appointments, stay organized, and pick up your next step in therapy without digging through menus.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <Link href="/client/therapists">
+                  <Button className="min-h-11 rounded-full bg-teal-600 px-5 text-white hover:bg-teal-700">
+                    Find a therapist
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link href="/client/appointments">
+                  <Button
+                    variant="outline"
+                    className="min-h-11 rounded-full border-white/80 bg-white/70 px-5 text-slate-800 hover:bg-white"
+                  >
+                    View appointments
+                  </Button>
+                </Link>
               </div>
             </div>
-          </div>
-          
-          {/* Decorative Elements */}
-          <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-200/20 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-40 h-40 bg-pink-200/20 rounded-full blur-3xl"></div>
-        </div>
 
-        {/* Your Progress Journey - Motivational Stats */}
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-2xl">🌱</span>
-            <h2 className="text-2xl font-bold text-gray-800">Your Growth Journey</h2>
-          </div>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {/* Total Sessions - Progress Card */}
-            <Card className="border-2 border-teal-200 bg-gradient-to-br from-teal-50 to-cyan-50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-teal-700 mb-1">Total Sessions</p>
-                    <p className="text-4xl font-bold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
-                      {appointments.length}
-                    </p>
-                  </div>
-                  <div className="w-16 h-16 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg">
-                    <Video className="h-8 w-8 text-white" />
-                  </div>
-                </div>
-                <div className="mt-3 pt-3 border-t border-teal-200">
-                  <p className="text-xs font-medium text-teal-600 flex items-center gap-1">
-                    <span>✨</span>
-                    {appointments.length === 0 ? "Your journey begins here!" : 
-                     appointments.length === 1 ? "Great start! First step taken 🎉" :
-                     appointments.length < 5 ? "Building momentum! Keep going 💪" :
-                     appointments.length < 10 ? "Amazing progress! You're committed 🌟" :
-                     "Incredible dedication! You're thriving 🚀"}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Completed Sessions - Achievement Card */}
-            <Card className="border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-green-700 mb-1">Completed</p>
-                    <p className="text-4xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                      {completedSessions}
-                    </p>
-                  </div>
-                  <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg">
-                    <CheckCircle className="h-8 w-8 text-white" />
-                  </div>
-                </div>
-                <div className="mt-3 pt-3 border-t border-green-200">
-                  <p className="text-xs font-medium text-green-600 flex items-center gap-1">
-                    <span>🏆</span>
-                    {completedSessions === 0 ? "Your first win awaits!" :
-                     completedSessions === 1 ? "First milestone achieved! 🎊" :
-                     completedSessions < 5 ? "Each session is a victory! 🌈" :
-                     completedSessions < 10 ? "You're making real progress! 💫" :
-                     "Champion of self-care! 👑"}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Upcoming Sessions - Anticipation Card */}
-            <Card className="border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-orange-700 mb-1">Upcoming</p>
-                    <p className="text-4xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
-                      {upcomingAppointments.length}
-                    </p>
-                  </div>
-                  <div className="w-16 h-16 bg-gradient-to-br from-orange-400 to-amber-500 rounded-2xl flex items-center justify-center shadow-lg">
-                    <Calendar className="h-8 w-8 text-white" />
-                  </div>
-                </div>
-                <div className="mt-3 pt-3 border-t border-orange-200">
-                  <p className="text-xs font-medium text-orange-600 flex items-center gap-1">
-                    <span>🌅</span>
-                    {upcomingAppointments.length === 0 ? "Ready when you are!" :
-                     upcomingAppointments.length === 1 ? "Next step scheduled! 📅" :
-                     "Your future self will thank you! 🙏"}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Member Since - Journey Duration Card */}
-            <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-purple-700 mb-1">Member Since</p>
-                    <p className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                      {userData.metadata?.createdAt ? (() => {
-                        const timestamp = userData.metadata.createdAt as any;
-                        const date = timestamp?.toDate?.() || new Date(timestamp.seconds * 1000);
-                        return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-                      })() : 'N/A'}
-                    </p>
-                  </div>
-                  <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
-                    <User className="h-8 w-8 text-white" />
-                  </div>
-                </div>
-                <div className="mt-3 pt-3 border-t border-purple-200">
-                  <p className="text-xs font-medium text-purple-600 flex items-center gap-1">
-                    <span>💝</span>
-                    Every day is a step forward!
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* Wellness Tips Section */}
-        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border-2 border-purple-200 shadow-lg">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-2xl">🌿</span>
-            <h2 className="text-xl font-bold text-gray-800">Quick Wellness Reminders</h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {wellnessTips.map((tip, index) => (
-              <div key={index} className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-purple-200 hover:shadow-md transition-all duration-300">
-                <div className="text-3xl mb-2">{tip.icon}</div>
-                <h3 className="font-semibold text-gray-800 mb-1">{tip.title}</h3>
-                <p className="text-sm text-gray-600">{tip.tip}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* Upcoming Appointments */}
-          <div className="lg:col-span-2">
-            <Card className="border border-blue-200/60 bg-white shadow-sm">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-lg">Upcoming Appointments</CardTitle>
-                    <CardDescription className="text-sm">
-                      Your scheduled therapy sessions
-                    </CardDescription>
-                  </div>
-                  <Link href="/client/appointments">
-                    <Button variant="outline" size="sm" className="border-blue-300 hover:bg-blue-50">
-                      View All
-                    </Button>
-                  </Link>
-                </div>
+            <Card className="border-white/70 bg-white/80 shadow-sm backdrop-blur">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg text-slate-950">
+                  <HeartHandshake className="h-5 w-5 text-teal-600" />
+                  Next care checkpoint
+                </CardTitle>
+                <CardDescription>
+                  Your nearest session and what to do next.
+                </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 {loadingAppointments ? (
-                  <div className="text-center py-12">
-                    <LoadingSpinner size="lg" />
-                  </div>
-                ) : upcomingAppointments.length > 0 ? (
-                  <div className="space-y-3">
-                    {upcomingAppointments.slice(0, 3).map((apt) => {
-                      const timestamp = apt.scheduledFor as any;
-                      const date = timestamp?.toDate?.() || new Date(timestamp);
-                      return (
-                        <div key={apt.id} className="flex items-center justify-between p-4 border border-blue-200 rounded-lg hover:bg-blue-50/50 transition-colors">
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
-                              <Video className="h-6 w-6 text-teal-600" />
-                            </div>
-                            <div>
-                              <p className="font-medium text-gray-900">
-                                Session with Therapist
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at {date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                              </p>
-                            </div>
-                          </div>
-                          <Link href="/client/appointments">
-                            <Button size="sm" className="bg-teal-500 hover:bg-teal-600">View Details</Button>
-                          </Link>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <Calendar className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      No upcoming sessions
-                    </h3>
-                    <p className="text-gray-600 mb-6">
-                      Book your first therapy session to get started
-                    </p>
-                    <Link href="/client/therapists">
-                      <Button className="bg-teal-500 hover:bg-teal-600">Find a Therapist</Button>
+                  <LoadingSpinner size="md" text="Checking your schedule..." />
+                ) : nextAppointment ? (
+                  <>
+                    <div className="rounded-2xl border border-teal-100 bg-teal-50/70 p-4">
+                      <p className="text-sm font-medium text-teal-700">Upcoming session</p>
+                      <p className="mt-2 text-xl font-semibold text-slate-900">
+                        {formatAppointmentDate(nextAppointment.scheduledFor)}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        {formatAppointmentTime(nextAppointment.scheduledFor)}
+                      </p>
+                    </div>
+                    <div className="space-y-2 text-sm text-slate-600">
+                      <p>Set aside a few quiet minutes before your session so you can arrive grounded.</p>
+                      <p>Your session link and history stay available from your appointments area.</p>
+                    </div>
+                    <Link href="/client/appointments" className="block">
+                      <Button className="min-h-11 w-full rounded-xl bg-slate-950 text-white hover:bg-slate-800">
+                        Open appointments
+                      </Button>
                     </Link>
-                  </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-5 text-center">
+                      <Calendar className="mx-auto h-8 w-8 text-slate-400" />
+                      <p className="mt-3 text-sm font-medium text-slate-900">
+                        No upcoming sessions yet
+                      </p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        Browse therapists and book when you&apos;re ready.
+                      </p>
+                    </div>
+                    <Link href="/client/therapists" className="block">
+                      <Button className="min-h-11 w-full rounded-xl bg-slate-950 text-white hover:bg-slate-800">
+                        Explore therapists
+                      </Button>
+                    </Link>
+                  </>
                 )}
               </CardContent>
             </Card>
           </div>
+        </section>
 
-          {/* Quick Actions */}
-          <div className="space-y-4">
-            <Card className="border border-blue-200/60 bg-white shadow-sm">
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {stats.map((stat) => {
+            const Icon = stat.icon;
+
+            return (
+              <Card
+                key={stat.label}
+                className="overflow-hidden border border-slate-200/80 bg-white shadow-sm"
+              >
+                <CardContent className="p-5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-slate-500">{stat.label}</p>
+                      <p className="text-3xl font-semibold tracking-tight text-slate-950">
+                        {stat.value}
+                      </p>
+                    </div>
+                    <div
+                      className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${stat.tone} text-white shadow-sm`}
+                    >
+                      <Icon className="h-5 w-5" />
+                    </div>
+                  </div>
+                  <p className="mt-4 text-sm leading-6 text-slate-600">{stat.helper}</p>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </section>
+
+        <section className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_360px]">
+          <Card className="border border-slate-200 bg-white shadow-sm">
+            <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <CardTitle className="text-xl text-slate-950">Upcoming appointments</CardTitle>
+                <CardDescription>
+                  Your next therapy sessions at a glance.
+                </CardDescription>
+              </div>
+              <Link href="/client/appointments">
+                <Button
+                  variant="outline"
+                  className="min-h-10 rounded-full border-slate-200 px-4"
+                >
+                  View all
+                </Button>
+              </Link>
+            </CardHeader>
+            <CardContent>
+              {loadingAppointments ? (
+                <div className="py-12">
+                  <LoadingSpinner size="lg" text="Loading appointments..." />
+                </div>
+              ) : upcomingAppointments.length > 0 ? (
+                <div className="space-y-3">
+                  {upcomingAppointments.slice(0, 4).map((appointment) => (
+                    <div
+                      key={appointment.id}
+                      className="flex flex-col gap-4 rounded-2xl border border-slate-200 p-4 transition-colors hover:border-teal-200 hover:bg-teal-50/40 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-teal-100 text-teal-700">
+                          <Video className="h-5 w-5" />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="font-medium text-slate-950">Therapy session</p>
+                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-600">
+                            <span>{formatAppointmentDate(appointment.scheduledFor)}</span>
+                            <span>{formatAppointmentTime(appointment.scheduledFor)}</span>
+                            <span className="capitalize">{appointment.status}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <Link href="/client/appointments">
+                        <Button
+                          variant="outline"
+                          className="min-h-10 w-full rounded-xl border-slate-200 sm:w-auto"
+                        >
+                          Details
+                        </Button>
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 px-6 py-12 text-center">
+                  <Calendar className="mx-auto h-10 w-10 text-slate-400" />
+                  <h3 className="mt-4 text-lg font-semibold text-slate-900">
+                    Nothing scheduled right now
+                  </h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    When you&apos;re ready, browse available therapists and book your next session.
+                  </p>
+                  <Link href="/client/therapists" className="mt-5 inline-block">
+                    <Button className="rounded-full bg-teal-600 px-5 text-white hover:bg-teal-700">
+                      Find a therapist
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <div className="space-y-5">
+            <Card className="border border-slate-200 bg-white shadow-sm">
               <CardHeader>
-                <CardTitle className="text-lg">Quick Actions</CardTitle>
-                <CardDescription className="text-sm">Common tasks</CardDescription>
+                <CardTitle className="text-xl text-slate-950">Quick actions</CardTitle>
+                <CardDescription>Jump into the tasks you use most.</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-2">
+              <CardContent className="grid gap-3">
                 <Link href="/client/therapists" className="block">
-                  <Button variant="outline" className="w-full justify-start border-blue-300 hover:bg-blue-50">
-                    <User className="mr-2 h-4 w-4" />
-                    Browse Therapists
+                  <Button
+                    variant="outline"
+                    className="min-h-12 w-full justify-start rounded-2xl border-slate-200 px-4 text-left"
+                  >
+                    <User className="mr-3 h-4 w-4" />
+                    Browse therapists
                   </Button>
                 </Link>
                 <Link href="/client/appointments" className="block">
-                  <Button variant="outline" className="w-full justify-start border-blue-300 hover:bg-blue-50">
-                    <Calendar className="mr-2 h-4 w-4" />
-                    My Appointments
+                  <Button
+                    variant="outline"
+                    className="min-h-12 w-full justify-start rounded-2xl border-slate-200 px-4 text-left"
+                  >
+                    <Calendar className="mr-3 h-4 w-4" />
+                    Manage appointments
                   </Button>
                 </Link>
                 <Link href="/client/invoices" className="block">
-                  <Button variant="outline" className="w-full justify-start border-blue-300 hover:bg-blue-50">
-                    <FileText className="mr-2 h-4 w-4" />
-                    View Invoices
+                  <Button
+                    variant="outline"
+                    className="min-h-12 w-full justify-start rounded-2xl border-slate-200 px-4 text-left"
+                  >
+                    <FileText className="mr-3 h-4 w-4" />
+                    Review invoices
                   </Button>
                 </Link>
               </CardContent>
             </Card>
 
-            {/* Comforting Encouragement Card */}
-            <Card className="border-2 border-pink-200 bg-gradient-to-br from-pink-50 to-purple-50 shadow-md">
+            <Card className="border border-slate-200 bg-white shadow-sm">
               <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <span className="text-2xl">💝</span>
-                  You're Doing Great
-                </CardTitle>
+                <CardTitle className="text-xl text-slate-950">Account snapshot</CardTitle>
+                <CardDescription>Your key details at a glance.</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3 text-sm text-gray-700">
-                  <p className="leading-relaxed">
-                    <strong className="text-pink-600">Remember:</strong> Seeking help is brave. You're taking important steps toward a healthier, happier you.
-                  </p>
-                  <div className="bg-white/60 rounded-lg p-3 border border-pink-200">
-                    <p className="text-xs font-semibold text-purple-600 mb-1">🌟 Progress, Not Perfection</p>
-                    <p className="text-sm">Every session, every breath, every moment of self-care counts. You're exactly where you need to be.</p>
-                  </div>
-                </div>
+              <CardContent className="space-y-3">
+                {accountItems.map((item) => {
+                  const Icon = item.icon;
+
+                  return (
+                    <div
+                      key={item.label}
+                      className="flex items-start gap-3 rounded-2xl bg-slate-50 px-4 py-3"
+                    >
+                      <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-xl bg-white text-slate-600 shadow-sm">
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+                          {item.label}
+                        </p>
+                        <p className="mt-1 break-words text-sm text-slate-700">{item.value}</p>
+                      </div>
+                    </div>
+                  );
+                })}
               </CardContent>
             </Card>
           </div>
-        </div>
+        </section>
 
-        {/* Gentle Self-Care Reminder Banner */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-50 via-orange-50 to-pink-50 border-2 border-amber-200 p-6 shadow-lg">
-          <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-3">
-              <span className="text-3xl">🌺</span>
-              <h2 className="text-xl font-bold text-gray-800">Gentle Reminder: You Matter</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-amber-200">
-                <div className="text-2xl mb-2">🤲</div>
-                <h3 className="font-semibold text-gray-800 mb-1">Be Kind to Yourself</h3>
-                <p className="text-sm text-gray-600">Treat yourself with the same compassion you'd offer a dear friend.</p>
+        <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.95fr)]">
+          <Card className="border border-slate-200 bg-white shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-xl text-slate-950">Steady care reminders</CardTitle>
+              <CardDescription>
+                A few gentle prompts to support your routine between sessions.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-3">
+              {wellnessNotes.map((note) => (
+                <div
+                  key={note}
+                  className="rounded-2xl border border-teal-100 bg-teal-50/60 px-4 py-4 text-sm leading-6 text-slate-700"
+                >
+                  {note}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card className="overflow-hidden border border-slate-200 bg-[linear-gradient(135deg,_#fff7ed_0%,_#fdf2f8_52%,_#fefce8_100%)] shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-xl text-slate-950">A small reminder for today</CardTitle>
+              <CardDescription>
+                Progress in therapy often comes from consistency, not perfection.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="rounded-2xl bg-white/80 p-4 shadow-sm">
+                <p className="text-sm font-medium text-slate-900">
+                  Showing up for yourself counts, even on quieter days.
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Use this dashboard to keep the practical side simple, so your energy can stay with the care itself.
+                </p>
               </div>
-              <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-orange-200">
-                <div className="text-2xl mb-2">⏰</div>
-                <h3 className="font-semibold text-gray-800 mb-1">Take Your Time</h3>
-                <p className="text-sm text-gray-600">Healing happens at its own pace. There's no rush, no deadline.</p>
-              </div>
-              <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-pink-200">
-                <div className="text-2xl mb-2">🌈</div>
-                <h3 className="font-semibold text-gray-800 mb-1">Celebrate Small Wins</h3>
-                <p className="text-sm text-gray-600">Every step forward, no matter how small, is worth celebrating.</p>
-              </div>
-            </div>
-          </div>
-          
-          {/* Decorative Elements */}
-          <div className="absolute top-0 right-0 w-32 h-32 bg-orange-200/20 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-40 h-40 bg-pink-200/20 rounded-full blur-3xl"></div>
-        </div>
+              <Link href="/client/settings" className="block">
+                <Button
+                  variant="outline"
+                  className="min-h-11 w-full rounded-xl border-white/80 bg-white/70 text-slate-900 hover:bg-white"
+                >
+                  Update profile settings
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </section>
       </div>
     </ClientLayout>
   );

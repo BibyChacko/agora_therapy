@@ -1,6 +1,24 @@
 {
   "indexes": [
     {
+      "collectionGroup": "therapistProfiles",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "verification.isVerified",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "practice.yearsExperience",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "scheduleOverrides",
       "queryScope": "COLLECTION",
       "fields": [
