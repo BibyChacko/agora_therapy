@@ -4,14 +4,18 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import { onIdTokenChanged, User } from 'firebase/auth';
+import { auth } from '@/lib/firebase/client';
 import LanguageSelector from '../language-selector/LanguageSelector';
 import { FiMenu, FiX } from 'react-icons/fi';
-import { LogIn, UserPlus } from 'lucide-react';
+import { LayoutDashboard, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [authUser, setAuthUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -27,6 +31,15 @@ const Header = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    const unsubscribe = onIdTokenChanged(auth, (user) => {
+      setAuthUser(user);
+      setAuthLoading(false);
+    });
+
+    return unsubscribe;
+  }, []);
+
   const navLinks = [
     { name: 'Home', path: '/' },
     { name: 'About', path: '/about' },
@@ -38,6 +51,10 @@ const Header = () => {
     { name: 'FAQ', path: '/faq' },
     { name: 'Contact', path: '/contact' },
   ];
+
+  const authHref = authUser ? '/dashboard' : '/login';
+  const authLabel = authUser ? 'Dashboard' : 'Sign In';
+  const AuthIcon = authUser ? LayoutDashboard : LogIn;
 
   return (
     <header 
@@ -80,21 +97,15 @@ const Header = () => {
 
         <div className="hidden md:flex items-center gap-4">
           {/* <LanguageSelector /> */}
-          <Link href="/login">
+          <Link href={authHref}>
             <Button
               variant="outline"
               size="sm"
               className="gap-2 border-teal-500 text-teal-500 hover:bg-teal-500 hover:text-white"
             >
-              <LogIn className="h-4 w-4" />
-              Sign In
+              <AuthIcon className="h-4 w-4" />
+              {authLoading ? 'Loading...' : authLabel}
             </Button>
-          </Link>
-          <Link
-            href="/register"
-            className="px-4 py-2 rounded-full bg-gradient-to-r from-teal-500 to-blue-600 font-medium text-sm text-white transition-opacity hover:opacity-90"
-          >
-            Get Started
           </Link>
         </div>
 
@@ -128,21 +139,14 @@ const Header = () => {
             ))}
             <div className="flex flex-col gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
               <LanguageSelector />
-              <Link href="/login" onClick={() => setIsMenuOpen(false)}>
+              <Link href={authHref} onClick={() => setIsMenuOpen(false)}>
                 <Button
                   variant="outline"
                   className="gap-2 border-teal-500 text-teal-500 hover:bg-teal-500 hover:text-white w-full"
                 >
-                  <LogIn className="h-4 w-4" />
-                  Sign In
+                  <AuthIcon className="h-4 w-4" />
+                  {authLoading ? 'Loading...' : authLabel}
                 </Button>
-              </Link>
-              <Link
-                href="/register"
-                className="px-4 py-2 rounded-full border-2 border-teal-500 font-medium text-sm text-center text-teal-500 transition-all hover:bg-teal-500 hover:text-white"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Get Started
               </Link>
               <Link 
                 href="/psychologists" 

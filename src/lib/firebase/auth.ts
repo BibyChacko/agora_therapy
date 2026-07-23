@@ -130,7 +130,7 @@ export async function signInWithEmail(
 }
 
 // Sign in with Google
-export async function signInWithGoogle(): Promise<UserCredential> {
+export async function signInWithGoogle(role: UserRole = "client"): Promise<UserCredential> {
   try {
     const userCredential = await signInWithPopup(auth, googleProvider);
     const { user } = userCredential;
@@ -153,7 +153,7 @@ export async function signInWithGoogle(): Promise<UserCredential> {
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           locale: navigator.language || "en-US",
         },
-        role: "client", // Default role for Google sign-in
+        role,
         status: "active",
         preferences: {
           notifications: {

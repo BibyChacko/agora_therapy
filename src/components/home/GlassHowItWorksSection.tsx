@@ -31,7 +31,7 @@ export function GlassHowItWorksSection() {
   ];
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-gray-50 via-sky-50/40 to-teal-50/30 py-16 md:py-24 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+    <section id="how-it-works" className="relative overflow-hidden bg-gradient-to-br from-gray-50 via-sky-50/40 to-teal-50/30 py-16 md:py-24 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
       {/* Dynamic background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-1/4 -left-20 h-[420px] w-[420px] rounded-full bg-sky-200/20 blur-[120px] animate-pulse md:h-[500px] md:w-[500px]"></div>

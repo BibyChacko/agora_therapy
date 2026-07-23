@@ -35,6 +35,42 @@ export function GlassHeroSection() {
               </span>
             </h1>
 
+            <p className="max-w-2xl text-lg leading-8 text-gray-600 dark:text-gray-300 md:text-xl">
+              Find a licensed therapist who matches your language, goals, and schedule. Start with a quick browse or see how the process works before you book.
+            </p>
+
+            <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center">
+              <Link
+                href="#therapists"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-purple-600 to-teal-500 px-7 py-4 text-base font-semibold text-white shadow-xl shadow-purple-500/20 transition-all duration-300 hover:scale-[1.02] hover:from-purple-700 hover:to-teal-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2"
+              >
+                Find Your Therapist
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </Link>
+              <Link
+                href="#how-it-works"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-white/80 bg-white/70 px-7 py-4 text-base font-semibold text-gray-900 shadow-lg backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 dark:border-gray-700/80 dark:bg-gray-800/70 dark:text-white dark:hover:bg-gray-800/90"
+              >
+                How It Works
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </Link>
+            </div>
+
+            <div className="flex flex-col gap-3 text-sm text-gray-600 dark:text-gray-300 sm:flex-row sm:flex-wrap sm:items-center sm:gap-5">
+              <div className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" aria-hidden="true"></span>
+                <span>Private and confidential support</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-sky-500" aria-hidden="true"></span>
+                <span>Browse by language and specialty</span>
+              </div>
+            </div>
+
             {/* Feature Cards */}
             <div className="space-y-4">
               {[
