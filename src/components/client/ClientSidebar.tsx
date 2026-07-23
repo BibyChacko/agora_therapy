@@ -11,8 +11,6 @@ import {
   FileText,
   Settings,
   LogOut,
-  Menu,
-  X,
   Sparkles,
 } from "lucide-react";
 import { useState } from "react";
@@ -65,10 +63,32 @@ const accountItems = [
   },
 ];
 
+const mobileDockItems = [
+  {
+    name: "Home",
+    href: "/client",
+    icon: LayoutDashboard,
+  },
+  {
+    name: "Sessions",
+    href: "/client/appointments",
+    icon: Calendar,
+  },
+  {
+    name: "Therapists",
+    href: "/client/therapists",
+    icon: Users,
+  },
+  {
+    name: "Invoices",
+    href: "/client/invoices",
+    icon: FileText,
+  },
+];
+
 export function ClientSidebar() {
   const pathname = usePathname();
   const { user, userData, signOut } = useAuth();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   const handleSignOut = async () => {
@@ -82,38 +102,15 @@ export function ClientSidebar() {
 
   return (
     <>
-      {/* Mobile menu button */}
-      <button
-        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="fixed left-4 top-20 z-50 rounded-full border border-slate-200 bg-white p-3 shadow-lg lg:hidden"
-        aria-label={isMobileMenuOpen ? "Close client menu" : "Open client menu"}
-      >
-        {isMobileMenuOpen ? (
-          <X className="h-6 w-6" />
-        ) : (
-          <Menu className="h-6 w-6" />
-        )}
-      </button>
-
-      {isMobileMenuOpen && (
-        <button
-          type="button"
-          aria-label="Close menu overlay"
-          className="fixed inset-0 z-30 bg-slate-950/35 backdrop-blur-[2px] lg:hidden"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
-
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-16 left-0 z-40 w-[18rem] border-r border-teal-100 bg-white/95 shadow-2xl backdrop-blur transition-transform duration-200 ease-in-out lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] lg:translate-x-0 lg:shadow-none",
-          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+          "hidden w-[18rem] border-r border-teal-100 bg-white/95 shadow-2xl backdrop-blur transition-transform duration-200 ease-in-out lg:sticky lg:top-16 lg:block lg:h-[calc(100vh-4rem)] lg:translate-x-0 lg:shadow-none"
         )}
       >
         <div className="flex flex-col h-full">
           <div className="border-b border-teal-100 px-5 py-5">
-            <Link href="/client" onClick={() => setIsMobileMenuOpen(false)}>
+            <Link href="/client">
               <div className="flex items-center gap-3 rounded-2xl bg-[linear-gradient(135deg,_#ecfeff_0%,_#f0fdfa_46%,_#fdf2f8_100%)] p-4 transition-transform hover:scale-[1.01]">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500 to-cyan-500 text-lg font-semibold text-white shadow-md">
                   {userData?.profile?.firstName?.[0] || "C"}
@@ -149,7 +146,6 @@ export function ClientSidebar() {
                     <li key={item.name}>
                       <Link
                         href={item.href}
-                        onClick={() => setIsMobileMenuOpen(false)}
                         className={cn(
                           "flex items-center space-x-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
                           isActive
@@ -180,7 +176,6 @@ export function ClientSidebar() {
                     <li key={item.name}>
                       <Link
                         href={item.href}
-                        onClick={() => setIsMobileMenuOpen(false)}
                         className={cn(
                           "flex items-center space-x-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
                           isActive
@@ -211,7 +206,6 @@ export function ClientSidebar() {
                     <li key={item.name}>
                       <Link
                         href={item.href}
-                        onClick={() => setIsMobileMenuOpen(false)}
                         className={cn(
                           "flex items-center space-x-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
                           isActive
@@ -242,7 +236,6 @@ export function ClientSidebar() {
                     <li key={item.name}>
                       <Link
                         href={item.href}
-                        onClick={() => setIsMobileMenuOpen(false)}
                         className={cn(
                           "flex items-center space-x-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
                           isActive
@@ -273,13 +266,31 @@ export function ClientSidebar() {
         </div>
       </aside>
 
-      {/* Mobile overlay */}
-      {isMobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
+      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-800 bg-slate-950 px-2 py-2 shadow-[0_-12px_32px_rgba(15,23,42,0.18)] lg:hidden">
+        <ul className="grid grid-cols-4 items-center gap-1">
+          {mobileDockItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href;
+
+            return (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  className={cn(
+                    "flex flex-col items-center justify-center rounded-[1.4rem] px-2 py-2 text-[11px] font-medium transition-colors",
+                    isActive
+                      ? "bg-teal-500 text-white"
+                      : "text-slate-300 hover:bg-white/10 hover:text-white"
+                  )}
+                >
+                  <Icon className="mb-1 h-4 w-4" />
+                  <span>{item.name}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
 
       {/* Logout Confirmation Dialog */}
       <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
