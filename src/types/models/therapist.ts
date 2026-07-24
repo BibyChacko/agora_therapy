@@ -107,6 +107,19 @@ export interface TherapistPublicView {
   licenseAuthority?: string;
   isFeatured?: boolean;
   timezone?: string;
+  pricing?: {
+    countryCode: string | null;
+    displayCurrency: string;
+    displayHourlyRate: number;
+    displayPlatformFee: number;
+    displayHourlyTotal: number;
+    baseCurrency: string;
+    baseHourlyRate: number;
+    basePlatformFeeUsd?: number;
+    exchangeRate: number | null;
+    rateDate: string | null;
+    source: "geo" | "profile" | "fallback";
+  };
 }
 
 /**

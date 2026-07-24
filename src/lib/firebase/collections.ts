@@ -19,6 +19,7 @@ export const COLLECTIONS = {
   THERAPIST_AVAILABILITY: "therapistAvailability",
   SCHEDULE_OVERRIDES: "scheduleOverrides",
   APPOINTMENTS: "appointments",
+  EXCHANGE_RATES: "exchangeRates",
   AUDIT_LOGS: "auditLogs",
   NOTIFICATIONS: "notifications",
   PAYMENT_INTENTS: "paymentIntents",
@@ -37,6 +38,8 @@ export const collections = {
     collection(db, COLLECTIONS.SCHEDULE_OVERRIDES) as CollectionReference,
   appointments: () =>
     collection(db, COLLECTIONS.APPOINTMENTS) as CollectionReference,
+  exchangeRates: () =>
+    collection(db, COLLECTIONS.EXCHANGE_RATES) as CollectionReference,
   auditLogs: () =>
     collection(db, COLLECTIONS.AUDIT_LOGS) as CollectionReference,
   notifications: () =>
@@ -58,6 +61,8 @@ export const documents = {
     doc(db, COLLECTIONS.SCHEDULE_OVERRIDES, id) as DocumentReference,
   appointment: (id: string) =>
     doc(db, COLLECTIONS.APPOINTMENTS, id) as DocumentReference,
+  exchangeRate: (id: string) =>
+    doc(db, COLLECTIONS.EXCHANGE_RATES, id) as DocumentReference,
   auditLog: (id: string) =>
     doc(db, COLLECTIONS.AUDIT_LOGS, id) as DocumentReference,
   notification: (id: string) =>

@@ -37,7 +37,10 @@ import {
   getUserTimezone,
 } from '@/lib/utils/timezone-utils';
 import { businessConfig } from '@/lib/config';
-import { normalizeCurrencyCode } from '@/lib/utils/currency';
+import {
+  formatAmountFromMinorUnits,
+  normalizeCurrencyCode,
+} from '@/lib/utils/currency';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 const isTamaraEnabled = process.env.NEXT_PUBLIC_TAMARA_ENABLED === 'true';
@@ -52,7 +55,19 @@ interface TimeSlot {
   localEndTime: string;
   displayTime: string;
   therapistTimezone: string;
+  currency: string;
+  price: number;
   isOverride?: boolean;
+  pricing?: {
+    countryCode: string | null;
+    displayCurrency: string;
+    displayAmount: number;
+    baseCurrency: string;
+    baseAmount: number;
+    exchangeRate: number | null;
+    rateDate: string | null;
+    source: 'geo' | 'profile' | 'fallback';
+  };
 }
 
 interface AvailabilitySummary {
@@ -98,7 +113,9 @@ export default function BookingPage() {
   const selectedSessionConfig =
     THERAPY_SESSION_CONFIGS.find((config) => config.value === selectedSessionType) ||
     THERAPY_SESSION_CONFIGS[0];
-  const therapistCurrency = (therapist?.currency || 'USD').toUpperCase();
+  const therapistCurrency = normalizeCurrencyCode(
+    therapist?.pricing?.displayCurrency || therapist?.currency || 'USD'
+  );
   const isTamaraSupportedForBooking =
     isTamaraEnabled && ['AED', 'SAR', 'USD'].includes(therapistCurrency);
 
@@ -125,9 +142,15 @@ export default function BookingPage() {
 
       const data = await response.json();
       setTherapist(data);
-      const hourlyRate = data.hourlyRate / 100;
+      const hourlyRate =
+        (data.pricing?.displayHourlyTotal ||
+          data.pricing?.displayHourlyRate ||
+          data.hourlyRate) / 100;
+      const currency = normalizeCurrencyCode(
+        data.pricing?.displayCurrency || data.currency || 'USD'
+      );
       trackViewItem({
-        currency: 'AED',
+        currency,
         value: hourlyRate,
         items: [
           {
@@ -418,7 +441,12 @@ export default function BookingPage() {
     );
   }
 
-  const sessionFee = ((therapist.hourlyRate / 100) * selectedSessionConfig.duration) / 60 + 15;
+  const displayHourlyRateMinor =
+    therapist.pricing?.displayHourlyRate || therapist.hourlyRate;
+  const displayPlatformFeeMinor = therapist.pricing?.displayPlatformFee || 1500;
+  const sessionFeeEstimateMinor = Math.round(
+    (displayHourlyRateMinor * selectedSessionConfig.duration) / 60
+  ) + displayPlatformFeeMinor;
   const therapistTimezone = therapist.timezone || availabilitySummary?.timezone || 'UTC';
   const selectedSlot = timeSlots.find((slot) => slot.timeSlotId === selectedTime) || null;
   const today = new Date();
@@ -485,6 +513,10 @@ export default function BookingPage() {
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
                       <span className="font-medium text-slate-900">Therapist timezone:</span>{' '}
                       {getTimezoneDisplayName(therapistTimezone)} ({getTimezoneAbbreviation(therapistTimezone)})
+                    </div>
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                      <span className="font-medium text-slate-900">Estimated total:</span>{' '}
+                      {formatAmountFromMinorUnits(sessionFeeEstimateMinor, therapistCurrency)}
                     </div>
                   </div>
                 </div>
@@ -921,21 +953,21 @@ export default function BookingPage() {
 
                       <div className="mt-5 space-y-3 rounded-2xl bg-white p-4 text-sm">
                         <div className="flex justify-between">
-                          <span className="text-slate-500">Therapist Fee</span>
+                          <span className="text-slate-500">Session Fee</span>
                           <span className="font-medium text-slate-900">
-                            {paymentCurrency} {(therapistFee / 100).toFixed(2)}
+                            {formatAmountFromMinorUnits(amount, paymentCurrency)}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-slate-500">Platform Fee</span>
+                          <span className="text-slate-500">Tax</span>
                           <span className="font-medium text-slate-900">
-                            {paymentCurrency} {(platformFee / 100).toFixed(2)}
+                            {formatAmountFromMinorUnits(0, paymentCurrency)}
                           </span>
                         </div>
                         <div className="flex justify-between border-t border-slate-100 pt-3 text-base font-semibold text-slate-900">
-                          <span>Total</span>
+                          <span>Total (Including Tax)</span>
                           <span>
-                            {paymentCurrency} {(amount / 100).toFixed(2)}
+                            {formatAmountFromMinorUnits(amount, paymentCurrency)}
                           </span>
                         </div>
                       </div>

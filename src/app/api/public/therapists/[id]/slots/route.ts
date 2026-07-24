@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { businessConfig } from "@/lib/config";
 import { AvailableSlotsService } from "@/lib/services/available-slots-service";
+import { PricingService } from "@/lib/services/pricing-service";
 import {
   getPublicTherapistById,
   getPublicTherapistBySlug,
@@ -63,18 +64,39 @@ export async function GET(
 
     const slots = result.availableSlots
       .filter((slot) => !slot.isBooked)
-      .map((slot) => ({
-        timeSlotId: slot.timeSlotId,
-        localDate: slot.localDate,
-        localStartTime: slot.localStartTime,
-        localEndTime: slot.localEndTime,
-        displayTime: slot.displayTime,
-        duration: slot.duration,
-        currency: slot.currency,
-        price: slot.price,
-        therapistTimezone: slot.therapistTimezone,
-        isOverride: Boolean(slot.isOverride),
-      }));
+      .map(async (slot) => {
+        const pricePresentation = await PricingService.buildPricePresentation({
+          usdAmountMinor: slot.price,
+          request,
+          fallbackCurrency: slot.currency,
+          baseCurrency: slot.currency,
+        });
+
+        return {
+          timeSlotId: slot.timeSlotId,
+          localDate: slot.localDate,
+          localStartTime: slot.localStartTime,
+          localEndTime: slot.localEndTime,
+          displayTime: slot.displayTime,
+          duration: slot.duration,
+          currency: pricePresentation.displayCurrency,
+          price: pricePresentation.displayAmountMinor,
+          therapistTimezone: slot.therapistTimezone,
+          isOverride: Boolean(slot.isOverride),
+          pricing: {
+            countryCode: pricePresentation.countryCode,
+            displayCurrency: pricePresentation.displayCurrency,
+            displayAmount: pricePresentation.displayAmountMinor,
+            baseCurrency: pricePresentation.baseCurrency,
+            baseAmount: pricePresentation.baseAmountMinor,
+            exchangeRate: pricePresentation.exchangeRate,
+            rateDate: pricePresentation.rateDate,
+            source: pricePresentation.source,
+          },
+        };
+      });
+
+    const resolvedSlots = await Promise.all(slots);
 
     const firstBookableAt = new Date(
       Date.now() + businessConfig.minAdvanceBookingHours * 60 * 60 * 1000
@@ -86,12 +108,12 @@ export async function GET(
       therapistId: therapist.id,
       timezone: result.timezone,
       date: targetDate.toISOString(),
-      slots,
+      slots: resolvedSlots,
       bookingWindow: {
         minAdvanceHours: businessConfig.minAdvanceBookingHours,
         earliestBookableAt: firstBookableAt.toISOString(),
       },
-      ...(slots.length === 0 && isBeforeBookingWindow && businessConfig.minAdvanceBookingHours > 0
+      ...(resolvedSlots.length === 0 && isBeforeBookingWindow && businessConfig.minAdvanceBookingHours > 0
         ? {
             message: `Bookings must be scheduled at least ${businessConfig.minAdvanceBookingHours} hours in advance.`,
           }

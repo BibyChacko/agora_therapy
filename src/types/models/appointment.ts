@@ -57,6 +57,18 @@ export interface Appointment {
     status: PaymentStatus;
     transactionId?: string;
     method?: string;
+    baseAmount?: number;
+    baseCurrency?: string;
+    therapistFee?: number;
+    platformFee?: number;
+    exchangeRate?: number | null;
+    rateDate?: string | null;
+    countryCode?: string | null;
+    pricingRuleType?: "default" | "foreign_surcharge" | "country_override";
+    pricingRuleDescription?: string;
+    providerCheckoutId?: string | null;
+    providerStatus?: string | null;
+    paidAt?: Timestamp;
   };
 
   communication: {

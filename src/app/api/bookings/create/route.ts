@@ -5,6 +5,7 @@ import Stripe from "stripe";
 import { verifyRequestUser } from "@/lib/server/firebase-request-auth";
 import { AvailableSlotsService } from "@/lib/services/available-slots-service";
 import { googleMeetService } from "@/lib/services/google-meet-service";
+import { PricingService } from "@/lib/services/pricing-service";
 import { tamaraService } from "@/lib/services/tamara-service";
 import {
   getTherapySessionConfig,
@@ -107,26 +108,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get therapist hourly rate
-    let hourlyRate = therapistProfile.practice?.hourlyRate || 5000; // Default $50
-    if (hourlyRate < 1000) {
-      // Convert dollars to cents if needed
-      hourlyRate = hourlyRate * 100;
-    }
-
-    // Calculate amounts
-    const therapistFee = Math.round((hourlyRate * sessionDuration) / 60);
-    const platformFee = 1500; // $15.00 in cents
-    const totalAmount = therapistFee + platformFee;
-
     // Prepare customer shipping information (required for Indian regulations)
     const customerName = clientData.profile?.displayName || 
                         `${clientData.profile?.firstName || ''} ${clientData.profile?.lastName || ''}`.trim() || 
                         'Customer';
-    
-    const appointmentRef = db.collection("appointments").doc();
 
-    const currency = String(therapistProfile.practice?.currency || "USD").toUpperCase();
+    const appointmentRef = db.collection("appointments").doc();
     const address = clientData.profile?.address || {};
     const countryCode = String(address.country || "AE").toUpperCase();
     const phoneNumber =
@@ -139,6 +126,18 @@ export async function POST(request: NextRequest) {
       clientData.profile?.lastName ||
       customerName.split(" ").slice(1).join(" ") ||
       "User";
+
+    const pricing = await PricingService.calculateBookingPricing({
+      request,
+      therapistProfile,
+      profileCountryCode: countryCode,
+      sessionDurationMinutes: sessionDuration,
+    });
+
+    const therapistFee = pricing.therapistFee.amountMinor;
+    const platformFee = pricing.platformFee.amountMinor;
+    const totalAmount = pricing.total.amountMinor;
+    const currency = pricing.total.currency;
 
     const tamaraPricing =
       paymentProvider === "tamara"
@@ -203,9 +202,16 @@ export async function POST(request: NextRequest) {
         status: "pending",
         transactionId: "",
         method: paymentProvider,
+        baseAmount: pricing.usdReference.totalMinor,
+        baseCurrency: "USD",
+        exchangeRate: pricing.exchangeRate,
+        rateDate: pricing.rateDate,
+        countryCode: pricing.context.countryCode,
+        pricingRuleType: pricing.appliedRule.type,
+        pricingRuleDescription: pricing.appliedRule.description,
         ...(tamaraPricing
           ? {
-              originalAmount: totalAmount,
+              originalAmount: pricing.usdReference.totalMinor,
               originalCurrency: tamaraPricing.originalCurrency,
               exchangeRate: tamaraPricing.exchangeRate ?? null,
             }
@@ -277,6 +283,8 @@ export async function POST(request: NextRequest) {
         await appointmentRef.update({
           "payment.amount": tamaraPricing!.totalAmount.amount,
           "payment.currency": tamaraPricing!.totalAmount.currency,
+          "payment.baseAmount": pricing.usdReference.totalMinor,
+          "payment.baseCurrency": "USD",
           ...(tamaraPricing?.therapistFee
             ? { "payment.therapistFee": tamaraPricing.therapistFee.amount }
             : {}),
@@ -332,6 +340,10 @@ export async function POST(request: NextRequest) {
         clientId,
         clientName: customerName,
         clientEmail: clientData.email,
+        clientCountryCode: pricing.context.countryCode || "",
+        baseCurrency: "USD",
+        baseAmount: pricing.usdReference.totalMinor.toString(),
+        exchangeRate: pricing.exchangeRate?.toString() || "",
         scheduledFor,
         duration: sessionDuration.toString(),
         sessionType: normalizedSessionType,
@@ -355,6 +367,15 @@ export async function POST(request: NextRequest) {
       therapistFee,
       platformFee,
       currency: currency.toLowerCase(),
+      pricing: {
+        countryCode: pricing.context.countryCode,
+        baseCurrency: "USD",
+        baseAmount: pricing.usdReference.totalMinor,
+        exchangeRate: pricing.exchangeRate,
+        rateDate: pricing.rateDate,
+        ruleType: pricing.appliedRule.type,
+        ruleDescription: pricing.appliedRule.description,
+      },
       paymentProvider: "stripe",
     });
   } catch (error) {

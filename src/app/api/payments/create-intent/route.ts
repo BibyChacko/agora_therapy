@@ -21,9 +21,9 @@ export async function POST(request: NextRequest) {
 
     // Get request body
     const body = await request.json();
-    const { appointmentId, amount, currency = "usd" } = body;
+    const { appointmentId } = body;
 
-    if (!appointmentId || !amount) {
+    if (!appointmentId) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -52,6 +52,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const amount = Number(appointmentData?.payment?.amount || 0);
+    const currency = String(appointmentData?.payment?.currency || "usd").toLowerCase();
+
+    if (!amount) {
+      return NextResponse.json(
+        { error: "Appointment has no pending payment amount" },
+        { status: 400 }
+      );
+    }
+
     // Check if payment already exists
     const existingPayment = await db
       .collection("payments")
@@ -68,7 +78,7 @@ export async function POST(request: NextRequest) {
 
     // Create Stripe payment intent
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Convert to cents
+      amount,
       currency,
       metadata: {
         appointmentId,

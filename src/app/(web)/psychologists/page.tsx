@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
+import { headers } from 'next/headers';
 import Link from 'next/link';
 import PsychologistFilters from '@/components/psychologists/PsychologistFilters';
 import { TherapistCard } from '@/components/psychologists/TherapistCard';
@@ -7,6 +8,7 @@ import { getPublicTherapists } from '@/lib/services/public-therapist-service';
 import { getLanguageName, LANGUAGES } from '@/lib/constants/languages';
 import { getServiceById, AVAILABLE_SERVICES } from '@/types/models/service';
 import { gccAreas, siteUrl } from '@/lib/seo';
+import { PricingService } from '@/lib/services/pricing-service';
 
 function buildDirectoryQuery(params: { language?: string; specialization?: string }) {
   const queryParams = new URLSearchParams();
@@ -83,13 +85,42 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
 }
 
 async function TherapistsList({ searchParams }: { searchParams: any }) {
+  const requestHeaders = await headers();
+  const countryCode = PricingService.resolveCountryCodeFromHeaders(requestHeaders);
   const therapists = await getPublicTherapists({
     specialization: searchParams.specialization,
     language: searchParams.language,
     minExperience: searchParams.minExperience,
   });
+  const localizedTherapists = await Promise.all(
+    therapists.map(async (therapist) => {
+      const pricing = await PricingService.buildTherapistPriceSummaryForCountry({
+        hourlyRateUsdMinor: therapist.hourlyRate,
+        countryCode,
+        fallbackCurrency: therapist.currency || 'USD',
+        baseCurrency: therapist.currency || 'USD',
+      });
 
-  if (therapists.length === 0) {
+      return {
+        ...therapist,
+        pricing: {
+          countryCode: pricing.countryCode,
+          displayCurrency: pricing.displayCurrency,
+          displayHourlyRate: pricing.displayHourlyRate,
+          displayPlatformFee: pricing.displayPlatformFee,
+          displayHourlyTotal: pricing.displayHourlyTotal,
+          baseCurrency: pricing.baseCurrency,
+          baseHourlyRate: pricing.baseHourlyRate,
+          basePlatformFeeUsd: pricing.basePlatformFeeUsd,
+          exchangeRate: pricing.exchangeRate,
+          rateDate: pricing.rateDate,
+          source: pricing.source,
+        },
+      };
+    })
+  );
+
+  if (localizedTherapists.length === 0) {
     return (
       <div className="text-center py-12">
         <p className="text-gray-600 dark:text-gray-400 text-lg">No therapists found matching your criteria.</p>
@@ -99,7 +130,7 @@ async function TherapistsList({ searchParams }: { searchParams: any }) {
 
   return (
     <div className="grid md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3">
-      {therapists.map((therapist) => (
+      {localizedTherapists.map((therapist) => (
         <TherapistCard key={therapist.id} therapist={therapist} />
       ))}
     </div>

@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Star, CheckCircle, MapPin, DollarSign, Globe } from 'lucide-react';
 import { TherapistPublicView } from '@/types/models/therapist';
 import { getLanguageName } from '@/lib/constants/languages';
+import { formatAmountFromMinorUnits } from '@/lib/utils/currency';
 
 interface TherapistCardProps {
   therapist: TherapistPublicView;
@@ -30,6 +31,16 @@ export function TherapistCard({ therapist }: TherapistCardProps) {
   const remainingCount = (therapist.specializations?.length || 0) - 2;
   const profilePath = therapist.slug || therapist.id;
   const verifiedDate = formatVerificationDate(therapist.verifiedAt);
+  const displayPrice =
+    therapist.pricing?.displayHourlyTotal ||
+    therapist.pricing?.displayHourlyRate ||
+    therapist.hourlyRate;
+  const displayCurrency =
+    therapist.pricing?.displayCurrency || therapist.currency || 'USD';
+  const formattedDisplayPrice = formatAmountFromMinorUnits(
+    displayPrice,
+    displayCurrency
+  );
 
   return (
     <Link 
@@ -50,7 +61,7 @@ export function TherapistCard({ therapist }: TherapistCardProps) {
         <div className="absolute top-3 left-3 right-3 flex justify-between items-start z-10">
           {/* Price Pill */}
           <div className="bg-black/60 backdrop-blur-md text-white rounded-full px-3 py-1.5 shadow-xl border border-white/10 flex flex-col items-center leading-none">
-            <span className="text-sm font-black">${(therapist.hourlyRate / 100).toFixed(0)}</span>
+            <span className="text-sm font-black">{formattedDisplayPrice}</span>
             <span className="text-[7px] uppercase font-bold opacity-80">hr</span>
           </div>
 

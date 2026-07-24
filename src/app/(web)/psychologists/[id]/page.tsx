@@ -1,9 +1,14 @@
 import { Metadata } from 'next';
+import { headers } from 'next/headers';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound, permanentRedirect } from 'next/navigation';
 import { FiArrowLeft, FiStar, FiClock, FiBookOpen } from 'react-icons/fi';
 import { getLanguageName } from '@/lib/constants/languages';
+import {
+  formatCurrencyAmount,
+  PricingService,
+} from '@/lib/services/pricing-service';
 import { getServiceById } from '@/types/models/service';
 import {
   getPublicTherapistById,
@@ -142,6 +147,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PsychologistDetail({ params }: Props) {
   const { id } = await params;
+  const requestHeaders = await headers();
   const psychologist =
     (await getPublicTherapistBySlug(id)) || (await getPublicTherapistById(id));
 
@@ -161,6 +167,17 @@ export default async function PsychologistDetail({ params }: Props) {
   const imageUrl = toAbsoluteUrl(psychologist.image);
   const therapistLocation = psychologist.location || 'Dubai, UAE';
   const verifiedDate = formatVerificationDate(psychologist.verifiedAt);
+  const countryCode = PricingService.resolveCountryCodeFromHeaders(requestHeaders);
+  const priceSummary = await PricingService.buildTherapistPriceSummaryForCountry({
+    hourlyRateUsdMinor: psychologist.hourlyRate,
+    countryCode,
+    fallbackCurrency: psychologist.currency || 'USD',
+    baseCurrency: psychologist.currency || 'USD',
+  });
+  const localizedHourlyRate = formatCurrencyAmount(
+    priceSummary.displayHourlyTotal,
+    priceSummary.displayCurrency
+  );
   const description = [
     `${psychologist.name} is a verified psychologist on MindGood.`,
     specializations.length ? `Specializations include ${specializations.join(', ')}.` : null,
@@ -268,8 +285,11 @@ export default async function PsychologistDetail({ params }: Props) {
         },
         "makesOffer": {
           "@type": "Offer",
-          "price": (psychologist.hourlyRate / 100).toFixed(2),
-          "priceCurrency": "USD",
+          "price": (
+            priceSummary.displayHourlyTotal /
+            10 ** priceSummary.displayCurrencyExponent
+          ).toFixed(priceSummary.displayCurrencyExponent),
+          "priceCurrency": priceSummary.displayCurrency,
           "availability": "https://schema.org/InStock",
           "url": canonicalUrl
         },
@@ -436,7 +456,7 @@ export default async function PsychologistDetail({ params }: Props) {
             <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Hourly Rate</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                ${(psychologist.hourlyRate / 100).toFixed(2)}/hr
+                {localizedHourlyRate}/hr
               </p>
               <BookConsultationButton psychologistId={psychologist.id} />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">

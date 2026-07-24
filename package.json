@@ -9,6 +9,7 @@
     "lint": "next lint",
     "create-admin": "ts-node -P scripts/tsconfig.json scripts/create-admin.ts",
     "backfill:therapist-slugs": "ts-node scripts/backfill-therapist-slugs.ts",
+    "sync:exchange-rates": "ts-node -P scripts/tsconfig.json scripts/sync-exchange-rates.ts",
     "impeccable": "impeccable",
     "impeccable:detect": "impeccable detect"
   },
