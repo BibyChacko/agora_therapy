@@ -98,9 +98,8 @@ export default function BookingPage() {
   const [selectedSessionType, setSelectedSessionType] =
     useState<SupportedTherapySessionType>('single');
   const [clientNotes, setClientNotes] = useState('');
-  const [paymentProvider, setPaymentProvider] = useState<PaymentProvider>(
-    isTamaraEnabled ? 'tamara' : 'stripe'
-  );
+  const [paymentProvider, setPaymentProvider] =
+    useState<PaymentProvider>('stripe');
   
   // Payment state
   const [clientSecret, setClientSecret] = useState('');
@@ -117,7 +116,11 @@ export default function BookingPage() {
     therapist?.pricing?.displayCurrency || therapist?.currency || 'USD'
   );
   const isTamaraSupportedForBooking =
-    isTamaraEnabled && ['AED', 'SAR', 'USD'].includes(therapistCurrency);
+    isTamaraEnabled && therapistCurrency === 'AED';
+  const availablePaymentProviders: PaymentProvider[] = isTamaraSupportedForBooking
+    ? ['stripe', 'tamara']
+    : ['stripe'];
+  const hasMultiplePaymentMethods = availablePaymentProviders.length > 1;
 
   const buildDateParam = useCallback((date: Date) => {
     const normalizedDate = new Date(
@@ -256,10 +259,10 @@ export default function BookingPage() {
   }, [selectedDate]);
 
   useEffect(() => {
-    if (paymentProvider === 'tamara' && !isTamaraSupportedForBooking) {
-      setPaymentProvider('stripe');
+    if (!availablePaymentProviders.includes(paymentProvider)) {
+      setPaymentProvider(availablePaymentProviders[0]);
     }
-  }, [isTamaraSupportedForBooking, paymentProvider]);
+  }, [availablePaymentProviders, paymentProvider]);
 
   useEffect(() => {
     const selectedSlot = timeSlots.find((slot) => slot.timeSlotId === selectedTime);
@@ -834,56 +837,49 @@ export default function BookingPage() {
                         />
                       </div>
 
-                      <div className="rounded-[24px] border border-slate-200 bg-slate-50/70 p-5">
-                        <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
-                          Payment Method
-                        </h3>
-                        <p className="mt-3 text-sm leading-6 text-slate-600">
-                          Choose how you&apos;d like to complete payment for this booking.
-                        </p>
-                        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                          <button
-                            type="button"
-                            onClick={() => setPaymentProvider('stripe')}
-                            className={`rounded-2xl border p-4 text-left transition-all ${
-                              paymentProvider === 'stripe'
-                                ? 'border-teal-500 bg-white shadow-md'
-                                : 'border-slate-200 bg-white hover:border-teal-300'
-                            }`}
-                          >
-                            <div className="flex items-center justify-between gap-3">
-                              <div>
-                                <p className="font-semibold text-slate-900">Card Payment</p>
-                                <p className="mt-1 text-sm text-slate-600">
-                                  Pay now with your credit or debit card.
-                                </p>
-                              </div>
-                              <FiCreditCard className="h-5 w-5 text-slate-500" />
-                            </div>
-                          </button>
-
-                          {isTamaraEnabled && (
+                      {hasMultiplePaymentMethods && (
+                        <div className="rounded-[24px] border border-slate-200 bg-slate-50/70 p-5">
+                          <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+                            Payment Method
+                          </h3>
+                          <p className="mt-3 text-sm leading-6 text-slate-600">
+                            Choose how you&apos;d like to complete payment for this booking.
+                          </p>
+                          <div className="mt-4 grid gap-3 sm:grid-cols-2">
                             <button
                               type="button"
-                              onClick={() =>
-                                isTamaraSupportedForBooking && setPaymentProvider('tamara')
-                              }
-                              disabled={!isTamaraSupportedForBooking}
+                              onClick={() => setPaymentProvider('stripe')}
+                              className={`rounded-2xl border p-4 text-left transition-all ${
+                                paymentProvider === 'stripe'
+                                  ? 'border-teal-500 bg-white shadow-md'
+                                  : 'border-slate-200 bg-white hover:border-teal-300'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-3">
+                                <div>
+                                  <p className="font-semibold text-slate-900">Card Payment</p>
+                                  <p className="mt-1 text-sm text-slate-600">
+                                    Pay now with your credit or debit card.
+                                  </p>
+                                </div>
+                                <FiCreditCard className="h-5 w-5 text-slate-500" />
+                              </div>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setPaymentProvider('tamara')}
                               className={`rounded-2xl border p-4 text-left transition-all ${
                                 paymentProvider === 'tamara'
                                   ? 'border-teal-500 bg-white shadow-md'
-                                  : isTamaraSupportedForBooking
-                                  ? 'border-slate-200 bg-white hover:border-teal-300'
-                                  : 'border-slate-200 bg-slate-100 opacity-60'
+                                  : 'border-slate-200 bg-white hover:border-teal-300'
                               }`}
                             >
                               <div className="flex items-center justify-between gap-3">
                                 <div>
                                   <p className="font-semibold text-slate-900">Tamara</p>
                                   <p className="mt-1 text-sm text-slate-600">
-                                    {isTamaraSupportedForBooking
-                                      ? 'Continue to Tamara to pay in instalments.'
-                                      : `Tamara is unavailable for ${therapistCurrency} pricing.`}
+                                    Continue to Tamara to pay in instalments.
                                   </p>
                                 </div>
                                 <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
@@ -891,9 +887,9 @@ export default function BookingPage() {
                                 </span>
                               </div>
                             </button>
-                          )}
+                          </div>
                         </div>
-                      </div>
+                      )}
 
                       <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-5">
                         <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
